@@ -1,53 +1,38 @@
-'use client';
+document.addEventListener('snipcart.ready', function () {
+  // Add VAT field to billing form
+  Snipcart.api.theme.cart.addCustomField({
+    name: 'vat_number',
+    placeholder: 'e.g., ESB12345678',
+    label: 'EU VAT Number (optional for B2C)',
+    type: 'text',
+    required: false,
+    section: 'billing',
+  });
 
-import { useEffect } from 'react';
+  // Validate on billing page
+  Snipcart.subscribe('page.validating', function (ev) {
+    if (ev.type === 'billing-address') {
+      const vatNumber = Snipcart.api.cart.getCustomFieldValue('vat_number');
+      const country = Snipcart.api.cart.getBillingAddress().country;
 
-interface SnipcartSettings {
-  publicApiKey: string;
-  templatesUrl?: string;
-  version?: string;
-}
-
-declare global {
-  interface Window {
-    SnipcartSettings?: SnipcartSettings;
-  }
-}
-
-const Snipcart = () => {
-  useEffect(() => {
-    // Initialize Snipcart settings
-    if (typeof window !== 'undefined') {
-      window.SnipcartSettings = {
-        publicApiKey: 'NzhjOGJmOTEtY2Y1MS00MGRkLWIwNmEtNjkzYWVlNTYxMjViNjM4OTA0NTgxOTU4MTA2ODQy',
-        templatesUrl: '/snipcart-templates.html',
-        version: '3.6.0', // Specify version to avoid auto-update warning
-      };
+      if (vatNumber && country !== 'ES') {
+        const countryCode = vatNumber.substring(0, 2).toUpperCase();
+        // Validate with free Abstract API (no key)
+        fetch(
+          `https://vat.abstractapi.com/v1/validate/?vat_number=${vatNumber}&country_code=${countryCode}`,
+        )
+          .then((response) => response.json())
+          .then((data) => {
+            if (!data.is_valid_vat) {
+              ev.addError('vat_number', 'Invalid EU VAT number.');
+            } else {
+              Snipcart.api.cart.update({ taxes: [] });
+            }
+          })
+          .catch(() => {
+            ev.addError('vat_number', 'Validation failed.');
+          });
+      }
     }
-
-    // Load Snipcart script
-    if (!document.getElementById('snipcart-script')) {
-      const script = document.createElement('script');
-      script.id = 'snipcart-script';
-      script.src = 'https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js';
-      script.async = true;
-      document.body.appendChild(script);
-
-      return () => {
-        document.body.removeChild(script);
-      };
-    }
-  }, []);
-
-  return (
-    <div
-      id="snipcart"
-      hidden={true}
-      data-api-key="NzhjOGJmOTEtY2Y1MS00MGRkLWIwNmEtNjkzYWVlNTYxMjViNjM4OTA0NTgxOTU4MTA2ODQy"
-      data-config-modal-style="side"
-      data-config-add-product-behavior="none" // Fixes history.replaceState error in Next.js
-    />
-  );
-};
-
-export default Snipcart;
+  });
+});
