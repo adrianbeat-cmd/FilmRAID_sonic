@@ -427,3 +427,17 @@ html.snipcart-modal-open .snipcart-overlay {
     min-width: 150px !important;
   }
 }
+
+/* Ensure item thumbnail, description, quantity visible */
+#snipcart .snipcart-item-line__image {
+  width: 100px;
+  height: auto;
+}
+
+#snipcart .snipcart-item-line__variant {
+  display: block;
+}
+
+#snipcart .snipcart-item-line__quantity {
+  display: block;
+}
