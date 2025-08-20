@@ -6,14 +6,11 @@ const SnipcartConfig = () => {
   useEffect(() => {
     const handleSnipcartReady = () => {
       if (typeof window !== 'undefined' && window.Snipcart) {
-        const snipcart = window.Snipcart; // Type guard
+        const snipcart = window.Snipcart;
         // Client-side validation for VAT (adds error if invalid; taxes handled server-side)
-        // @ts-ignore - Snipcart event types infer no-params but docs show (ev); using unknown for params
         snipcart.events.on('page.validating', async (ev) => {
           if (ev.type === 'billing-address') {
-            // @ts-ignore - api.cart methods defined in d.ts but TS not recognizing on Snipcart type
             const vatNumber = snipcart.api.cart.getCustomFieldValue('vatNumber');
-            // @ts-ignore - api.cart methods defined in d.ts but TS not recognizing on Snipcart type
             const billingAddress = snipcart.api.cart.getBillingAddress();
             const country = billingAddress.country;
 
@@ -64,11 +61,11 @@ const SnipcartConfig = () => {
 
         // Show confirmation for valid VAT on field change
         snipcart.events.on('snipcart.ready', () => {
-          const vatInput = document.querySelector('[name="vatNumber"]') as HTMLInputElement;
+          const vatInput = document.querySelector('[name="vatNumber"]');
           if (vatInput) {
             vatInput.addEventListener('blur', async () => {
               const vatNumber = vatInput.value;
-              const countrySelect = document.querySelector('[name="country"]') as HTMLSelectElement;
+              const countrySelect = document.querySelector('[name="country"]');
               const country = countrySelect ? countrySelect.value : '';
 
               const euCountries = [
@@ -100,11 +97,14 @@ const SnipcartConfig = () => {
                 'SK',
               ];
 
-              let messageEl = document.querySelector('#vat-message') as HTMLSpanElement;
+              let messageEl = document.querySelector('#vat-message');
               if (!messageEl) {
                 messageEl = document.createElement('span');
                 messageEl.id = 'vat-message';
                 messageEl.style.color = 'green';
+                messageEl.style.fontSize = '0.875rem';
+                messageEl.style.marginTop = '0.25rem';
+                messageEl.style.display = 'block';
                 vatInput.parentNode?.appendChild(messageEl);
               }
 
@@ -116,20 +116,20 @@ const SnipcartConfig = () => {
                   const data = await response.json();
                   if (data.valid) {
                     if (country === 'ES') {
-                      messageEl.textContent = ' Valid - IVA charged';
+                      messageEl.textContent = 'Valid - IVA charged (local sale)';
                       messageEl.style.color = 'green';
                     } else if (euCountries.includes(country)) {
-                      messageEl.textContent = ' Valid - 0% VAT applied';
+                      messageEl.textContent = 'Valid - 0% VAT applied (intra-EU B2B)';
                       messageEl.style.color = 'green';
                     } else {
                       messageEl.textContent = '';
                     }
                   } else {
-                    messageEl.textContent = ' Invalid';
+                    messageEl.textContent = 'Invalid VAT number';
                     messageEl.style.color = 'red';
                   }
                 } catch {
-                  messageEl.textContent = ' Validation failed';
+                  messageEl.textContent = 'Validation failed - try again';
                   messageEl.style.color = 'red';
                 }
               } else {

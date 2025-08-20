@@ -46,7 +46,7 @@ interface ProductClientProps {
     hddCount: number;
     image: string;
     back_image: string;
-    description: string; // Change to string
+    description: React.ReactNode;
     specs: { label: string; value: string | string[] }[];
   };
   tb: number;
@@ -57,7 +57,7 @@ interface ProductClientProps {
   availableRaids: string[];
 }
 
-const ProductClient: React.FC<ProductClientProps> = ({
+const ProductClient = ({
   currentModel,
   tb,
   raid0,
@@ -65,7 +65,7 @@ const ProductClient: React.FC<ProductClientProps> = ({
   price,
   images,
   availableRaids,
-}) => {
+}: ProductClientProps) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedRaid, setSelectedRaid] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
@@ -111,7 +111,7 @@ const ProductClient: React.FC<ProductClientProps> = ({
         setSelectedRaid('');
         setQuantity(1);
         setTotalPrice(price);
-        if (captchaRef.current) captchaRef.reset();
+        if (captchaRef.current) captchaRef.current.reset();
       })
       .catch((error: Error) => {
         alert(`Failed to send wire transfer request: ${error.message}. Please try again.`);
@@ -185,54 +185,74 @@ const ProductClient: React.FC<ProductClientProps> = ({
               ? '5.7 x 11.8 x 11.4 in (146 x 302 x 290 mm)'
               : '8.1 x 12.2 x 11.4 in (206 x 310 x 290 mm)',
     },
+    {
+      label: 'Weight (without disks)',
+      value:
+        currentModel.name === 'FilmRaid-4A'
+          ? '3.6 Kg'
+          : currentModel.name === 'FilmRaid-6'
+            ? '4.8 Kg'
+            : currentModel.name === 'FilmRaid-8'
+              ? '5.2 Kg'
+              : '9.5 Kg',
+    },
+    { label: 'Warranty', value: '3 years' },
   ];
 
   const handleButtonClick = () => {
     if (!selectedRaid) {
-      toast.error('Please select a RAID level');
-      return;
+      toast('Select RAID Level', {
+        description: 'Please select a RAID configuration to proceed.',
+        style: { background: '#ff4d4f', color: '#fff' },
+      });
     }
   };
 
   return (
-    <section className="section-padding">
-      <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
-        <div class="order-1">
-          <div class="relative aspect-video md:aspect-square">
+    <section className="py-12 md:py-16 lg:py-20">
+      <div className="container grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div className="order-1">
+          <div className="relative">
             <Image
               src={images[selectedImage]}
               alt={currentModel.name}
-              fill
-              class="rounded-lg object-cover"
+              width={800}
+              height={600}
+              className="h-auto w-full rounded-lg shadow-md"
             />
-          </div>
-          <div class="mt-4 grid grid-cols-4 gap-4">
-            {images.map((img, idx) => (
-              <div
-                key={idx}
-                class="relative aspect-square cursor-pointer"
-                onClick={() => setSelectedImage(idx)}
-              >
-                <Image
-                  src={img}
-                  alt={`${currentModel.name} view ${idx + 1}`}
-                  fill
-                  class="rounded object-cover"
-                />
-              </div>
-            ))}
+            <div className="mt-4 flex justify-center gap-2">
+              {images.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedImage(idx)}
+                  className={`rounded border p-1 ${
+                    selectedImage === idx ? 'border-primary' : 'border-transparent'
+                  }`}
+                >
+                  <Image src={img} alt={`Thumbnail ${idx + 1}`} width={80} height={60} />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-        <div class="order-2">
-          <h1 class="text-3xl font-bold">
-            {currentModel.name} {raid0}TB
-          </h1>
-          <p class="text-muted-foreground mt-4">{currentModel.description}</p>
-          <div class="mt-6">
+        <div className="order-2 space-y-4 md:sticky md:top-16 md:col-start-2 md:row-start-1 md:self-start">
+          <h1 className="text-3xl font-bold">{currentModel.name}</h1>
+          <p className="text-muted-foreground">{currentModel.description}</p>
+          <div>
+            <h3 className="font-bold">Storage</h3>
+            <p className="text-sm">{tb}TB HDD</p>
+            <p className="text-sm">
+              RAID 0: {raid0}TB | RAID 5: {raid5}TB
+            </p>
+          </div>
+          <p className="mb-4 text-xl">Total: €{totalPrice}</p>
+          <div className="mb-4 space-y-2">
             <Label htmlFor="raid">RAID Level</Label>
             <Select onValueChange={setSelectedRaid} value={selectedRaid}>
-              <SelectTrigger class="w-full">
-                <SelectValue placeholder="Select RAID" />
+              <SelectTrigger
+                className={`w-full ${!selectedRaid ? 'bg-[#306fdb] !text-[#ffffff] dark:bg-[#306fdb] dark:!text-[#ffffff]' : ''}`}
+              >
+                <SelectValue placeholder="First select RAID Level" />
               </SelectTrigger>
               <SelectContent>
                 {availableRaids.map((raid) => (
@@ -243,14 +263,14 @@ const ProductClient: React.FC<ProductClientProps> = ({
               </SelectContent>
             </Select>
           </div>
-          <div class="mt-4">
+          <div className="mt-4 space-y-2">
             <Label htmlFor="quantity">Quantity</Label>
             <Select
               onValueChange={(value) => setQuantity(parseInt(value))}
               value={quantity.toString()}
               defaultValue="1"
             >
-              <SelectTrigger class="w-full">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="1" />
               </SelectTrigger>
               <SelectContent>
@@ -262,7 +282,7 @@ const ProductClient: React.FC<ProductClientProps> = ({
               </SelectContent>
             </Select>
           </div>
-          <div class="mt-4 flex flex-col space-y-4">
+          <div className="mt-4 flex flex-col space-y-4">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button
@@ -336,7 +356,7 @@ const ProductClient: React.FC<ProductClientProps> = ({
               data-item-id={productId}
               data-item-price={price}
               data-item-url={productUrl}
-              data-item-description={currentModel.description}
+              data-item-description={currentModel.description as string}
               data-item-name={productName}
               data-item-image={images[0]}
               data-item-quantity={quantity}
@@ -345,10 +365,6 @@ const ProductClient: React.FC<ProductClientProps> = ({
               data-item-custom1-value={selectedRaid}
               data-item-shippable="true"
               data-item-taxable="true"
-              data-item-weight="5000" // Example for 4-bay; replace with real
-              data-item-length="23"
-              data-item-width="16"
-              data-item-height="12"
             >
               Add to Cart (Pay Online)
             </Button>

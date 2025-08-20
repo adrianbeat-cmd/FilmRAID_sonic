@@ -11,51 +11,51 @@ exports.handler = async (event) => {
 
   let rates = [];
 
-  if (
-    country === 'ES' ||
-    [
-      'AT',
-      'BE',
-      'BG',
-      'CY',
-      'CZ',
-      'DE',
-      'DK',
-      'EE',
-      'FI',
-      'FR',
-      'GR',
-      'HR',
-      'HU',
-      'IE',
-      'IT',
-      'LT',
-      'LU',
-      'LV',
-      'MT',
-      'NL',
-      'PL',
-      'PT',
-      'RO',
-      'SE',
-      'SI',
-      'SK',
-    ].includes(country)
-  ) {
-    // DHL EU example flat (replace with API call for real)
+  const euCountries = [
+    'AT',
+    'BE',
+    'BG',
+    'CY',
+    'CZ',
+    'DE',
+    'DK',
+    'EE',
+    'ES',
+    'FI',
+    'FR',
+    'GR',
+    'HR',
+    'HU',
+    'IE',
+    'IT',
+    'LT',
+    'LU',
+    'LV',
+    'MT',
+    'NL',
+    'PL',
+    'PT',
+    'RO',
+    'SE',
+    'SI',
+    'SK',
+  ];
+
+  let cost = 50 + totalWeight * 10; // Base €50 + €10/kg; replace with API call
+  if (euCountries.includes(country)) {
     rates.push({
       id: 'dhl-eu',
       name: 'DHL EU (2-3 days)',
-      cost: 50, // €, adjust based on weight
+      cost: cost,
       minDeliveryDays: 2,
       maxDeliveryDays: 3,
     });
   } else {
-    // FedEx international example flat (replace with API)
+    cost = 100 + totalWeight * 15; // Higher for intl
     rates.push({
       id: 'fedex-intl',
       name: 'FedEx Global (3-5 days)',
-      cost: 100, // €, adjust
+      cost: cost,
       minDeliveryDays: 3,
       maxDeliveryDays: 5,
     });
