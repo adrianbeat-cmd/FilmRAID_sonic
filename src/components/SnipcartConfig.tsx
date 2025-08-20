@@ -6,11 +6,15 @@ const SnipcartConfig = () => {
   useEffect(() => {
     const handleSnipcartReady = () => {
       if (typeof window !== 'undefined' && window.Snipcart) {
+        // @ts-ignore - Snipcart type not fully defined in TS
         const snipcart = window.Snipcart;
         // Client-side validation for VAT (adds error if invalid; taxes handled server-side)
+        // @ts-ignore - events.on type inference limited
         snipcart.events.on('page.validating', async (ev) => {
           if (ev.type === 'billing-address') {
+            // @ts-ignore - api.cart.getCustomFieldValue not typed
             const vatNumber = snipcart.api.cart.getCustomFieldValue('vatNumber');
+            // @ts-ignore - api.cart.getBillingAddress not typed
             const billingAddress = snipcart.api.cart.getBillingAddress();
             const country = billingAddress.country;
 
@@ -50,9 +54,11 @@ const SnipcartConfig = () => {
                 );
                 const data = await response.json();
                 if (!data.valid) {
+                  // @ts-ignore - addError not fully typed
                   ev.addError('vatNumber', 'Invalid EU VAT number. Leave blank for standard VAT.');
                 }
               } catch {
+                // @ts-ignore - addError not fully typed
                 ev.addError('vatNumber', 'VAT validation failed. Try again.');
               }
             }
@@ -60,12 +66,13 @@ const SnipcartConfig = () => {
         });
 
         // Show confirmation for valid VAT on field change
+        // @ts-ignore - events.on type inference limited
         snipcart.events.on('snipcart.ready', () => {
-          const vatInput = document.querySelector('[name="vatNumber"]');
+          const vatInput = document.querySelector('[name="vatNumber"]') as HTMLInputElement;
           if (vatInput) {
             vatInput.addEventListener('blur', async () => {
               const vatNumber = vatInput.value;
-              const countrySelect = document.querySelector('[name="country"]');
+              const countrySelect = document.querySelector('[name="country"]') as HTMLSelectElement;
               const country = countrySelect ? countrySelect.value : '';
 
               const euCountries = [
@@ -97,7 +104,7 @@ const SnipcartConfig = () => {
                 'SK',
               ];
 
-              let messageEl = document.querySelector('#vat-message');
+              let messageEl = document.querySelector('#vat-message') as HTMLSpanElement;
               if (!messageEl) {
                 messageEl = document.createElement('span');
                 messageEl.id = 'vat-message';
