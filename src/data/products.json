@@ -1,0 +1,444 @@
+{
+  "products": [
+    {
+      "id": "sonic-light-white",
+      "name": "Sonic Light",
+      "description": "Premium Smart Soundbar",
+      "price": 599,
+      "originalPrice": 699,
+      "image": "/images/products/product-1.webp",
+      "specifications": {
+        "general": [
+          {
+            "key": "operatingVoltage",
+            "label": "Operating Voltage",
+            "value": "12V (10 - 15V DC)",
+            "icon": "Zap"
+          },
+          {
+            "key": "powerConsumption",
+            "label": "Power Consumption",
+            "value": "10W (Idle), 30W (Max)",
+            "icon": "Lightbulb"
+          },
+          {
+            "key": "frequencyResponse",
+            "label": "Frequency Response",
+            "value": "60 - 20,000 Hz",
+            "icon": "Radio"
+          },
+          {
+            "key": "dimensions",
+            "label": "Dimensions (WxHxD)",
+            "value": "180 x 95 x 95 mm",
+            "icon": "Ruler"
+          },
+          {
+            "key": "weight",
+            "label": "Weight",
+            "value": "890 g",
+            "icon": "Scale"
+          }
+        ],
+        "audioInputsOutputs": [
+          {
+            "key": "bluetooth",
+            "label": "Bluetooth (Wireless Audio)",
+            "value": "2x"
+          },
+          {
+            "key": "aux",
+            "label": "AUX Input (Stereo Analog)",
+            "value": "1x"
+          },
+          {
+            "key": "usb",
+            "label": "USB-C (Charging & Data)",
+            "value": "1x"
+          }
+        ],
+        "batteryConnectivity": [
+          {
+            "key": "batteryLife",
+            "label": "Battery Life",
+            "value": "Up to 12 hours (Playback at 70% volume)"
+          },
+          {
+            "key": "chargingTime",
+            "label": "Charging Time",
+            "value": "Approx. 2.5 hours"
+          },
+          {
+            "key": "wirelessRange",
+            "label": "Wireless Range",
+            "value": "Up to 15 meters"
+          },
+          {
+            "key": "connectivity",
+            "label": "Connectivity",
+            "value": "Bluetooth, USB-C, AUX"
+          }
+        ],
+        "environmental": [
+          {
+            "key": "operatingTemperature",
+            "label": "Operating Temperature",
+            "value": "0° - 45° C (32° - 113° F)"
+          },
+          {
+            "key": "storageTemperature",
+            "label": "Storage Temperature",
+            "value": "-10° - 60° C (14° - 140° F)"
+          },
+          {
+            "key": "waterResistance",
+            "label": "Water Resistance",
+            "value": "IPX5 Rated (Splash-Proof)"
+          }
+        ],
+        "certifications": [
+          {
+            "key": "safety",
+            "label": "Safety",
+            "value": "Compliant with IEC/EN 62368-1"
+          },
+          {
+            "key": "certificate",
+            "label": "Certificate",
+            "value": "RoHS & CE Certified"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sonic-light-wood",
+      "name": "Sonic Light",
+      "description": "Premium Smart Soundbar",
+      "price": 599,
+      "originalPrice": 699,
+      "image": "/images/products/product-2.webp",
+      "specifications": {
+        "general": [
+          {
+            "key": "operatingVoltage",
+            "label": "Operating Voltage",
+            "value": "12V (10 - 15V DC)",
+            "icon": "Zap"
+          },
+          {
+            "key": "powerConsumption",
+            "label": "Power Consumption",
+            "value": "10W (Idle), 30W (Max)",
+            "icon": "Lightbulb"
+          },
+          {
+            "key": "frequencyResponse",
+            "label": "Frequency Response",
+            "value": "60 - 20,000 Hz",
+            "icon": "Radio"
+          },
+          {
+            "key": "dimensions",
+            "label": "Dimensions (WxHxD)",
+            "value": "180 x 95 x 95 mm",
+            "icon": "Ruler"
+          },
+          {
+            "key": "weight",
+            "label": "Weight",
+            "value": "890 g",
+            "icon": "Scale"
+          }
+        ],
+        "audioInputsOutputs": [
+          {
+            "key": "bluetooth",
+            "label": "Bluetooth (Wireless Audio)",
+            "value": "2x"
+          },
+          {
+            "key": "aux",
+            "label": "AUX Input (Stereo Analog)",
+            "value": "1x"
+          },
+          {
+            "key": "usb",
+            "label": "USB-C (Charging & Data)",
+            "value": "1x"
+          }
+        ],
+        "batteryConnectivity": [
+          {
+            "key": "batteryLife",
+            "label": "Battery Life",
+            "value": "Up to 12 hours (Playback at 70% volume)"
+          },
+          {
+            "key": "chargingTime",
+            "label": "Charging Time",
+            "value": "Approx. 2.5 hours"
+          },
+          {
+            "key": "wirelessRange",
+            "label": "Wireless Range",
+            "value": "Up to 15 meters"
+          },
+          {
+            "key": "connectivity",
+            "label": "Connectivity",
+            "value": "Bluetooth, USB-C, AUX"
+          }
+        ],
+        "environmental": [
+          {
+            "key": "operatingTemperature",
+            "label": "Operating Temperature",
+            "value": "0° - 45° C (32° - 113° F)"
+          },
+          {
+            "key": "storageTemperature",
+            "label": "Storage Temperature",
+            "value": "-10° - 60° C (14° - 140° F)"
+          },
+          {
+            "key": "waterResistance",
+            "label": "Water Resistance",
+            "value": "IPX5 Rated (Splash-Proof)"
+          }
+        ],
+        "certifications": [
+          {
+            "key": "safety",
+            "label": "Safety",
+            "value": "Compliant with IEC/EN 62368-1"
+          },
+          {
+            "key": "certificate",
+            "label": "Certificate",
+            "value": "RoHS & CE Certified"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sonic-light-black",
+      "name": "Sonic Light",
+      "description": "Premium Smart Soundbar",
+      "price": 599,
+      "originalPrice": 699,
+      "image": "/images/products/product-3.webp",
+      "specifications": {
+        "general": [
+          {
+            "key": "operatingVoltage",
+            "label": "Operating Voltage",
+            "value": "12V (10 - 15V DC)",
+            "icon": "Zap"
+          },
+          {
+            "key": "powerConsumption",
+            "label": "Power Consumption",
+            "value": "10W (Idle), 30W (Max)",
+            "icon": "Lightbulb"
+          },
+          {
+            "key": "frequencyResponse",
+            "label": "Frequency Response",
+            "value": "60 - 20,000 Hz",
+            "icon": "Radio"
+          },
+          {
+            "key": "dimensions",
+            "label": "Dimensions (WxHxD)",
+            "value": "180 x 95 x 95 mm",
+            "icon": "Ruler"
+          },
+          {
+            "key": "weight",
+            "label": "Weight",
+            "value": "890 g",
+            "icon": "Scale"
+          }
+        ],
+        "audioInputsOutputs": [
+          {
+            "key": "bluetooth",
+            "label": "Bluetooth (Wireless Audio)",
+            "value": "2x"
+          },
+          {
+            "key": "aux",
+            "label": "AUX Input (Stereo Analog)",
+            "value": "1x"
+          },
+          {
+            "key": "usb",
+            "label": "USB-C (Charging & Data)",
+            "value": "1x"
+          }
+        ],
+        "batteryConnectivity": [
+          {
+            "key": "batteryLife",
+            "label": "Battery Life",
+            "value": "Up to 12 hours (Playback at 70% volume)"
+          },
+          {
+            "key": "chargingTime",
+            "label": "Charging Time",
+            "value": "Approx. 2.5 hours"
+          },
+          {
+            "key": "wirelessRange",
+            "label": "Wireless Range",
+            "value": "Up to 15 meters"
+          },
+          {
+            "key": "connectivity",
+            "label": "Connectivity",
+            "value": "Bluetooth, USB-C, AUX"
+          }
+        ],
+        "environmental": [
+          {
+            "key": "operatingTemperature",
+            "label": "Operating Temperature",
+            "value": "0° - 45° C (32° - 113° F)"
+          },
+          {
+            "key": "storageTemperature",
+            "label": "Storage Temperature",
+            "value": "-10° - 60° C (14° - 140° F)"
+          },
+          {
+            "key": "waterResistance",
+            "label": "Water Resistance",
+            "value": "IPX5 Rated (Splash-Proof)"
+          }
+        ],
+        "certifications": [
+          {
+            "key": "safety",
+            "label": "Safety",
+            "value": "Compliant with IEC/EN 62368-1"
+          },
+          {
+            "key": "certificate",
+            "label": "Certificate",
+            "value": "RoHS & CE Certified"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sonic-light-premium",
+      "name": "Sonic Light",
+      "description": "Premium Smart Soundbar",
+      "price": 599,
+      "originalPrice": 699,
+      "image": "/images/products/product-4.webp",
+      "specifications": {
+        "general": [
+          {
+            "key": "operatingVoltage",
+            "label": "Operating Voltage",
+            "value": "12V (10 - 15V DC)",
+            "icon": "Zap"
+          },
+          {
+            "key": "powerConsumption",
+            "label": "Power Consumption",
+            "value": "10W (Idle), 30W (Max)",
+            "icon": "Lightbulb"
+          },
+          {
+            "key": "frequencyResponse",
+            "label": "Frequency Response",
+            "value": "60 - 20,000 Hz",
+            "icon": "Radio"
+          },
+          {
+            "key": "dimensions",
+            "label": "Dimensions (WxHxD)",
+            "value": "180 x 95 x 95 mm",
+            "icon": "Ruler"
+          },
+          {
+            "key": "weight",
+            "label": "Weight",
+            "value": "890 g",
+            "icon": "Scale"
+          }
+        ],
+        "audioInputsOutputs": [
+          {
+            "key": "bluetooth",
+            "label": "Bluetooth (Wireless Audio)",
+            "value": "2x"
+          },
+          {
+            "key": "aux",
+            "label": "AUX Input (Stereo Analog)",
+            "value": "1x"
+          },
+          {
+            "key": "usb",
+            "label": "USB-C (Charging & Data)",
+            "value": "1x"
+          }
+        ],
+        "batteryConnectivity": [
+          {
+            "key": "batteryLife",
+            "label": "Battery Life",
+            "value": "Up to 12 hours (Playback at 70% volume)"
+          },
+          {
+            "key": "chargingTime",
+            "label": "Charging Time",
+            "value": "Approx. 2.5 hours"
+          },
+          {
+            "key": "wirelessRange",
+            "label": "Wireless Range",
+            "value": "Up to 15 meters"
+          },
+          {
+            "key": "connectivity",
+            "label": "Connectivity",
+            "value": "Bluetooth, USB-C, AUX"
+          }
+        ],
+        "environmental": [
+          {
+            "key": "operatingTemperature",
+            "label": "Operating Temperature",
+            "value": "0° - 45° C (32° - 113° F)"
+          },
+          {
+            "key": "storageTemperature",
+            "label": "Storage Temperature",
+            "value": "-10° - 60° C (14° - 140° F)"
+          },
+          {
+            "key": "waterResistance",
+            "label": "Water Resistance",
+            "value": "IPX5 Rated (Splash-Proof)"
+          }
+        ],
+        "certifications": [
+          {
+            "key": "safety",
+            "label": "Safety",
+            "value": "Compliant with IEC/EN 62368-1"
+          },
+          {
+            "key": "certificate",
+            "label": "Certificate",
+            "value": "RoHS & CE Certified"
+          }
+        ]
+      }
+    }
+  ]
+}
