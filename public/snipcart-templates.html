@@ -1,57 +1,75 @@
 <div id="snipcart-templates">
   <billing section="top">
-    <fieldset class="snipcart-form__set">
-      <div class="snipcart-form__field">
-        <snipcart-label class="snipcart__font--tiny" for="company">
-          Company (optional)
-        </snipcart-label>
-        <snipcart-input name="company"></snipcart-input>
-      </div>
-    </fieldset>
+    <div>
+      <fieldset class="snipcart-form__set">
+        <div class="snipcart-form__field">
+          <snipcart-label class="snipcart__font--tiny" for="company">
+            Company (optional)
+          </snipcart-label>
+          <snipcart-input name="company"></snipcart-input>
+        </div>
+      </fieldset>
+    </div>
   </billing>
 
   <billing section="bottom">
-    <fieldset class="snipcart-form__set">
-      <div class="snipcart-form__field">
-        <snipcart-label class="snipcart__font--tiny" for="vatNumber">
-          EU VAT Number (optional for B2C; valid numbers get 0% VAT for intra-EU)
-        </snipcart-label>
-        <snipcart-input name="vatNumber"></snipcart-input>
-      </div>
-    </fieldset>
+    <div>
+      <fieldset class="snipcart-form__set">
+        <div class="snipcart-form__field">
+          <snipcart-label class="snipcart__font--tiny" for="vatNumber">
+            EU VAT Number (optional for B2C; valid numbers get 0% VAT for intra-EU)
+          </snipcart-label>
+          <snipcart-input name="vatNumber"></snipcart-input>
+        </div>
+      </fieldset>
+    </div>
   </billing>
 
   <shipping-same-as-billing>
     <div>
       <div class="snipcart-form__field-checkbox">
         <snipcart-input name="shipToBillingAddress" type="checkbox" checked="true"></snipcart-input>
-        <snipcart-label for="shipToBillingAddress"> Use different shipping address </snipcart-label>
+        <snipcart-label for="shipToBillingAddress">
+          Use different shipping address
+        </snipcart-label>
       </div>
     </div>
   </shipping-same-as-billing>
 
   <item-line>
-    <div class="snipcart-item-line__media">
-      <item-image />
-    </div>
-    <div class="snipcart-item-line__info">
-      <item-description />
-      <item-title />
-      {{#customFields}}
-      <div class="snipcart-item-line__customfields">
-        {{name}}
-        <select class="snipcart-form__select">
-          {{#options}}
-          <option>{{label}}</option>
-          {{/options}}
-        </select>
+    <div class="snipcart-item-line snipcart__box">
+      <div class="snipcart-item-line__header">
+        <p class="snipcart-item-line__product">
+          <div class="snipcart-item-line__image">
+            <item-image />
+          </div>
+          <div class="snipcart-item-line__content">
+            <div class="snipcart-item-line__content-column">
+              <h2 class="snipcart-item-line__title">
+                <item-title />
+              </h2>
+              <div class="snipcart-item-line__variant">
+                <item-description />
+              </div>
+              {{#customFields}}
+                <div class="snipcart-item-line__customfields">
+                  {{name}}
+                  <select class="snipcart-form__select snipcart-form__select--item">
+                    {{#options}}
+                      <option>{{label}}</option>
+                    {{/options}}
+                  </select>
+                </div>
+              {{/customFields}}
+            </div>
+          </div>
+        </p>
       </div>
-      {{/customFields}}
-    </div>
-    <div class="snipcart-item-line__actions">
-      <item-quantity />
-      <item-remove />
-      <item-total-price />
+      <div class="snipcart-item-line__actions">
+        <item-quantity class="snipcart-item-line__quantity" />
+        <item-remove class="snipcart-item-line__remove" />
+        <item-total-price class="snipcart-item-line__price" />
+      </div>
     </div>
   </item-line>
 </div>
