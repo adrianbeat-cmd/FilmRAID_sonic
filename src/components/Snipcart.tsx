@@ -20,7 +20,7 @@ const Snipcart = () => {
     if (typeof window !== 'undefined') {
       window.SnipcartSettings = {
         publicApiKey: process.env.NEXT_PUBLIC_SNIPCART_API_KEY as string,
-        // templatesUrl: '/snipcart-templates.html', // Disabled to fix error - use dashboard custom fields instead
+        // templatesUrl: '/snipcart-templates.html', // Disabled to use dashboard custom fields
         version: '3.6.0',
       };
     }
