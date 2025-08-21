@@ -341,7 +341,7 @@ const ProductClient = ({
                     <Label>CAPTCHA Verification</Label>
                     <GoogleReCAPTCHA
                       ref={captchaRef}
-                      sitekey={process.env.RECAPTCHA_SITE_KEY as string}
+                      sitekey="6LexUYkrAAAAAKVDlNKttonFcHI_i3wBXQh0PnoV"
                       onChange={setCaptchaValue}
                     />
                   </div>
