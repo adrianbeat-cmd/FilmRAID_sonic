@@ -8,13 +8,36 @@ const SnipcartConfig = () => {
       if (typeof window !== 'undefined' && window.Snipcart) {
         // @ts-ignore - Snipcart type not fully defined in TS
         const snipcart = window.Snipcart;
+
+        // Add Company Name field (new)
+        // @ts-ignore - Snipcart's addCustomField method lacks full TS support
+        snipcart.api.theme.cart.addCustomField({
+          name: 'companyName',
+          placeholder: 'Company Name (optional)',
+          label: 'Company Name (optional)',
+          type: 'text',
+          required: false,
+          section: 'billing',
+        });
+
+        // Add EU VAT Number field (moved from snipcart-vat.js, standardized name)
+        // @ts-ignore - Snipcart's addCustomField method lacks full TS support
+        snipcart.api.theme.cart.addCustomField({
+          name: 'vatNumber',
+          placeholder: 'e.g., ESB12345678',
+          label: 'EU VAT Number (optional for B2C)',
+          type: 'text',
+          required: false,
+          section: 'billing',
+        });
+
         // Client-side validation for VAT (adds error if invalid; taxes handled server-side)
-        // @ts-ignore - events.on type inference limited
+        // @ts-ignore - events.on type inference limited in Snipcart API
         snipcart.events.on('page.validating', async (ev) => {
           if (ev.type === 'billing-address') {
-            // @ts-ignore - api.cart.getCustomFieldValue not typed
+            // @ts-ignore - api.cart.getCustomFieldValue not typed in Snipcart
             const vatNumber = snipcart.api.cart.getCustomFieldValue('vatNumber');
-            // @ts-ignore - api.cart.getBillingAddress not typed
+            // @ts-ignore - api.cart.getBillingAddress not typed in Snipcart
             const billingAddress = snipcart.api.cart.getBillingAddress();
             const country = billingAddress.country;
 
@@ -54,11 +77,11 @@ const SnipcartConfig = () => {
                 );
                 const data = await response.json();
                 if (!data.valid) {
-                  // @ts-ignore - addError not fully typed
+                  // @ts-ignore - addError not fully typed in Snipcart
                   ev.addError('vatNumber', 'Invalid EU VAT number. Leave blank for standard VAT.');
                 }
               } catch {
-                // @ts-ignore - addError not fully typed
+                // @ts-ignore - addError not fully typed in Snipcart
                 ev.addError('vatNumber', 'VAT validation failed. Try again.');
               }
             }
@@ -66,7 +89,7 @@ const SnipcartConfig = () => {
         });
 
         // Show confirmation for valid VAT on field change
-        // @ts-ignore - events.on type inference limited
+        // @ts-ignore - events.on type inference limited in Snipcart API
         snipcart.events.on('snipcart.ready', () => {
           const vatInput = document.querySelector('[name="vatNumber"]') as HTMLInputElement;
           if (vatInput) {
