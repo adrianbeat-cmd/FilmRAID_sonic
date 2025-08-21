@@ -19,7 +19,7 @@ const Snipcart = () => {
     // Initialize Snipcart settings
     if (typeof window !== 'undefined') {
       window.SnipcartSettings = {
-        publicApiKey: 'NzhjOGJmOTEtY2Y1MS00MGRkLWIwNmEtNjkzYWVlNTYxMjViNjM4OTA0NTgxOTU4MTA2ODQy',
+        publicApiKey: process.env.NEXT_PUBLIC_SNIPCART_API_KEY as string,
         templatesUrl: '/snipcart-templates.html',
         version: '3.6.0', // Specify version to avoid auto-update warning
       };
@@ -43,7 +43,7 @@ const Snipcart = () => {
     <div
       id="snipcart"
       hidden={true}
-      data-api-key="NzhjOGJmOTEtY2Y1MS00MGRkLWIwNmEtNjkzYWVlNTYxMjViNjM4OTA0NTgxOTU4MTA2ODQy"
+      data-api-key={process.env.NEXT_PUBLIC_SNIPCART_API_KEY}
       data-config-modal-style="side"
       data-config-add-product-behavior="none" // Fixes history.replaceState conflict in Next.js static
     />
