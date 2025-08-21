@@ -11,6 +11,7 @@ exports.handler = async (event) => {
   const billingCountry = content.billingAddress.country;
   const customFields = content.customFields || [];
   const vatField = customFields.find((f) => f.name === 'vatNumber');
+  const companyField = customFields.find((f) => f.name === 'companyName'); // Optional, for future use/logging
 
   let rates = [];
 
@@ -54,8 +55,10 @@ exports.handler = async (event) => {
         console.log('VAT validation response:', json);
         if (json.valid) {
           rates = []; // 0% for valid intra-EU B2B
+          console.log('Valid VAT - applying 0% tax');
         } else {
           rates = [{ name: 'IVA', amount: 0.21, includedInPrice: false, appliesOnShipping: false }];
+          console.log('Invalid VAT - applying 21% tax');
         }
       } catch (error) {
         console.error('VAT validation error:', error);
