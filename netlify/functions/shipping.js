@@ -5,7 +5,7 @@ exports.handler = async (event) => {
   const shippingAddress = content.shippingAddress || {};
   const items = content.items || [];
 
-  console.log('Shipping webhook called with:', { country: shippingAddress.country, items }); // Debug log
+  console.log('Shipping webhook called with:', { country: shippingAddress.country, items });
 
   // Calculate total weight (kg) and dims (cm) dynamically
   let totalWeight = 0;
@@ -33,9 +33,8 @@ exports.handler = async (event) => {
 
   let rates = [];
 
-  // Fallback if address missing
   if (!shippingAddress.country) {
-    rates = [{ name: 'Standard Shipping', amount: 50, estimatedDays: 5 }];
+    rates = [{ description: 'Standard Shipping', cost: 50, guaranteedDaysToDelivery: 5 }];
   } else if (
     [
       'AT',
@@ -67,9 +66,9 @@ exports.handler = async (event) => {
       'SK',
     ].includes(shippingAddress.country)
   ) {
-    rates.push({ name: 'DHL Express (EU)', amount: 50, estimatedDays: 2 });
+    rates.push({ description: 'DHL Express (EU)', cost: 50, guaranteedDaysToDelivery: 2 });
   } else {
-    rates.push({ name: 'FedEx International', amount: 100, estimatedDays: 5 });
+    rates.push({ description: 'FedEx International', cost: 100, guaranteedDaysToDelivery: 5 });
   }
 
   return {
