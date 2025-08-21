@@ -144,18 +144,6 @@ const SnipcartConfig = () => {
               }
             });
           }
-
-          // Reorder VAT before checkbox
-          const vatField = document
-            .querySelector('.snipcart-form__field [name="vatNumber"]')
-            ?.closest('.snipcart-form__field');
-          const checkboxField = document
-            .querySelector('.snipcart-form__field-checkbox [name="shipToBillingAddress"]')
-            ?.closest('.snipcart-form__field-checkbox');
-
-          if (vatField && checkboxField && checkboxField.parentNode) {
-            checkboxField.parentNode.insertBefore(vatField, checkboxField.nextSibling);
-          }
         });
       }
     };

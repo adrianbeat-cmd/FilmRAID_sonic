@@ -20,8 +20,8 @@ const Snipcart = () => {
     if (typeof window !== 'undefined') {
       window.SnipcartSettings = {
         publicApiKey: process.env.NEXT_PUBLIC_SNIPCART_API_KEY as string,
-        // templatesUrl: '/snipcart-templates.html', // Comment to disable custom templates
-        version: '3.6.0', // Specify version to avoid auto-update warning
+        // templatesUrl: '/snipcart-templates.html', // Disabled to fix error - use dashboard custom fields instead
+        version: '3.6.0',
       };
     }
 
@@ -45,7 +45,7 @@ const Snipcart = () => {
       hidden={true}
       data-api-key={process.env.NEXT_PUBLIC_SNIPCART_API_KEY}
       data-config-modal-style="side"
-      data-config-add-product-behavior="none" // Fixes history.replaceState conflict in Next.js static
+      data-config-add-product-behavior="none"
     />
   );
 };
