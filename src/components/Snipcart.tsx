@@ -20,7 +20,7 @@ const Snipcart = () => {
     if (typeof window !== 'undefined') {
       window.SnipcartSettings = {
         publicApiKey: process.env.NEXT_PUBLIC_SNIPCART_API_KEY as string,
-        templatesUrl: '/snipcart-templates.html',
+        templatesUrl: '/snipcart-templates.html', // Ensure this matches file path
         version: '3.6.0',
       };
     }
