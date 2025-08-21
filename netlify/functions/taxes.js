@@ -67,6 +67,8 @@ exports.handler = async (event) => {
     }
   } // Non-EU: no tax
 
+  console.log('Returning rates:', rates); // Debug log for response
+
   return {
     statusCode: 200,
     body: JSON.stringify({ rates }),
