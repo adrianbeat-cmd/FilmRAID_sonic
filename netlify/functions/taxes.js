@@ -3,6 +3,11 @@ exports.handler = async (event) => {
   const data = JSON.parse(event.body);
   const content = data.content;
 
+  console.log('Taxes webhook called with:', {
+    billingCountry: content.billingAddress.country,
+    customFields: content.customFields,
+  });
+
   const billingCountry = content.billingAddress.country;
   const customFields = content.customFields || [];
   const vatField = customFields.find((f) => f.name === 'vatNumber');
@@ -46,19 +51,22 @@ exports.handler = async (event) => {
       try {
         const response = await fetch(`https://api.vatcomply.com/vat?vat_number=${vatField.value}`);
         const json = await response.json();
+        console.log('VAT validation response:', json);
         if (json.valid) {
           rates = []; // 0% for valid intra-EU B2B
         } else {
           rates = [{ name: 'IVA', amount: 0.21, includedInPrice: false, appliesOnShipping: false }];
         }
       } catch (error) {
-        // Fail-safe: charge tax if validation errors
+        console.error('VAT validation error:', error);
         rates = [{ name: 'IVA', amount: 0.21, includedInPrice: false, appliesOnShipping: false }];
       }
     } else {
       rates = [{ name: 'IVA', amount: 0.21, includedInPrice: false, appliesOnShipping: false }]; // EU B2C
     }
   } // Non-EU: no tax
+
+  console.log('Returning rates:', rates);
 
   return {
     statusCode: 200,
