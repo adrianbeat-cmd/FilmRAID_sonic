@@ -2,8 +2,8 @@
 exports.handler = async (event) => {
   const data = JSON.parse(event.body);
   const content = data.content;
-  const shippingAddress = content.shippingAddress;
-  const items = content.items;
+  const shippingAddress = content.shippingAddress || {};
+  const items = content.items || [];
 
   console.log('Shipping webhook called with:', { country: shippingAddress.country, items }); // Debug log
 
@@ -33,8 +33,10 @@ exports.handler = async (event) => {
 
   let rates = [];
 
-  // EU: DHL (replace with your API key/credentials once ready)
-  if (
+  // Fallback if address missing
+  if (!shippingAddress.country) {
+    rates = [{ name: 'Standard Shipping', amount: 50, estimatedDays: 5 }];
+  } else if (
     [
       'AT',
       'BE',
@@ -65,77 +67,9 @@ exports.handler = async (event) => {
       'SK',
     ].includes(shippingAddress.country)
   ) {
-    try {
-      const dhlResponse = await fetch('https://api-eu.dhl.com/shipment/rates', {
-        // DHL rate API endpoint
-        method: 'POST',
-        headers: {
-          Authorization: 'Bearer YOUR_DHL_API_KEY', // Replace
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          origin: { countryCode: 'ES', postalCode: '08030', city: 'Barcelona' },
-          destination: {
-            countryCode: shippingAddress.country,
-            postalCode: shippingAddress.postalCode,
-            city: shippingAddress.city,
-          },
-          packages: [{ weight: totalWeight, dimensions }],
-          // Add accountNumber if needed
-        }),
-      });
-      const dhlData = await dhlResponse.json();
-      rates.push({
-        name: 'DHL Express (EU)',
-        amount: dhlData.rates[0].totalNet.amount, // Adjust path per API response
-        estimatedDays: 2,
-      });
-    } catch (error) {
-      console.error('DHL error:', error);
-      rates.push({ name: 'DHL Express (EU)', amount: 50, estimatedDays: 2 }); // Fallback flat rate
-    }
+    rates.push({ name: 'DHL Express (EU)', amount: 50, estimatedDays: 2 });
   } else {
-    // International: FedEx
-    try {
-      const fedexResponse = await fetch('https://apis.fedex.com/rate/v1/rates/quotes', {
-        // FedEx rate API
-        method: 'POST',
-        headers: {
-          Authorization: 'Bearer YOUR_FEDEX_API_KEY', // Replace
-          'Content-Type': 'application/json',
-          'X-locale': 'en_US',
-        },
-        body: JSON.stringify({
-          accountNumber: { value: 'YOUR_FEDEX_ACCOUNT_NUMBER' }, // Replace
-          requestedShipment: {
-            shipper: { address: { postalCode: '08030', countryCode: 'ES', city: 'Barcelona' } },
-            recipient: {
-              address: {
-                postalCode: shippingAddress.postalCode,
-                countryCode: shippingAddress.country,
-                city: shippingAddress.city,
-              },
-            },
-            packageLineItems: [
-              {
-                weight: { units: 'KG', value: totalWeight },
-                dimensions: { ...dimensions, units: 'CM' },
-              },
-            ],
-            serviceType: 'INTERNATIONAL_PRIORITY', // Or ECONOMY
-          },
-        }),
-      });
-      const fedexData = await fedexResponse.json();
-      rates.push({
-        name: 'FedEx International',
-        amount: fedexData.output.rateReplyDetails[0].ratedShipmentDetails[0].totalNetCharge.amount, // Adjust path
-        estimatedDays: 3 - 5,
-      });
-    } catch (error) {
-      console.error('FedEx error:', error);
-      rates.push({ name: 'FedEx International', amount: 100, estimatedDays: 5 }); // Fallback
-    }
+    rates.push({ name: 'FedEx International', amount: 100, estimatedDays: 5 });
   }
 
   return {
