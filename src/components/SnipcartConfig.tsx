@@ -6,29 +6,29 @@ const SnipcartConfig = () => {
   useEffect(() => {
     const handleSnipcartReady = () => {
       if (typeof window !== 'undefined' && window.Snipcart) {
-        // @ts-ignore - Snipcart type not fully defined in TS
+        // @ts-ignore - Snipcart type not fully defined in TS; ignoring for API access
         const snipcart = window.Snipcart;
 
-        // Add Company Name field (new)
-        // @ts-ignore - Snipcart's addCustomField method lacks full TS support
-        snipcart.api.theme.cart.addCustomField({
+        // Add Company Name field
+        // @ts-ignore - Snipcart's registerCustomField method lacks full TS support
+        snipcart.api.theme.customization.registerCustomField({
+          section: 'billing-address',
           name: 'companyName',
           placeholder: 'Company Name (optional)',
           label: 'Company Name (optional)',
           type: 'text',
           required: false,
-          section: 'billing',
         });
 
-        // Add EU VAT Number field (moved from snipcart-vat.js, standardized name)
-        // @ts-ignore - Snipcart's addCustomField method lacks full TS support
-        snipcart.api.theme.cart.addCustomField({
+        // Add EU VAT Number field
+        // @ts-ignore - Snipcart's registerCustomField method lacks full TS support
+        snipcart.api.theme.customization.registerCustomField({
+          section: 'billing-address',
           name: 'vatNumber',
           placeholder: 'e.g., ESB12345678',
           label: 'EU VAT Number (optional for B2C)',
           type: 'text',
           required: false,
-          section: 'billing',
         });
 
         // Client-side validation for VAT (adds error if invalid; taxes handled server-side)
