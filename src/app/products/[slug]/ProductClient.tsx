@@ -103,7 +103,12 @@ const ProductClient = ({
     data.quantity = quantity.toString();
 
     emailjs
-      .send('service_e70jt19', 'template_bic87oh', data, 'Rbqf0P3F5FR_B-ndQ')
+      .send(
+        process.env.EMAILJS_SERVICE_ID as string,
+        process.env.EMAILJS_TEMPLATE_ID as string,
+        data,
+        process.env.EMAILJS_USER_ID as string,
+      )
       .then(() => {
         alert('Wire transfer request sent successfully! We will send you the bank details soon.');
         reset();
@@ -336,7 +341,7 @@ const ProductClient = ({
                     <Label>CAPTCHA Verification</Label>
                     <GoogleReCAPTCHA
                       ref={captchaRef}
-                      sitekey="6LexUYkrAAAAAKVDlNKttonFcHI_i3wBXQh0PnoV"
+                      sitekey={process.env.RECAPTCHA_SITE_KEY as string}
                       onChange={setCaptchaValue}
                     />
                   </div>
