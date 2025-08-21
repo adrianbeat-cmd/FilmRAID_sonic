@@ -6,7 +6,6 @@ const SnipcartConfig = () => {
   useEffect(() => {
     const handleSnipcartReady = () => {
       if (typeof window !== 'undefined' && window.Snipcart) {
-        console.log('Snipcart ready event fired');
         // @ts-ignore - Snipcart type not fully defined in TS
         const snipcart = window.Snipcart;
         // Client-side validation for VAT (adds error if invalid; taxes handled server-side)
@@ -69,13 +68,10 @@ const SnipcartConfig = () => {
         // Show confirmation for valid VAT on field change
         // @ts-ignore - events.on type inference limited
         snipcart.events.on('snipcart.ready', () => {
-          console.log('Snipcart ready for custom events');
           const vatInput = document.querySelector('[name="vatNumber"]') as HTMLInputElement;
           if (vatInput) {
-            console.log('VAT input found');
             vatInput.addEventListener('blur', async () => {
               const vatNumber = vatInput.value;
-              console.log('VAT blur triggered with value:', vatNumber);
               const countrySelect = document.querySelector('[name="country"]') as HTMLSelectElement;
               const country = countrySelect ? countrySelect.value : '';
 
@@ -125,7 +121,6 @@ const SnipcartConfig = () => {
                     `https://api.vatcomply.com/vat?vat_number=${vatNumber}`,
                   );
                   const data = await response.json();
-                  console.log('VAT validation response:', data);
                   if (data.valid) {
                     if (country === 'ES') {
                       messageEl.textContent = 'Valid - IVA charged (local sale)';
@@ -148,8 +143,6 @@ const SnipcartConfig = () => {
                 messageEl.textContent = '';
               }
             });
-          } else {
-            console.log('VAT input not found - form not loaded yet?');
           }
 
           // Reorder VAT before checkbox
