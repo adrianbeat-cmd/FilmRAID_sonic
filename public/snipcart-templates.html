@@ -1,4 +1,5 @@
-<billing-section name="top">
+<div id="snipcart-templates">
+  <billing-section name="top">
     <fieldset class="snipcart-form__set">
       <div class="snipcart-form__field">
         <snipcart-label class="snipcart__font--tiny" for="company">
@@ -28,11 +29,11 @@
   </shipping-same-as-billing>
   <item-line>
     <div class="snipcart-item-line__media">
-      <item-image>
-    </item-image></div>
+      <item-image />
+    </div>
     <div class="snipcart-item-line__info">
-      <item-description>
-      <item-title>
+      <item-description />
+      <item-title />
       {{#customFields}}
       <div class="snipcart-item-line__customfields">
         {{name}}
@@ -43,10 +44,11 @@
         </select>
       </div>
       {{/customFields}}
-    </item-title></item-description></div>
+    </div>
     <div class="snipcart-item-line__actions">
-      <item-quantity>
-      <item-remove>
-      <item-total-price>
-    </item-total-price></item-remove></item-quantity></div>
-  </item-line
+      <item-quantity />
+      <item-remove />
+      <item-total-price />
+    </div>
+  </item-line>
+</div>
