@@ -49,6 +49,7 @@ interface ProductClientProps {
     description: React.ReactNode;
     specs: { label: string; value: string | string[] }[];
   };
+  tb: number;
   raid0: number;
   raid5: number;
   price: number;
@@ -58,6 +59,7 @@ interface ProductClientProps {
 
 const ProductClient = ({
   currentModel,
+  tb,
   raid0,
   raid5,
   price,
@@ -82,6 +84,7 @@ const ProductClient = ({
     setTotalPrice(price * quantity);
   }, [price, quantity]);
 
+  const configSummary = `Model: ${currentModel.name}, Capacity: ${raid0}TB, RAID: ${selectedRaid || 'Not selected'}`;
   const productId = `${currentModel.name.toLowerCase()}-${raid0}tb`;
   const productUrl = `https://www.filmraid.pro/products/${productId}`;
   const productName = `${currentModel.name} ${raid0}TB`;
@@ -140,110 +143,166 @@ const ProductClient = ({
             ? 'Dual Core 1.2 GHz SAS ROC'
             : 'Tri-Mode Dual Core ARM A15 1.6GHz ROC',
     },
-    // Add full specs if needed
+    {
+      label: 'On-Board Cache',
+      value:
+        currentModel.name === 'FilmRaid-4A'
+          ? '1GB DDR3-800'
+          : currentModel.name === 'FilmRaid-6'
+            ? '2GB DDR3-1866 SDRAM'
+            : '8GB DDR4-2666 SDRAM',
+    },
+    {
+      label: 'Expansion Support',
+      value:
+        currentModel.name === 'FilmRaid-4A' || currentModel.name === 'FilmRaid-8'
+          ? 'N/A'
+          : currentModel.name === 'FilmRaid-6'
+            ? 'SFF-8644 (2-lanes)'
+            : 'SFF-8644 (4-lanes)',
+    },
+    {
+      label: 'Cooling Fan',
+      value:
+        currentModel.name === 'FilmRaid-4A' || currentModel.name === 'FilmRaid-6'
+          ? '1 x 2700rpm'
+          : '2 x 2700rpm',
+    },
+    {
+      label: 'Power Supply',
+      value:
+        currentModel.name === 'FilmRaid-4A'
+          ? '135W (inside) / 150W (outside)'
+          : currentModel.name === 'FilmRaid-6'
+            ? '180W'
+            : currentModel.name === 'FilmRaid-8'
+              ? '270W'
+              : '400W',
+    },
+    {
+      label: 'Physical Dimensions (H x W x D)',
+      value:
+        currentModel.name === 'FilmRaid-4A'
+          ? '4.84 x 6.51 x 9.11 in (123 x 165.6 x 232 mm)'
+          : currentModel.name === 'FilmRaid-6'
+            ? '4.84 x 8.45 x 9.11 in (146 x 255 x 290 mm)'
+            : currentModel.name === 'FilmRaid-8'
+              ? '5.7 x 11.8 x 11.4 in (146 x 302 x 290 mm)'
+              : '8.1 x 12.2 x 11.4 in (206 x 310 x 290 mm)',
+    },
+    {
+      label: 'Weight (without disks)',
+      value:
+        currentModel.name === 'FilmRaid-4A'
+          ? '3.6 Kg'
+          : currentModel.name === 'FilmRaid-6'
+            ? '4.8 Kg'
+            : currentModel.name === 'FilmRaid-8'
+              ? '5.2 Kg'
+              : '9.5 Kg',
+    },
+    { label: 'Warranty', value: '3 years' },
   ];
 
   const handleButtonClick = () => {
-    toast.success('Added to cart!');
+    if (!selectedRaid) {
+      toast('Select RAID Level', {
+        description: 'Please select a RAID configuration to proceed.',
+        style: { background: '#ff4d4f', color: '#fff' },
+      });
+    }
   };
 
-  // Weight in grams
-  let weight;
-  switch (currentModel.name) {
-    case 'FilmRaid-4A':
-      weight = 8000;
-      break;
-    case 'FilmRaid-6':
-      weight = 12000;
-      break;
-    case 'FilmRaid-8':
-      weight = 18000;
-      break;
-    case 'FilmRaid-12E':
-      weight = 22000;
-      break;
-    default:
-      weight = 10000;
-  }
-
   return (
-    <section className="py-12 md:py-24">
-      <div className="container grid gap-12 md:grid-cols-2">
-        <div className="order-1 space-y-4 md:sticky md:top-24 md:self-start">
-          <div className="relative h-[500px] overflow-hidden rounded-lg">
+    <section className="py-12 md:py-16 lg:py-20">
+      <div className="container grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div className="order-1">
+          <div className="relative">
             <Image
               src={images[selectedImage]}
-              alt={`${currentModel.name} ${selectedImage === 0 ? 'front' : 'back'}`}
-              fill
-              className="object-cover"
-              priority
+              alt={currentModel.name}
+              width={800}
+              height={600}
+              className="h-auto w-full rounded-lg shadow-md"
             />
-          </div>
-          <div className="flex gap-4">
-            {images.map((img, idx) => (
-              <button
-                key={idx}
-                onClick={() => setSelectedImage(idx)}
-                className={`h-24 w-24 overflow-hidden rounded-lg border-2 ${selectedImage === idx ? 'border-primary' : 'border-transparent'}`}
-              >
-                <Image
-                  src={img}
-                  alt={`${currentModel.name} thumbnail ${idx + 1}`}
-                  fill
-                  className="object-cover"
-                />
-              </button>
-            ))}
+            <div className="mt-4 flex justify-center gap-2">
+              {images.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedImage(idx)}
+                  className={`rounded border p-1 ${
+                    selectedImage === idx ? 'border-primary' : 'border-transparent'
+                  }`}
+                >
+                  <Image src={img} alt={`Thumbnail ${idx + 1}`} width={80} height={60} />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-        <div className="order-2 space-y-6">
-          <h1 className="text-3xl font-bold">
-            {currentModel.name} {raid0}TB
-          </h1>
-          <p className="text-lg">{currentModel.description}</p>
-          <div className="space-y-2">
-            <p className="text-2xl font-bold">€{totalPrice.toFixed(2)}</p>
-            <p className="text-muted-foreground text-sm">RAID 0 Capacity: {raid0}TB</p>
-            <p className="text-muted-foreground text-sm">RAID 5 Capacity: {raid5}TB</p>
+        <div className="order-2 space-y-4 md:sticky md:top-16 md:col-start-2 md:row-start-1 md:self-start">
+          <h1 className="text-3xl font-bold">{currentModel.name}</h1>
+          <p className="text-muted-foreground">{currentModel.description}</p>
+          <div>
+            <h3 className="font-bold">Storage</h3>
+            <p className="text-sm">{tb}TB HDD</p>
+            <p className="text-sm">
+              RAID 0: {raid0}TB | RAID 5: {raid5}TB
+            </p>
           </div>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="raid">RAID Level</Label>
-              <Select value={selectedRaid} onValueChange={setSelectedRaid}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select RAID level" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableRaids.map((raid) => (
-                    <SelectItem key={raid} value={raid}>
-                      RAID {raid}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="quantity">Quantity</Label>
-              <Input
-                id="quantity"
-                type="number"
-                min={1}
-                value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
-              />
-            </div>
+          <p className="mb-4 text-xl">Total: €{totalPrice}</p>
+          <div className="mb-4 space-y-2">
+            <Label htmlFor="raid">RAID Level</Label>
+            <Select onValueChange={setSelectedRaid} value={selectedRaid}>
+              <SelectTrigger
+                className={`w-full ${!selectedRaid ? 'bg-[#306fdb] !text-[#ffffff] dark:bg-[#306fdb] dark:!text-[#ffffff]' : ''}`}
+              >
+                <SelectValue placeholder="First select RAID Level" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableRaids.map((raid) => (
+                  <SelectItem key={raid} value={raid}>
+                    {raid}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="mt-4 space-y-2">
+            <Label htmlFor="quantity">Quantity</Label>
+            <Select
+              onValueChange={(value) => setQuantity(parseInt(value))}
+              value={quantity.toString()}
+              defaultValue="1"
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="1" />
+              </SelectTrigger>
+              <SelectContent>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                  <SelectItem key={num} value={num.toString()}>
+                    {num}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="mt-4 flex flex-col space-y-4">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="w-full">
+                <Button
+                  className="w-full"
+                  variant={selectedRaid ? 'default' : 'outline'}
+                  disabled={!selectedRaid}
+                  onClick={handleButtonClick}
+                >
                   Request Wire Transfer
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Request Wire Transfer</DialogTitle>
-                  <DialogDescription>
-                    Fill in your details to request wire transfer payment.
-                  </DialogDescription>
+                  <DialogDescription>{configSummary}</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                   <div className="space-y-2">
@@ -311,7 +370,6 @@ const ProductClient = ({
               data-item-custom1-value={selectedRaid}
               data-item-shippable="true"
               data-item-taxable="true"
-              data-item-weight={weight}
             >
               Add to Cart (Pay Online)
             </Button>
