@@ -98,7 +98,7 @@ const modelData = [
       { label: 'Memory', value: '2GB DDR3 ECC' },
       { label: 'Dimensions', value: '146 x 255 x 290 mm' },
       { label: 'Weight', value: '5.2 Kg diskless' },
-      { label: 'Power', value: '270W' },
+      { label: 'Power', value: '250W' },
       { label: 'Cooling', value: '1 x 2700rpm fan' },
       { label: 'Warranty', value: '3 Years' },
       {
@@ -110,10 +110,10 @@ const modelData = [
   {
     name: 'FilmRaid-12E',
     hddCount: 12,
-    image: '/layout/filmraid-12e.jpg',
-    back_image: '/layout/FilmRaid-12E_back.jpg',
+    image: '/layout/filmraid-12.jpg',
+    back_image: '/layout/FilmRaid-12_back.jpg',
     description:
-      '12-bay tower RAID system with dual core processor and 8GB DDR4 ECC memory. Thunderbolt 3 up to 40Gb/s, DisplayPort 1.4 for 8K 30Hz, RAID 0/1/1E/3/5/6/10/30/50/60. Ideal for large-scale film projects.',
+      '12-bay rackmount RAID system with dual core processor and 4GB DDR3 ECC memory. Thunderbolt 3 up to 40Gb/s, DisplayPort 1.4 for 8K 30Hz, RAID 0/1/1E/3/5/6/10/30/50/60. Perfect for enterprise film storage.',
     specs: [
       { label: 'Bays', value: '12 x 3.5"/2.5" SAS/SATA' },
       {
@@ -129,11 +129,11 @@ const modelData = [
       },
       { label: 'RAID Levels', value: '0, 1, 1E, 3, 5, 6, 10, 30, 50, 60, JBOD' },
       { label: 'Speed', value: 'Up to 2600MB/s read/write' },
-      { label: 'Processor', value: 'Dual core 1.6GHz' },
-      { label: 'Memory', value: '8GB DDR4 ECC' },
-      { label: 'Dimensions', value: '206 x 310 x 290 mm' },
-      { label: 'Weight', value: '9.5 Kg diskless' },
-      { label: 'Power', value: '400W' },
+      { label: 'Processor', value: 'Dual core' },
+      { label: 'Memory', value: '4GB DDR3 ECC' },
+      { label: 'Dimensions', value: '146 x 255 x 290 mm' },
+      { label: 'Weight', value: '10 Kg diskless' },
+      { label: 'Power', value: '250W' },
       { label: 'Cooling', value: '1 x 2700rpm fan' },
       { label: 'Warranty', value: '3 Years' },
       {
@@ -144,30 +144,22 @@ const modelData = [
   },
 ];
 
-// Capacity options
 const capacityOptions = [
-  { tb: 18, prices: [2949, 4279, 5239, 7589] },
-  { tb: 20, prices: [3129, 4549, 5599, 8129] },
-  { tb: 22, prices: [3219, 4679, 5779, 8399] },
+  { tb: 18, prices: [2949, 4449, 5239, 7449] },
+  { tb: 20, prices: [3129, 4629, 5419, 7629] },
+  { tb: 22, prices: [3309, 4809, 5599, 7809] },
 ];
 
-interface Params {
-  slug: string;
-}
+export default function ProductPage({ params }: { params: { slug: string } }) {
+  const slugLower = params.slug.toLowerCase();
+  const parts = slugLower.split('-');
+  const modelLower = parts.slice(0, -1).join('-'); // e.g., 'filmraid-4a'
+  const capacityLower = parts[parts.length - 1]; // e.g., '72tb'
+  const totalTb = parseInt(capacityLower.replace('tb', ''));
 
-const ProductPage = async ({ params }: { params: Promise<Params> }) => {
-  const resolvedParams = await params;
-  const { slug } = resolvedParams;
-
-  // Parse slug, e.g., 'filmraid-4a-72tb'
-  const parts = slug.toLowerCase().split('-');
-  if (parts.length !== 3) notFound();
-  const modelLower = 'filmraid-' + parts[1];
-  const capacityStr = parts[2].replace('tb', '');
-  const totalTb = parseInt(capacityStr);
-  if (isNaN(totalTb)) notFound();
-
-  const selectedModel = modelData.findIndex((m) => m.name.toLowerCase() === modelLower);
+  const selectedModel = modelData.findIndex(
+    (m) => m.name.toLowerCase() === modelLower.replace('filmraid-', 'FilmRaid-'),
+  );
   if (selectedModel === -1) notFound();
 
   const currentModel = modelData[selectedModel];
@@ -184,14 +176,12 @@ const ProductPage = async ({ params }: { params: Promise<Params> }) => {
   const price = currentCapacity.prices[selectedModel];
   const images = [currentModel.image, currentModel.back_image];
 
-  // Define available RAID levels based on model
   const raidLevelsSpec = currentModel.specs.find((spec) => spec.label === 'RAID Levels');
   const availableRaids =
     typeof raidLevelsSpec?.value === 'string'
       ? raidLevelsSpec.value.split(', ').map((raid) => raid.trim())
       : [];
 
-  // JSON-LD for Snipcart crawling
   const jsonLd = {
     '@context': 'http://schema.org',
     '@type': 'Product',
@@ -207,6 +197,24 @@ const ProductPage = async ({ params }: { params: Promise<Params> }) => {
     },
     image: `https://www.filmraid.pro${images[0]}`,
   };
+
+  let weight;
+  switch (currentModel.name) {
+    case 'FilmRaid-4A':
+      weight = 8000;
+      break;
+    case 'FilmRaid-6':
+      weight = 12000;
+      break;
+    case 'FilmRaid-8':
+      weight = 18000;
+      break;
+    case 'FilmRaid-12E':
+      weight = 22000;
+      break;
+    default:
+      weight = 10000;
+  }
 
   return (
     <>
@@ -230,6 +238,7 @@ const ProductPage = async ({ params }: { params: Promise<Params> }) => {
         data-item-custom1-value={availableRaids[0] || '0'}
         data-item-shippable="true"
         data-item-taxable="true"
+        data-item-weight={weight}
       >
         Add to Cart
       </button>
@@ -244,7 +253,7 @@ const ProductPage = async ({ params }: { params: Promise<Params> }) => {
       />
     </>
   );
-};
+}
 
 export async function generateStaticParams() {
   return [
@@ -262,5 +271,3 @@ export async function generateStaticParams() {
     { slug: 'filmraid-12e-264tb' },
   ];
 }
-
-export default ProductPage;
