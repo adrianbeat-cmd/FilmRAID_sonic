@@ -84,30 +84,40 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  // ✅ Use the env var you actually set on Netlify
-  const publicKey = process.env.NEXT_PUBLIC_SNIPCART_API_KEY ?? '';
+  // Read BOTH possible env var names; fall back to the one Netlify uses.
+  const publicKey =
+    process.env.NEXT_PUBLIC_SNIPCART_PUBLIC_API_KEY ||
+    process.env.NEXT_PUBLIC_SNIPCART_API_KEY ||
+    '';
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         {/* Snipcart v3 CSS */}
-        <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.6.1/default/snipcart.css" />
-        {/* Settings BEFORE the script */}
-        <Script id="snipcart-settings" strategy="beforeInteractive">
-          {`
-            window.SnipcartSettings = {
-              publicApiKey: "${publicKey}",
-              loadStrategy: "always",
-              modalStyle: "side",
-              addProductBehavior: "none",
-              timeoutDuration: 15000,
-              templatesUrl: "/snipcart-templates.html"
-            };
-          `}
-        </Script>
-        {/* Snipcart v3 script */}
+        <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css" />
+
+        {/* Define settings BEFORE loading the script */}
         <Script
-          src="https://cdn.snipcart.com/themes/v3.6.1/default/snipcart.js"
+          id="snipcart-settings"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.SnipcartSettings = {
+                publicApiKey: "${publicKey}",
+                version: "3.6.0",
+                loadStrategy: "always",
+                modalStyle: "side",
+                addProductBehavior: "none",
+                timeoutDuration: 15000,
+                templatesUrl: "/snipcart-templates.html"
+              };
+            `,
+          }}
+        />
+
+        {/* Snipcart v3 script (loads after settings) */}
+        <Script
+          src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
           strategy="afterInteractive"
         />
       </head>
@@ -121,57 +131,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <CTA />
             <Footer />
 
-            {/* Snipcart container (required) */}
-            <div
-              hidden
-              id="snipcart"
-              data-api-key={publicKey}
-              data-config-add-product-behavior="none"
-              data-config-modal-style="side"
-              data-templates-url="/snipcart-templates.html"
-            >
-              {/* ✅ Custom billing fields */}
-              <div id="snipcart-custom-fields">
-                <fieldset className="snipcart-form__set">
-                  <div className="snipcart-form__field">
-                    <label className="snipcart-form__label" htmlFor="companyName">
-                      Company Name (Optional)
-                    </label>
-                    <input
-                      className="snipcart-form__input"
-                      name="companyName"
-                      id="companyName"
-                      type="text"
-                      placeholder="Your Company"
-                      data-snipcart-custom-field
-                      data-snipcart-custom-field-name="Company Name"
-                      data-snipcart-custom-field-type="string"
-                      data-snipcart-custom-field-required="false"
-                      data-snipcart-custom-field-section="billing"
-                    />
-                  </div>
+            {/* Snipcart container (keep minimal & do NOT set a different key here) */}
+            <div id="snipcart" hidden></div>
 
-                  <div className="snipcart-form__field">
-                    <label className="snipcart-form__label" htmlFor="vatNumber">
-                      EU VAT Number
-                    </label>
-                    <input
-                      className="snipcart-form__input"
-                      name="vatNumber"
-                      id="vatNumber"
-                      type="text"
-                      placeholder="e.g. ESB12345678"
-                      data-snipcart-custom-field
-                      data-snipcart-custom-field-name="vatNumber"
-                      data-snipcart-custom-field-type="string"
-                      data-snipcart-custom-field-required="false"
-                      data-snipcart-custom-field-section="billing"
-                    />
-                    <span id="vat-message"></span>
-                  </div>
-                </fieldset>
-              </div>
-            </div>
+            {/* Optional: tiny helper to surface missing key errors early */}
+            <Script id="snipcart-key-check" strategy="afterInteractive">
+              {`
+                if (!"${publicKey}") {
+                  console.error("Snipcart public API key is missing. Check NEXT_PUBLIC_SNIPCART_API_KEY in your env.");
+                }
+              `}
+            </Script>
           </NavigationProvider>
         </ThemeProvider>
       </body>
