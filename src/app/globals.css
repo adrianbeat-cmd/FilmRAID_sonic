@@ -430,3 +430,11 @@ html.snipcart-modal-open .snipcart-overlay {
     min-width: 160px !important;
   }
 }
+/* Fix double caret on selects inside Snipcart */
+#snipcart .snipcart-form__select {
+  background-image: none !important; /* remove theme arrow so the native one shows */
+  appearance: menulist !important; /* keep native caret consistent */
+  -webkit-appearance: menulist !important;
+  -moz-appearance: menulist !important;
+  padding-right: 1.5rem !important; /* a bit of space for the native caret */
+}

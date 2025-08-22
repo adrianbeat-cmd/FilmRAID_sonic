@@ -13,6 +13,7 @@ import { NavigationProvider } from '@/components/navigation-provider';
 import CTA from '@/components/sections/cta';
 import { ThemeProvider } from '@/components/theme-provider';
 
+// SF Pro
 const sfProDisplay = localFont({
   src: [
     { path: './fonts/SF-Pro-Display-Light.otf', weight: '300', style: 'normal' },
@@ -33,6 +34,21 @@ export const metadata: Metadata = {
   },
   description:
     'Custom RAID storage solutions for film productions. Secure, fast transfers with 2-day EU delivery, tailored for digital cinema workflows.',
+  keywords: [
+    'RAID storage',
+    'film production',
+    'digital cinema',
+    'data storage',
+    'fast transfers',
+    'EU delivery',
+    'post-production',
+    'DIT World',
+    'custom RAID',
+  ],
+  authors: [{ name: 'FilmRAID' }],
+  creator: 'FilmRAID',
+  publisher: 'FilmRAID',
+  robots: { index: true, follow: true },
   icons: {
     icon: [
       { url: '/favicon/favicon.ico', sizes: '48x48' },
@@ -48,7 +64,14 @@ export const metadata: Metadata = {
     siteName: 'FilmRAID',
     type: 'website',
     url: 'https://www.filmraid.pro',
-    images: [{ url: 'https://www.filmraid.pro/images/preview.jpg', width: 300, height: 200 }],
+    images: [
+      {
+        url: 'https://www.filmraid.pro/images/preview.jpg',
+        width: 300,
+        height: 200,
+        alt: 'FilmRAID - Fast & Reliable Storage for Filmmakers',
+      },
+    ],
     locale: 'en_US',
   },
   twitter: {
@@ -62,77 +85,78 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const SNIPCART_PUBLIC_KEY =
+  // You provided this public key
+  const publicKey =
+    process.env.NEXT_PUBLIC_SNIPCART_PUBLIC_API_KEY ??
     'NzhjOGJmOTEtY2Y1MS00MGRkLWIwNmEtNjkzYWVlNTYxMjViNjM4OTA0NTgxOTU4MTA2ODQy';
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* ---- History shim to avoid "__NA" on string '' error (must load first) ---- */}
-        <Script id="history-shim" strategy="beforeInteractive">
-          {`
-            (function () {
-              try {
-                var origPush = history.pushState;
-                var origReplace = history.replaceState;
-                history.pushState = function (state, title, url) {
-                  if (state == null || typeof state !== 'object') state = {};
-                  return origPush.apply(this, [state, title, url]);
-                };
-                history.replaceState = function (state, title, url) {
-                  if (state == null || typeof state !== 'object') state = {};
-                  return origReplace.apply(this, [state, title, url]);
-                };
-              } catch (e) { /* no-op */ }
-            })();
-          `}
-        </Script>
+        {/* Snipcart v3 CSS */}
+        <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css" />
 
-        {/* ---- Snipcart loader + settings (built-in templates, pinned v3.6.0) ---- */}
+        {/* Snipcart settings: full-page modal + open on add + NO templatesUrl */}
         <Script
           id="snipcart-settings"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               window.SnipcartSettings = {
-                publicApiKey: '${SNIPCART_PUBLIC_KEY}',
-                loadStrategy: 'on-user-interaction',
-                addProductBehavior: 'open',    // auto-open cart after add
-                modalStyle: 'side',
-                version: '3.6.0'
+                // Your public key
+                publicApiKey: "${publicKey}",
+                // Load as soon as possible so the cart can open on add
+                loadStrategy: "always",
+                // Open the full-screen modal (used to cover the whole page)
+                modalStyle: "full",
+                // Immediately open cart after adding an item
+                addProductBehavior: "open",
+                // Keep this short; Snipcart recommends a small timeout for "always"
+                timeoutDuration: 2000
+                // IMPORTANT: templatesUrl intentionally OMITTED to use official default templates
               };
-
-              (()=>{var c,d;(d=(c=window.SnipcartSettings).version)!=null||(c.version="3.0");
-              var s,S;(S=(s=window.SnipcartSettings).timeoutDuration)!=null||(s.timeoutDuration=2750);
-              var l,p;(p=(l=window.SnipcartSettings).domain)!=null||(l.domain="cdn.snipcart.com");
-              var w,u;(u=(w=window.SnipcartSettings).protocol)!=null||(w.protocol="https");
-              var f=window.SnipcartSettings.version.includes("v3.0.0-ci")
-                || (window.SnipcartSettings.version!="3.0"
-                    && window.SnipcartSettings.version.localeCompare("3.4.0",void 0,{numeric:!0,sensitivity:"base"})===-1),
-                  m=["focus","mouseover","touchmove","scroll","keydown"];
-              window.LoadSnipcart=o; document.readyState==="loading"?document.addEventListener("DOMContentLoaded",r):r();
-              function r(){window.SnipcartSettings.loadStrategy==="on-user-interaction"?
-                (m.forEach(t=>document.addEventListener(t,o)), setTimeout(o,window.SnipcartSettings.timeoutDuration)) : o()}
-              var a=!1; function o(){if(a)return; a=!0; let t=document.head,
-                e=document.querySelector("#snipcart"),
-                i=document.querySelector(\`src[src^="\${window.SnipcartSettings.protocol}://\${window.SnipcartSettings.domain}"][src$="snipcart.js"]\`),
-                n=document.querySelector(\`link[href^="\${window.SnipcartSettings.protocol}://\${window.SnipcartSettings.domain}"][href$="snipcart.css"]\`);
-                e||(e=document.createElement("div"),e.id="snipcart",e.setAttribute("hidden","true"),document.body.appendChild(e));
-                v(e);
-                i||(i=document.createElement("script"),i.src=\`\${window.SnipcartSettings.protocol}://\${window.SnipcartSettings.domain}/themes/v\${window.SnipcartSettings.version}/default/snipcart.js\`,i.async=!0,t.appendChild(i));
-                n||(n=document.createElement("link"),n.rel="stylesheet",n.type="text/css",n.href=\`\${window.SnipcartSettings.protocol}://\${window.SnipcartSettings.domain}/themes/v\${window.SnipcartSettings.version}/default/snipcart.css\`,t.prepend(n));
-                m.forEach(g=>document.removeEventListener(g,o))
-              }
-              function v(t){
-                !f || (
-                  t.dataset.apiKey=window.SnipcartSettings.publicApiKey,
-                  window.SnipcartSettings.addProductBehavior&&(t.dataset.configAddProductBehavior=window.SnipcartSettings.addProductBehavior),
-                  window.SnipcartSettings.modalStyle&&(t.dataset.configModalStyle=window.SnipcartSettings.modalStyle)
-                )
-              }})();
             `,
           }}
         />
+
+        {/* Snipcart script */}
+        <Script
+          src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
+          strategy="afterInteractive"
+        />
+
+        {/* Tiny helper to validate EU VAT format live (check mark / cross) */}
+        <Script id="vat-check" strategy="afterInteractive">
+          {`
+            document.addEventListener("snipcart.ready", function () {
+              const vatInput = document.querySelector('#vatNumber');
+              const vatMsg = document.querySelector('#vat-message');
+
+              if (!vatInput || !vatMsg) return;
+
+              const EU_VAT_REGEX = /^[A-Z]{2}[A-Z0-9]{8,12}$/i;
+
+              function updateMessage() {
+                const v = (vatInput.value || "").replace(/\\s+/g, "");
+                if (!v) {
+                  vatMsg.textContent = "";
+                  vatMsg.style.color = "";
+                  return;
+                }
+                if (EU_VAT_REGEX.test(v)) {
+                  vatMsg.textContent = "✓ VAT format looks valid";
+                  vatMsg.style.color = "green";
+                } else {
+                  vatMsg.textContent = "✗ VAT format looks invalid";
+                  vatMsg.style.color = "crimson";
+                }
+              }
+
+              vatInput.addEventListener("input", updateMessage);
+              updateMessage();
+            });
+          `}
+        </Script>
       </head>
 
       <body className={`${sfProDisplay.variable} antialiased`}>
@@ -144,18 +168,20 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <CTA />
             <Footer />
 
-            {/* Built-in templates (no templatesUrl) */}
+            {/* Snipcart container (required) */}
             <div
               hidden
               id="snipcart"
-              data-api-key={SNIPCART_PUBLIC_KEY}
+              data-api-key={publicKey}
               data-config-add-product-behavior="open"
-              data-config-modal-style="side"
+              data-config-modal-style="full"
             >
-              {/* Company just above EU VAT, both in Billing */}
+              {/* ✅ Custom BILLING FIELDS (shown after Province/ZIP). 
+                  We place Company ABOVE EU VAT as requested. */}
               <div id="snipcart-custom-fields">
                 <fieldset className="snipcart-form__set">
-                  <div className="snipcart-form__field" id="company-field">
+                  {/* Company Name FIRST */}
+                  <div className="snipcart-form__field">
                     <label className="snipcart-form__label" htmlFor="companyName">
                       Company Name (Optional)
                     </label>
@@ -173,7 +199,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                     />
                   </div>
 
-                  <div className="snipcart-form__field" id="vat-field">
+                  {/* EU VAT SECOND */}
+                  <div className="snipcart-form__field">
                     <label className="snipcart-form__label" htmlFor="vatNumber">
                       EU VAT Number
                     </label>
@@ -194,73 +221,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 </fieldset>
               </div>
             </div>
-
-            {/* Open-on-add fallback + place fields after Postal Code + VAT format check */}
-            <Script id="snipcart-hooks" strategy="afterInteractive">
-              {`
-                document.addEventListener('snipcart.ready', function () {
-                  // Fallback open
-                  try {
-                    window.Snipcart?.events?.on('item.added', function () {
-                      window.Snipcart?.api?.theme?.cart?.open?.();
-                    });
-                  } catch (_) {}
-
-                  const root = document.getElementById('snipcart');
-                  if (!root) return;
-
-                  // Place Company + VAT just after Postal/ZIP in Billing
-                  let placed = false;
-                  function placeFields() {
-                    if (placed) return;
-                    const postal = root.querySelector('input[name="postalCode"]');
-                    const companyWrap = root.querySelector('#company-field');
-                    const vatWrap = root.querySelector('#vat-field');
-                    if (postal && companyWrap && vatWrap) {
-                      const postalField = postal.closest('.snipcart-form__field') || postal.parentElement;
-                      if (postalField?.insertAdjacentElement) {
-                        postalField.insertAdjacentElement('afterend', companyWrap);
-                        companyWrap.insertAdjacentElement('afterend', vatWrap);
-                        placed = true;
-                      }
-                    }
-                  }
-
-                  const mo = new MutationObserver((m) => {
-                    if (m.some(x => x.addedNodes?.length)) placeFields();
-                  });
-                  mo.observe(root, { childList: true, subtree: true });
-
-                  // VAT format validator
-                  function validateVATValue(raw) {
-                    if (!raw) return null;
-                    const v = raw.replace(/\\s+/g, '').toUpperCase();
-                    // Spain common formats
-                    const esOK = /^ES[A-Z]\\d{8}$/.test(v) || /^ES\\d{8}[A-Z]$/.test(v) || /^ES[A-Z]\\d{7}[A-Z]$/.test(v);
-                    if (esOK) return true;
-                    // Generic fallback: country code + 8-12 alphanumerics
-                    return /^[A-Z]{2}[0-9A-Z]{8,12}$/.test(v);
-                  }
-                  function writeVATMessage(input) {
-                    const msg = root.querySelector('#vat-message');
-                    if (!msg) return;
-                    const raw = input?.value || '';
-                    const ok = validateVATValue(raw);
-                    if (ok === null) { msg.textContent = ''; return; }
-                    msg.textContent = ok ? '✓ VAT format looks valid' : '✗ VAT format looks invalid';
-                    msg.style.color = ok ? '#188038' : '#B3261E';
-                  }
-                  root.addEventListener('input', (ev) => {
-                    const t = ev.target;
-                    if (t && t.id === 'vatNumber') writeVATMessage(t);
-                  });
-                  root.addEventListener('blur', (ev) => {
-                    const t = ev.target;
-                    if (t && t.id === 'vatNumber') writeVATMessage(t);
-                  }, true);
-                });
-              `}
-            </Script>
           </NavigationProvider>
         </ThemeProvider>
       </body>
