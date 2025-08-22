@@ -84,33 +84,30 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const publicKey = process.env.NEXT_PUBLIC_SNIPCART_PUBLIC_API_KEY ?? '';
+  // ✅ Use the env var you actually set on Netlify
+  const publicKey = process.env.NEXT_PUBLIC_SNIPCART_API_KEY ?? '';
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         {/* Snipcart v3 CSS */}
-        <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css" />
-        {/* Define settings BEFORE loading the script */}
-        <Script
-          id="snipcart-settings"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.SnipcartSettings = {
-                publicApiKey: "${publicKey}",
-                loadStrategy: "always",
-                modalStyle: "side",
-                addProductBehavior: "none",
-                timeoutDuration: 15000,
-                templatesUrl: "/snipcart-templates.html"
-              };
-            `,
-          }}
-        />
+        <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.6.1/default/snipcart.css" />
+        {/* Settings BEFORE the script */}
+        <Script id="snipcart-settings" strategy="beforeInteractive">
+          {`
+            window.SnipcartSettings = {
+              publicApiKey: "${publicKey}",
+              loadStrategy: "always",
+              modalStyle: "side",
+              addProductBehavior: "none",
+              timeoutDuration: 15000,
+              templatesUrl: "/snipcart-templates.html"
+            };
+          `}
+        </Script>
         {/* Snipcart v3 script */}
         <Script
-          src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
+          src="https://cdn.snipcart.com/themes/v3.6.1/default/snipcart.js"
           strategy="afterInteractive"
         />
       </head>
@@ -131,8 +128,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               data-api-key={publicKey}
               data-config-add-product-behavior="none"
               data-config-modal-style="side"
+              data-templates-url="/snipcart-templates.html"
             >
-              {/* ✅ Custom billing fields for Company + VAT */}
+              {/* ✅ Custom billing fields */}
               <div id="snipcart-custom-fields">
                 <fieldset className="snipcart-form__set">
                   <div className="snipcart-form__field">
