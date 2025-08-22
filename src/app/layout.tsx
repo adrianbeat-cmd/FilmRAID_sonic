@@ -120,43 +120,45 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             {/* ✅ Custom billing fields for Company + VAT */}
             <div hidden>
               <div id="snipcart-custom-fields">
-                <fieldset className="snipcart-form__set">
-                  <div className="snipcart-form__field">
-                    <label className="snipcart-form__label" htmlFor="companyName">
-                      Company Name (Optional)
-                    </label>
-                    <input
-                      className="snipcart-form__input"
-                      name="companyName"
-                      id="companyName"
-                      type="text"
-                      placeholder="Your Company"
-                      data-snipcart-custom-field
-                      data-snipcart-custom-field-name="Company Name"
-                      data-snipcart-custom-field-type="string"
-                      data-snipcart-custom-field-required="false"
-                      data-snipcart-custom-field-section="billing"
-                    />
-                  </div>
-                  <div className="snipcart-form__field">
-                    <label className="snipcart-form__label" htmlFor="vatNumber">
-                      EU VAT Number
-                    </label>
-                    <input
-                      className="snipcart-form__input"
-                      name="vatNumber"
-                      id="vatNumber"
-                      type="text"
-                      placeholder="e.g. ESB12345678"
-                      data-snipcart-custom-field
-                      data-snipcart-custom-field-name="vatNumber"
-                      data-snipcart-custom-field-type="string"
-                      data-snipcart-custom-field-required="false"
-                      data-snipcart-custom-field-section="billing"
-                    />
-                    <span id="vat-message"></span>
-                  </div>
-                </fieldset>
+                <div>
+                  <fieldset className="snipcart-form__set">
+                    <div className="snipcart-form__field">
+                      <label className="snipcart-form__label" htmlFor="companyName">
+                        Company Name (Optional)
+                      </label>
+                      <input
+                        className="snipcart-form__input"
+                        name="companyName"
+                        id="companyName"
+                        type="text"
+                        placeholder="Your Company"
+                        data-snipcart-custom-field
+                        data-snipcart-custom-field-name="Company Name"
+                        data-snipcart-custom-field-type="string"
+                        data-snipcart-custom-field-required="false"
+                        data-snipcart-custom-field-section="billing"
+                      />
+                    </div>
+                    <div className="snipcart-form__field">
+                      <label className="snipcart-form__label" htmlFor="vatNumber">
+                        EU VAT Number
+                      </label>
+                      <input
+                        className="snipcart-form__input"
+                        name="vatNumber"
+                        id="vatNumber"
+                        type="text"
+                        placeholder="e.g. ESB12345678"
+                        data-snipcart-custom-field
+                        data-snipcart-custom-field-name="vatNumber"
+                        data-snipcart-custom-field-type="string"
+                        data-snipcart-custom-field-required="false"
+                        data-snipcart-custom-field-section="billing"
+                      />
+                      <span id="vat-message"></span>
+                    </div>
+                  </fieldset>
+                </div>
               </div>
             </div>
             <SnipcartConfig />
