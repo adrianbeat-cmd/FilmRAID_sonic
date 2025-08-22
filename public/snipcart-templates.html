@@ -1,4 +1,6 @@
+<!-- public/snipcart-templates.html -->
 <div id="snipcart-templates">
+  <!-- Custom billing fields (safe) -->
   <billing section="top">
     <fieldset class="snipcart-form__set">
       <div class="snipcart-form__field">
@@ -21,33 +23,6 @@
     </fieldset>
   </billing>
 
-  <shipping-same-as-billing>
-    <div>
-      <div class="snipcart-form__field-checkbox">
-        <snipcart-input name="shipToBillingAddress" type="checkbox" checked="true"></snipcart-input>
-        <snipcart-label for="shipToBillingAddress"> Use different shipping address </snipcart-label>
-      </div>
-    </div>
-  </shipping-same-as-billing>
-
-  <item-line>
-    <div class="snipcart-item-line">
-      <div class="snipcart-item-line__media">
-        <item-image />
-      </div>
-
-      <div class="snipcart-item-line__info">
-        <item-title />
-        <item-description />
-        <item-custom-fields />
-        <item-configuration />
-      </div>
-
-      <div class="snipcart-item-line__actions">
-        <item-quantity />
-        <item-total-price />
-        <item-remove />
-      </div>
-    </div>
-  </item-line>
+  <!-- Keep Snipcart's default summary by NOT overriding <item-line> -->
+  <!-- If you need a custom summary later, we’ll add it back carefully. -->
 </div>
