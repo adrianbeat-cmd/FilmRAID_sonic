@@ -1,6 +1,8 @@
+// src/app/layout.tsx
 import { ReactNode } from 'react';
 
 import localFont from 'next/font/local';
+import Script from 'next/script';
 
 import type { Metadata } from 'next';
 
@@ -9,32 +11,14 @@ import Footer from '@/components/layout/footer';
 import Navbar from '@/components/layout/navbar';
 import { NavigationProvider } from '@/components/navigation-provider';
 import CTA from '@/components/sections/cta';
-import Snipcart from '@/components/Snipcart';
-import SnipcartConfig from '@/components/SnipcartConfig';
 import { ThemeProvider } from '@/components/theme-provider';
 
 const sfProDisplay = localFont({
   src: [
-    {
-      path: './fonts/SF-Pro-Display-Light.otf',
-      weight: '300',
-      style: 'normal',
-    },
-    {
-      path: './fonts/SF-Pro-Display-Regular.otf',
-      weight: '400',
-      style: 'normal',
-    },
-    {
-      path: './fonts/SF-Pro-Display-Medium.otf',
-      weight: '500',
-      style: 'normal',
-    },
-    {
-      path: './fonts/SF-Pro-Display-Bold.otf',
-      weight: '700',
-      style: 'normal',
-    },
+    { path: './fonts/SF-Pro-Display-Light.otf', weight: '300', style: 'normal' },
+    { path: './fonts/SF-Pro-Display-Regular.otf', weight: '400', style: 'normal' },
+    { path: './fonts/SF-Pro-Display-Medium.otf', weight: '500', style: 'normal' },
+    { path: './fonts/SF-Pro-Display-Bold.otf', weight: '700', style: 'normal' },
   ],
   variable: '--font-sf-pro-display',
   display: 'swap',
@@ -63,10 +47,7 @@ export const metadata: Metadata = {
   authors: [{ name: 'FilmRAID' }],
   creator: 'FilmRAID',
   publisher: 'FilmRAID',
-  robots: {
-    index: true,
-    follow: true,
-  },
+  robots: { index: true, follow: true },
   icons: {
     icon: [
       { url: '/favicon/favicon.ico', sizes: '48x48' },
@@ -103,11 +84,37 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const publicKey = process.env.NEXT_PUBLIC_SNIPCART_PUBLIC_API_KEY ?? '';
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Snipcart v3 CSS */}
         <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css" />
+        {/* Define settings BEFORE loading the script */}
+        <Script
+          id="snipcart-settings"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.SnipcartSettings = {
+                publicApiKey: "${publicKey}",
+                loadStrategy: "always",
+                modalStyle: "side",
+                addProductBehavior: "none",
+                timeoutDuration: 15000,
+                templatesUrl: "/snipcart-templates.html"
+              };
+            `,
+          }}
+        />
+        {/* Snipcart v3 script */}
+        <Script
+          src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
+          strategy="afterInteractive"
+        />
       </head>
+
       <body className={`${sfProDisplay.variable} antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
           <NavigationProvider>
@@ -116,52 +123,57 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <main>{children}</main>
             <CTA />
             <Footer />
-            <Snipcart />
-            {/* ✅ Custom billing fields for Company + VAT */}
-            <div hidden>
+
+            {/* Snipcart container (required) */}
+            <div
+              hidden
+              id="snipcart"
+              data-api-key={publicKey}
+              data-config-add-product-behavior="none"
+              data-config-modal-style="side"
+            >
+              {/* ✅ Custom billing fields for Company + VAT */}
               <div id="snipcart-custom-fields">
-                <div>
-                  <fieldset className="snipcart-form__set">
-                    <div className="snipcart-form__field">
-                      <label className="snipcart-form__label" htmlFor="companyName">
-                        Company Name (Optional)
-                      </label>
-                      <input
-                        className="snipcart-form__input"
-                        name="companyName"
-                        id="companyName"
-                        type="text"
-                        placeholder="Your Company"
-                        data-snipcart-custom-field
-                        data-snipcart-custom-field-name="Company Name"
-                        data-snipcart-custom-field-type="string"
-                        data-snipcart-custom-field-required="false"
-                        data-snipcart-custom-field-section="billing"
-                      />
-                    </div>
-                    <div className="snipcart-form__field">
-                      <label className="snipcart-form__label" htmlFor="vatNumber">
-                        EU VAT Number
-                      </label>
-                      <input
-                        className="snipcart-form__input"
-                        name="vatNumber"
-                        id="vatNumber"
-                        type="text"
-                        placeholder="e.g. ESB12345678"
-                        data-snipcart-custom-field
-                        data-snipcart-custom-field-name="vatNumber"
-                        data-snipcart-custom-field-type="string"
-                        data-snipcart-custom-field-required="false"
-                        data-snipcart-custom-field-section="billing"
-                      />
-                      <span id="vat-message"></span>
-                    </div>
-                  </fieldset>
-                </div>
+                <fieldset className="snipcart-form__set">
+                  <div className="snipcart-form__field">
+                    <label className="snipcart-form__label" htmlFor="companyName">
+                      Company Name (Optional)
+                    </label>
+                    <input
+                      className="snipcart-form__input"
+                      name="companyName"
+                      id="companyName"
+                      type="text"
+                      placeholder="Your Company"
+                      data-snipcart-custom-field
+                      data-snipcart-custom-field-name="Company Name"
+                      data-snipcart-custom-field-type="string"
+                      data-snipcart-custom-field-required="false"
+                      data-snipcart-custom-field-section="billing"
+                    />
+                  </div>
+
+                  <div className="snipcart-form__field">
+                    <label className="snipcart-form__label" htmlFor="vatNumber">
+                      EU VAT Number
+                    </label>
+                    <input
+                      className="snipcart-form__input"
+                      name="vatNumber"
+                      id="vatNumber"
+                      type="text"
+                      placeholder="e.g. ESB12345678"
+                      data-snipcart-custom-field
+                      data-snipcart-custom-field-name="vatNumber"
+                      data-snipcart-custom-field-type="string"
+                      data-snipcart-custom-field-required="false"
+                      data-snipcart-custom-field-section="billing"
+                    />
+                    <span id="vat-message"></span>
+                  </div>
+                </fieldset>
               </div>
             </div>
-            <SnipcartConfig />
           </NavigationProvider>
         </ThemeProvider>
       </body>
