@@ -150,16 +150,15 @@ const capacityOptions = [
   { tb: 22, prices: [3309, 4809, 5599, 7809] },
 ];
 
-export default function ProductPage({ params }: { params: { slug: string } }) {
-  const slugLower = params.slug.toLowerCase();
+export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const slugLower = slug.toLowerCase();
   const parts = slugLower.split('-');
-  const modelLower = parts.slice(0, -1).join('-'); // e.g., 'filmraid-4a'
-  const capacityLower = parts[parts.length - 1]; // e.g., '72tb'
+  const modelLower = parts[0] + '-' + parts[1];
+  const capacityLower = parts[2];
   const totalTb = parseInt(capacityLower.replace('tb', ''));
 
-  const selectedModel = modelData.findIndex(
-    (m) => m.name.toLowerCase() === modelLower.replace('filmraid-', 'FilmRaid-'),
-  );
+  const selectedModel = modelData.findIndex((m) => m.name.toLowerCase() === modelLower);
   if (selectedModel === -1) notFound();
 
   const currentModel = modelData[selectedModel];
@@ -193,7 +192,7 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
       priceCurrency: 'EUR',
       price: price,
       availability: 'http://schema.org/InStock',
-      url: `https://www.filmraid.pro/products/${currentModel.name.toLowerCase()}-${raid0}tb`,
+      url: `https://www.filmraid.pro/products/${slug}`,
     },
     image: `https://www.filmraid.pro${images[0]}`,
   };
@@ -228,7 +227,7 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
         data-crawler="snipcart"
         data-item-id={`${currentModel.name.toLowerCase()}-${raid0}tb`}
         data-item-price={price}
-        data-item-url={`https://www.filmraid.pro/products/${currentModel.name.toLowerCase()}-${raid0}tb`}
+        data-item-url={`https://www.filmraid.pro/products/${slug}`}
         data-item-description={currentModel.description}
         data-item-name={`${currentModel.name} ${raid0}TB`}
         data-item-image={`https://www.filmraid.pro${images[0]}`}
