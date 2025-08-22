@@ -84,19 +84,15 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  // Read BOTH possible env var names; fall back to the one Netlify uses.
-  const publicKey =
-    process.env.NEXT_PUBLIC_SNIPCART_PUBLIC_API_KEY ||
-    process.env.NEXT_PUBLIC_SNIPCART_API_KEY ||
-    '';
+  const publicKey = process.env.NEXT_PUBLIC_SNIPCART_PUBLIC_API_KEY ?? '';
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Snipcart v3 CSS */}
+        {/* Snipcart v3.6 CSS */}
         <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css" />
 
-        {/* Define settings BEFORE loading the script */}
+        {/* Define settings BEFORE loading the script (no templatesUrl to keep stock UI) */}
         <Script
           id="snipcart-settings"
           strategy="beforeInteractive"
@@ -108,14 +104,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 loadStrategy: "always",
                 modalStyle: "side",
                 addProductBehavior: "none",
-                timeoutDuration: 15000,
-                templatesUrl: "/snipcart-templates.html"
+                timeoutDuration: 15000
               };
             `,
           }}
         />
 
-        {/* Snipcart v3 script (loads after settings) */}
+        {/* Snipcart v3.6 script */}
         <Script
           src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
           strategy="afterInteractive"
@@ -131,15 +126,116 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <CTA />
             <Footer />
 
-            {/* Snipcart container (keep minimal & do NOT set a different key here) */}
-            <div id="snipcart" hidden></div>
+            {/* Snipcart container (keep minimal & let settings carry the key) */}
+            <div id="snipcart" hidden>
+              <div id="snipcart-custom-fields">
+                <fieldset className="snipcart-form__set">
+                  {/* Company FIRST */}
+                  <div className="snipcart-form__field">
+                    <label className="snipcart-form__label" htmlFor="companyName">
+                      Company Name (Optional)
+                    </label>
+                    <input
+                      className="snipcart-form__input"
+                      name="companyName"
+                      id="companyName"
+                      type="text"
+                      placeholder="Your Company"
+                      data-snipcart-custom-field
+                      data-snipcart-custom-field-name="Company Name"
+                      data-snipcart-custom-field-type="string"
+                      data-snipcart-custom-field-required="false"
+                      data-snipcart-custom-field-section="billing"
+                    />
+                  </div>
 
-            {/* Optional: tiny helper to surface missing key errors early */}
-            <Script id="snipcart-key-check" strategy="afterInteractive">
+                  {/* EU VAT SECOND */}
+                  <div className="snipcart-form__field">
+                    <label className="snipcart-form__label" htmlFor="vatNumber">
+                      EU VAT Number
+                    </label>
+                    <input
+                      className="snipcart-form__input"
+                      name="vatNumber"
+                      id="vatNumber"
+                      type="text"
+                      placeholder="e.g. ESB12345678"
+                      data-snipcart-custom-field
+                      data-snipcart-custom-field-name="vatNumber"
+                      data-snipcart-custom-field-type="string"
+                      data-snipcart-custom-field-required="false"
+                      data-snipcart-custom-field-section="billing"
+                    />
+                    <span
+                      id="vat-message"
+                      style={{ display: 'block', marginTop: '0.375rem', fontSize: '0.875rem' }}
+                    />
+                  </div>
+                </fieldset>
+              </div>
+            </div>
+
+            {/* VAT validation + metadata wiring */}
+            <Script id="snipcart-vat-validation" strategy="afterInteractive">
               {`
-                if (!"${publicKey}") {
-                  console.error("Snipcart public API key is missing. Check NEXT_PUBLIC_SNIPCART_API_KEY in your env.");
-                }
+                (function () {
+                  const EU_CODES = new Set([
+                    "AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IE",
+                    "IT","LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE"
+                  ]);
+
+                  function formatMsg(el, ok, msg) {
+                    el.textContent = msg || "";
+                    el.style.color = ok ? "#137333" : "#B00020";
+                  }
+
+                  function basicVatFormatOk(v) {
+                    if (!v) return false;
+                    const val = v.toUpperCase().replace(/\\s|-/g, "");
+                    // Starts with 2-letter country code, then 8-12 alphanumerics
+                    if (!/^[A-Z]{2}[A-Z0-9]{8,12}$/.test(val)) return false;
+                    const cc = val.slice(0,2);
+                    return EU_CODES.has(cc);
+                  }
+
+                  document.addEventListener("snipcart.ready", function () {
+                    const input = document.getElementById("vatNumber");
+                    const message = document.getElementById("vat-message");
+                    if (!input || !message || !window.Snipcart) return;
+
+                    async function pushMeta(vat, valid) {
+                      try {
+                        const cart = await window.Snipcart.api.cart.get();
+                        await window.Snipcart.api.cart.update({
+                          metadata: { ...cart.metadata, vatNumber: vat || "", vatValid: !!valid }
+                        });
+                      } catch (e) {
+                        console.error("VAT metadata update failed", e);
+                      }
+                    }
+
+                    async function validateAndStore() {
+                      const raw = input.value.trim();
+                      if (!raw) {
+                        formatMsg(message, true, "");
+                        pushMeta("", false);
+                        return;
+                      }
+                      const ok = basicVatFormatOk(raw);
+                      if (!ok) {
+                        formatMsg(message, false, "Invalid EU VAT format. Use country code + number, e.g. ESB12345678.");
+                        pushMeta(raw, false);
+                        return;
+                      }
+                      formatMsg(message, true, "VAT format looks valid. We'll apply the correct tax at checkout.");
+                      pushMeta(raw, true);
+                    }
+
+                    input.addEventListener("blur", validateAndStore);
+                    input.addEventListener("change", validateAndStore);
+                    window.Snipcart.events.on("billingaddress.changed", validateAndStore);
+                  });
+                })();
               `}
             </Script>
           </NavigationProvider>
