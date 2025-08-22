@@ -71,12 +71,14 @@ const ProductClient = ({
   const [quantity, setQuantity] = useState<number>(1);
   const [totalPrice, setTotalPrice] = useState(price);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   const {
     handleSubmit,
     reset,
     register,
     formState: { errors },
   } = useForm<OrderFormData>();
+
   const [captchaValue, setCaptchaValue] = useState<string | null>(null);
   const captchaRef = useRef<GoogleReCAPTCHA>(null);
 
@@ -118,7 +120,6 @@ const ProductClient = ({
       });
   };
 
-  // Define technical specifications based on Areca ARC-8050T3U series
   const technicalSpecs = [
     { label: 'Form Factor', value: `${currentModel.hddCount}-Bay Desktop` },
     { label: 'Connection', value: '2x Thunderbolt 3, 1x DisplayPort 1.4' },
@@ -235,9 +236,11 @@ const ProductClient = ({
             </div>
           </div>
         </div>
+
         <div className="order-2 space-y-4 md:sticky md:top-16 md:col-start-2 md:row-start-1 md:self-start">
           <h1 className="text-3xl font-bold">{currentModel.name}</h1>
           <p className="text-muted-foreground">{currentModel.description}</p>
+
           <div>
             <h3 className="font-bold">Storage</h3>
             <p className="text-sm">{tb}TB HDD</p>
@@ -245,12 +248,14 @@ const ProductClient = ({
               RAID 0: {raid0}TB | RAID 5: {raid5}TB
             </p>
           </div>
+
           <p className="mb-4 text-xl">Total: €{totalPrice}</p>
+
           <div className="mb-4 space-y-2">
             <Label htmlFor="raid">RAID Level</Label>
             <Select onValueChange={setSelectedRaid} value={selectedRaid}>
               <SelectTrigger
-                className={`w-full ${!selectedRaid ? 'bg-[#306fdb] !text-[#ffffff] dark:bg-[#306fdb] dark:!text-[#ffffff]' : ''}`}
+                className={`w-full pr-10 ${!selectedRaid ? 'bg-[#306fdb] !text-[#ffffff] dark:bg-[#306fdb] dark:!text-[#ffffff]' : ''}`}
               >
                 <SelectValue placeholder="First select RAID Level" />
               </SelectTrigger>
@@ -263,6 +268,7 @@ const ProductClient = ({
               </SelectContent>
             </Select>
           </div>
+
           <div className="mt-4 space-y-2">
             <Label htmlFor="quantity">Quantity</Label>
             <Select
@@ -270,7 +276,7 @@ const ProductClient = ({
               value={quantity.toString()}
               defaultValue="1"
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full pr-10">
                 <SelectValue placeholder="1" />
               </SelectTrigger>
               <SelectContent>
@@ -282,6 +288,7 @@ const ProductClient = ({
               </SelectContent>
             </Select>
           </div>
+
           <div className="mt-4 flex flex-col space-y-4">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
@@ -348,6 +355,7 @@ const ProductClient = ({
                 </form>
               </DialogContent>
             </Dialog>
+
             <Button
               className="snipcart-add-item w-full"
               variant={selectedRaid ? 'default' : 'outline'}
@@ -360,7 +368,7 @@ const ProductClient = ({
               data-item-name={productName}
               data-item-image={images[0]}
               data-item-quantity={quantity}
-              data-item-custom1-name="RAIDLevel"
+              data-item-custom1-name="RAID Level"
               data-item-custom1-options={availableRaids.join('|')}
               data-item-custom1-value={selectedRaid}
               data-item-shippable="true"
@@ -370,6 +378,7 @@ const ProductClient = ({
             </Button>
           </div>
         </div>
+
         <Card className="order-3 md:col-start-1 md:row-start-2">
           <CardContent className="space-y-4 p-6">
             <h2 className="text-2xl font-bold">Technical Specifications</h2>
