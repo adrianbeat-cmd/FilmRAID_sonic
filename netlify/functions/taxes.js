@@ -2,13 +2,40 @@
 exports.handler = async (event) => {
   try {
     const payload = JSON.parse(event.body || '{}');
-    const customer = payload?.customer || {};
-    const country = customer?.billingAddress?.country || 'ES';
-    const vatNumber = customer?.billingAddress?.vatNumber || '';
 
-    console.log('Taxes webhook called with:', payload);
+    // Try multiple paths defensively
+    const customer = payload.customer || payload?.content?.customer || {};
+    const billing =
+      customer.billingAddress || payload?.billingAddress || payload?.content?.billingAddress || {};
 
-    // EU country codes
+    const country =
+      billing.country ||
+      customer?.shippingAddress?.country ||
+      payload?.shippingAddress?.country ||
+      'ES';
+
+    // vatNumber may come from native field or custom field
+    let vatNumber = billing.vatNumber || customer?.vatNumber || payload?.vatNumber || '';
+
+    // If templates put vatNumber as a custom field in the cart (edge case)
+    if (!vatNumber && Array.isArray(payload?.items)) {
+      for (const it of payload.items) {
+        if (Array.isArray(it.customFields)) {
+          const f = it.customFields.find(
+            (cf) =>
+              String(cf.name || '').toLowerCase() === 'vatnumber' ||
+              String(cf.name || '').toLowerCase() === 'vat number',
+          );
+          if (f && f.value) {
+            vatNumber = f.value;
+            break;
+          }
+        }
+      }
+    }
+
+    console.log('Taxes webhook country:', country, 'vatNumber:', vatNumber);
+
     const euCountries = [
       'AT',
       'BE',
@@ -39,56 +66,53 @@ exports.handler = async (event) => {
       'ES',
     ];
 
-    let rate = 0.21; // default 21%
+    let rate = 0.21;
     let taxName = 'IVA (21%)';
 
     if (country === 'ES') {
-      // Always charge IVA in Spain
       rate = 0.21;
       taxName = 'IVA Spain (21%)';
     } else if (euCountries.includes(country)) {
       if (vatNumber) {
         try {
-          const res = await fetch(`https://api.vatcomply.com/vat?vat_number=${vatNumber}`);
+          const res = await fetch(
+            `https://api.vatcomply.com/vat?vat_number=${encodeURIComponent(vatNumber)}`,
+          );
           const data = await res.json();
+          console.log('VAT validate:', data);
 
-          if (data.valid) {
-            // Intra-EU B2B → 0%
+          if (data && data.valid) {
             rate = 0.0;
             taxName = 'Intra-EU VAT Exempt';
           } else {
-            // Invalid VAT → charge 21%
             rate = 0.21;
-            taxName = 'Invalid VAT - Standard IVA (21%)';
+            taxName = 'Invalid VAT — standard IVA (21%)';
           }
-        } catch (err) {
-          console.error('VAT API error:', err);
-          // fallback: charge 21%
+        } catch (e) {
+          console.error('VAT API error:', e);
           rate = 0.21;
           taxName = 'IVA (21%)';
         }
       } else {
-        // EU private customer → 21%
         rate = 0.21;
         taxName = 'EU B2C VAT (21%)';
       }
     } else {
-      // Outside EU → no VAT
       rate = 0.0;
       taxName = 'No VAT (Export)';
     }
 
-    const taxes = [
-      {
-        name: taxName,
-        rate: rate,
-        appliesTo: { country },
-      },
-    ];
-
     return {
       statusCode: 200,
-      body: JSON.stringify({ taxes }),
+      body: JSON.stringify({
+        taxes: [
+          {
+            name: taxName,
+            rate,
+            appliesTo: { country },
+          },
+        ],
+      }),
     };
   } catch (error) {
     console.error('Taxes function error:', error);
