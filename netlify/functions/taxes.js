@@ -2,24 +2,39 @@
 exports.handler = async (event) => {
   try {
     const payload = JSON.parse(event.body || '{}');
+    const content = payload.content || {};
 
-    // Try multiple paths defensively
-    const customer = payload.customer || payload?.content?.customer || {};
-    const billing =
-      customer.billingAddress || payload?.billingAddress || payload?.content?.billingAddress || {};
+    const billing = content.billingAddress || {};
+    const shipping = content.shippingAddress || {};
+    const country = (billing.country || shipping.country || 'ES').toUpperCase();
 
-    const country =
-      billing.country ||
-      customer?.shippingAddress?.country ||
-      payload?.shippingAddress?.country ||
-      'ES';
+    // 1) try native VAT fields first
+    let vatNumber = billing.vatNumber || shipping.vatNumber || '';
 
-    // vatNumber may come from native field or custom field
-    let vatNumber = billing.vatNumber || customer?.vatNumber || payload?.vatNumber || '';
+    // 2) parse customFieldsJson if present (Snipcart v3 often sends this)
+    if (
+      !vatNumber &&
+      typeof content.customFieldsJson === 'string' &&
+      content.customFieldsJson.trim()
+    ) {
+      try {
+        const arr = JSON.parse(content.customFieldsJson);
+        if (Array.isArray(arr)) {
+          const v = arr.find(
+            (f) =>
+              String(f.Name || '').toLowerCase() === 'vatnumber' ||
+              String(f.Name || '').toLowerCase() === 'vat number',
+          );
+          if (v && v.Value) vatNumber = String(v.Value).trim();
+        }
+      } catch (e) {
+        console.warn('Could not parse customFieldsJson:', e);
+      }
+    }
 
-    // If templates put vatNumber as a custom field in the cart (edge case)
-    if (!vatNumber && Array.isArray(payload?.items)) {
-      for (const it of payload.items) {
+    // 3) as a last resort, scan items' customFields (rare in taxes hook)
+    if (!vatNumber && Array.isArray(content.items)) {
+      for (const it of content.items) {
         if (Array.isArray(it.customFields)) {
           const f = it.customFields.find(
             (cf) =>
@@ -27,7 +42,7 @@ exports.handler = async (event) => {
               String(cf.name || '').toLowerCase() === 'vat number',
           );
           if (f && f.value) {
-            vatNumber = f.value;
+            vatNumber = String(f.value).trim();
             break;
           }
         }
@@ -67,37 +82,38 @@ exports.handler = async (event) => {
     ];
 
     let rate = 0.21;
-    let taxName = 'IVA (21%)';
+    let taxName = 'IVA Spain (21%)';
 
     if (country === 'ES') {
       rate = 0.21;
       taxName = 'IVA Spain (21%)';
     } else if (euCountries.includes(country)) {
       if (vatNumber) {
+        // Use the runtime's global fetch (Node 18+ on Netlify)
         try {
           const res = await fetch(
             `https://api.vatcomply.com/vat?vat_number=${encodeURIComponent(vatNumber)}`,
           );
           const data = await res.json();
           console.log('VAT validate:', data);
-
           if (data && data.valid) {
             rate = 0.0;
             taxName = 'Intra-EU VAT Exempt';
           } else {
             rate = 0.21;
-            taxName = 'Invalid VAT — standard IVA (21%)';
+            taxName = 'Invalid VAT — standard VAT (21%)';
           }
         } catch (e) {
-          console.error('VAT API error:', e);
+          console.error('VAT API call failed:', e);
           rate = 0.21;
-          taxName = 'IVA (21%)';
+          taxName = 'VAT (21%)';
         }
       } else {
         rate = 0.21;
         taxName = 'EU B2C VAT (21%)';
       }
     } else {
+      // Export outside EU — no VAT
       rate = 0.0;
       taxName = 'No VAT (Export)';
     }

@@ -2,29 +2,42 @@
 exports.handler = async (event) => {
   try {
     const payload = JSON.parse(event.body || '{}');
-    const country = payload?.shippingAddress?.country || payload?.country || 'ES';
-    const items = payload?.items || [];
+    const content = payload.content || {};
+    const shippingAddress = content.shippingAddress || {};
+    const billingAddress = content.billingAddress || {};
+    const country = (shippingAddress.country || billingAddress.country || 'ES').toUpperCase();
 
-    // Calculate total weight (fallback if item.weight is null)
-    let totalWeight = 0;
-    items.forEach((item) => {
-      if (item.weight) {
-        totalWeight += item.weight * (item.quantity || 1);
-      } else {
-        // fallback: approximate by model name
-        if (item.name.includes('FilmRaid-4A')) totalWeight += 8;
-        else if (item.name.includes('FilmRaid-6')) totalWeight += 12;
-        else if (item.name.includes('FilmRaid-8')) totalWeight += 18;
-        else if (item.name.includes('FilmRaid-12E')) totalWeight += 22;
-        else totalWeight += 10; // default
+    // Items can live at content.items for shippingrates.fetch
+    const items = Array.isArray(content.items) ? content.items : [];
+
+    // Map weights per Adri’s table (kg)
+    const weightMap = [
+      { match: /filmraid-4a/i, kg: 8.0 },
+      { match: /filmraid-6\b/i, kg: 12.0 },
+      { match: /filmraid-8\b/i, kg: 18.0 },
+      // 12E ships in two boxes: 10 + 12 = 22kg
+      { match: /filmraid-12e/i, kg: 22.0 },
+    ];
+
+    const getItemKg = (item) => {
+      const key = (item?.id || item?.name || '').toString();
+      for (const row of weightMap) {
+        if (row.match.test(key)) return row.kg;
       }
-    });
+      return 8.0; // default minimal RAID if no match
+    };
 
-    console.log('Shipping webhook called with:', payload);
+    let totalWeight = 0;
+    for (const it of items) {
+      const q = Number(it.quantity || 1);
+      totalWeight += getItemKg(it) * q;
+    }
+
+    console.log('Shipping webhook called with:', JSON.stringify(payload, null, 2));
     console.log('Calculated totalWeight:', totalWeight);
 
-    // Simple EU check
-    const euCountries = [
+    // Build simple flat rates so the flow always continues
+    const inEU = [
       'AT',
       'BE',
       'BG',
@@ -52,35 +65,47 @@ exports.handler = async (event) => {
       'SI',
       'SK',
       'ES',
-    ];
+    ].includes(country);
 
-    let rates = [];
-
-    if (euCountries.includes(country)) {
+    const rates = [];
+    if (inEU) {
+      // Scale a bit with weight to be realistic
+      const cost = totalWeight <= 12 ? 35 : totalWeight <= 22 ? 50 : 65;
       rates.push({
         userDefinedId: 'dhl-eu',
-        cost: 50 + totalWeight * 2, // simple formula
         description: 'DHL Express (EU)',
+        cost,
         guaranteedDaysToDelivery: 2,
       });
     } else {
+      const cost = totalWeight <= 12 ? 85 : totalWeight <= 22 ? 120 : 160;
       rates.push({
         userDefinedId: 'fedex-intl',
-        cost: 100 + totalWeight * 3,
         description: 'FedEx International',
-        guaranteedDaysToDelivery: 5,
+        cost,
+        guaranteedDaysToDelivery: 3,
       });
     }
 
+    // Always return at least one rate to avoid Snipcart “carrier” error
     return {
       statusCode: 200,
       body: JSON.stringify({ rates }),
     };
-  } catch (error) {
-    console.error('Shipping function error:', error);
+  } catch (err) {
+    console.error('Shipping error:', err);
     return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Shipping rates calculation failed' }),
+      statusCode: 200,
+      body: JSON.stringify({
+        rates: [
+          {
+            userDefinedId: 'fallback',
+            description: 'Standard Shipping',
+            cost: 49,
+            guaranteedDaysToDelivery: 5,
+          },
+        ],
+      }),
     };
   }
 };

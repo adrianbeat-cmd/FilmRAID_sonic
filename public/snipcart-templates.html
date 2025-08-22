@@ -37,24 +37,16 @@
       </div>
 
       <div class="snipcart-item-line__info">
-        <item-description />
         <item-title />
-        {{#customFields}}
-        <div class="snipcart-item-line__customfields">
-          {{name}}
-          <select class="snipcart-form__select">
-            {{#options}}
-            <option>{{label}}</option>
-            {{/options}}
-          </select>
-        </div>
-        {{/customFields}}
+        <item-description />
+        <item-custom-fields />
+        <item-configuration />
       </div>
 
       <div class="snipcart-item-line__actions">
         <item-quantity />
-        <item-remove />
         <item-total-price />
+        <item-remove />
       </div>
     </div>
   </item-line>
