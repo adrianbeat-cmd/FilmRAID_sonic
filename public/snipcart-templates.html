@@ -1,5 +1,7 @@
+<!-- Single root element is REQUIRED -->
 <div id="snipcart-templates">
-  <!-- Custom billing fields -->
+
+  <!-- Billing (top) -->
   <billing section="top">
     <fieldset class="snipcart-form__set">
       <div class="snipcart-form__field">
@@ -11,6 +13,7 @@
     </fieldset>
   </billing>
 
+  <!-- Billing (bottom) -->
   <billing section="bottom">
     <fieldset class="snipcart-form__set">
       <div class="snipcart-form__field">
@@ -22,40 +25,43 @@
     </fieldset>
   </billing>
 
-  <!-- Override only the item-line to fix RAID Level + selector -->
-  <item-line>
-    <div class="snipcart-item-line">
-      <div class="snipcart-item-line__container">
-        <div class="snipcart-item-line__product">
-          <snipcart-item-image class="snipcart-item-line__media"></snipcart-item-image>
-          <div class="snipcart-item-line__header">
-            <h2 class="snipcart-item-line__title">
-              <snipcart-item-name></snipcart-item-name>
-            </h2>
-            <snipcart-item-custom-fields class="snipcart-item-line__custom-fields">
-              <!-- Label fix -->
-              <snipcart-item-custom-field
-                name="RAID Level"
-                class="snipcart-item-line__custom-field"
-              ></snipcart-item-custom-field>
-            </snipcart-item-custom-fields>
-          </div>
-        </div>
+  <!-- Toggle "use different shipping address" (Snipcart defaults to unchecked) -->
+  <shipping-same-as-billing>
+    <div>
+      <div class="snipcart-form__field-checkbox">
+        <snipcart-input name="shipToBillingAddress" type="checkbox"></snipcart-input>
+        <snipcart-label for="shipToBillingAddress">Use different shipping address</snipcart-label>
+      </div>
+    </div>
+  </shipping-same-as-billing>
 
-        <div class="snipcart-item-line__actions">
-          <snipcart-quantity class="snipcart-item-line__quantity"></snipcart-quantity>
-          <snipcart-item-price class="snipcart-item-line__price"></snipcart-item-price>
-          <snipcart-item-remove class="snipcart-item-line__remove"></snipcart-item-remove>
-        </div>
+  <!-- Item line: keep it very close to stock -->
+  <item-line>
+    <div class="snipcart-item-line__container">
+      <div class="snipcart-item-line__media">
+        <item-image />
+      </div>
+
+      <div class="snipcart-item-line__info">
+        <item-title />
+        <item-description />
+        {{#customFields}}
+          <div class="snipcart-item-line__customfields snipcart-form__field snipcart-form__field--select">
+            <snipcart-label>{{name}}</snipcart-label>
+            <select class="snipcart-form__select">
+              {{#options}}
+                <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+              {{/options}}
+            </select>
+          </div>
+        {{/customFields}}
+      </div>
+
+      <div class="snipcart-item-line__actions">
+        <item-quantity />
+        <item-remove />
+        <item-total-price />
       </div>
     </div>
   </item-line>
 </div>
-
-<style>
-  /* Fix select overlap: push number away from arrow */
-  .snipcart-item-line__custom-field select {
-    padding-right: 2rem; /* add space inside select so text doesn’t collide with arrow */
-    background-position: right 0.5rem center; /* keep arrow on far right */
-  }
-</style>

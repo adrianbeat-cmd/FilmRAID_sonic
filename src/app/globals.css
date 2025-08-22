@@ -383,64 +383,43 @@ html.snipcart-modal-open .snipcart-overlay {
 }
 
 /* Widen RAID dropdown in cart */
-#snipcart .snipcart-item-line__customfields {
-  width: 100%;
-}
-
+#snipcart .snipcart-item-line__customfields,
 #snipcart .snipcart-form__field--custom {
   width: 100%;
 }
 
+/* Stack actions so the select doesn’t get cramped */
 #snipcart .snipcart-item-line__actions {
-  flex-direction: column !important; /* Force stack: RAID on top of quantity */
+  flex-direction: column !important;
   align-items: flex-start !important;
 }
 
+/* Make RAID Level select full width inside custom fields */
 #snipcart .snipcart-item-line__customfields .snipcart-form__field--select .snipcart-form__select {
-  min-width: 100% !important; /* Full width for dropdown */
-  width: 100% !important; /* Ensure full width */
-  padding: 0.5rem 2rem 0.5rem 0.5rem; /* Ensures space for text and arrow */
-  appearance: auto; /* Restores default select appearance if hidden */
-  box-sizing: border-box; /* Ensure padding is included in width */
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  box-sizing: border-box;
 }
 
+/* Single canonical select style (avoid caret overlap) */
 #snipcart .snipcart-form__select {
-  color: #333 !important; /* Ensure text color is visible */
+  color: #333 !important;
   background-color: #fff !important;
-}
-
-/* For wider screens, force stack if needed */
-@media (min-width: 768px) {
-  #snipcart .snipcart-item-line__actions {
-    flex-direction: column !important;
-  }
-  #snipcart .snipcart-form__select {
-    min-width: 120px !important;
-  }
-}
-
-@media (min-width: 1024px) {
-  #snipcart .snipcart-form__select {
-    min-width: 150px !important;
-  }
-}
-/* --- Snipcart dropdown arrow/value overlap fix (global) --- */
-#snipcart .snipcart-form__select {
-  padding-right: 2rem !important; /* space for arrow */
-  background-repeat: no-repeat !important;
-  background-position: right 0.6rem center !important;
-  appearance: auto !important; /* ensure native arrow shows */
-  -webkit-appearance: menulist !important; /* Safari */
-  -moz-appearance: menulist !important; /* Firefox */
+  padding: 0.75rem 2rem 0.75rem 0.75rem !important; /* room for caret on the right */
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
   overflow: hidden !important;
+  appearance: menulist;
+  -webkit-appearance: menulist;
+  -moz-appearance: menulist;
 }
 
-/* On wider screens make selects a touch wider for readability */
+/* Option text spacing so numbers don’t collide with caret */
+#snipcart .snipcart-form__select option {
+  padding-right: 1.5rem;
+}
+
+/* Slightly wider selects on larger screens for readability */
 @media (min-width: 768px) {
   #snipcart .snipcart-form__select {
     min-width: 140px !important;

@@ -1,111 +1,72 @@
-// netlify/functions/shipping.js
 exports.handler = async (event) => {
   try {
     const payload = JSON.parse(event.body || '{}');
-    const content = payload.content || {};
-    const shippingAddress = content.shippingAddress || {};
-    const billingAddress = content.billingAddress || {};
-    const country = (shippingAddress.country || billingAddress.country || 'ES').toUpperCase();
+    const cart = payload.content || {};
+    const addr = cart.shippingAddress || cart.billingAddress || {};
 
-    // Items can live at content.items for shippingrates.fetch
-    const items = Array.isArray(content.items) ? content.items : [];
+    // Minimal guard: only reply when we have a country & postal code
+    const hasAddress = !!(addr.country && addr.postalCode);
 
-    // Map weights per Adri’s table (kg)
-    const weightMap = [
-      { match: /filmraid-4a/i, kg: 8.0 },
-      { match: /filmraid-6\b/i, kg: 12.0 },
-      { match: /filmraid-8\b/i, kg: 18.0 },
-      // 12E ships in two boxes: 10 + 12 = 22kg
-      { match: /filmraid-12e/i, kg: 22.0 },
-    ];
+    // Compute grams from items; default to 8000g if missing
+    const items = Array.isArray(cart.items) ? cart.items : [];
+    const weight =
+      items.reduce((sum, it) => {
+        const w = Number(it?.weight) || 0;
+        const q = Number(it?.quantity) || 1;
+        return sum + w * q;
+      }, 0) || 8000;
 
-    const getItemKg = (item) => {
-      const key = (item?.id || item?.name || '').toString();
-      for (const row of weightMap) {
-        if (row.match.test(key)) return row.kg;
-      }
-      return 8.0; // default minimal RAID if no match
-    };
-
-    let totalWeight = 0;
-    for (const it of items) {
-      const q = Number(it.quantity || 1);
-      totalWeight += getItemKg(it) * q;
-    }
-
-    console.log('Shipping webhook called with:', JSON.stringify(payload, null, 2));
-    console.log('Calculated totalWeight:', totalWeight);
-
-    // Build simple flat rates so the flow always continues
-    const inEU = [
+    // Basic EU flat table (in cents)
+    const isEU = [
       'AT',
       'BE',
       'BG',
+      'HR',
       'CY',
       'CZ',
-      'DE',
       'DK',
       'EE',
       'FI',
       'FR',
+      'DE',
       'GR',
-      'HR',
       'HU',
       'IE',
       'IT',
+      'LV',
       'LT',
       'LU',
-      'LV',
       'MT',
       'NL',
       'PL',
       'PT',
       'RO',
-      'SE',
-      'SI',
       'SK',
+      'SI',
       'ES',
-    ].includes(country);
+      'SE',
+    ].includes((addr.country || '').toUpperCase());
 
-    const rates = [];
-    if (inEU) {
-      // Scale a bit with weight to be realistic
-      const cost = totalWeight <= 12 ? 35 : totalWeight <= 22 ? 50 : 65;
-      rates.push({
-        userDefinedId: 'dhl-eu',
-        description: 'DHL Express (EU)',
-        cost,
-        guaranteedDaysToDelivery: 2,
-      });
-    } else {
-      const cost = totalWeight <= 12 ? 85 : totalWeight <= 22 ? 120 : 160;
-      rates.push({
-        userDefinedId: 'fedex-intl',
-        description: 'FedEx International',
-        cost,
-        guaranteedDaysToDelivery: 3,
-      });
-    }
+    const base = isEU ? 1999 : 3999; // €19.99 EU, €39.99 rest of world
+    const heavySurcharge = weight > 20000 ? (isEU ? 1500 : 3000) : 0; // >20kg
 
-    // Always return at least one rate to avoid Snipcart “carrier” error
+    const rate = {
+      cost: base + heavySurcharge, // integer (cents)
+      description: 'Tracked shipping', // label
+      guaranteedDaysToDelivery: isEU ? 3 : 7,
+    };
+
+    // ALWAYS return at least one rate when we have an address
+    const rates = hasAddress ? [rate] : [];
+
     return {
       statusCode: 200,
       body: JSON.stringify({ rates }),
     };
-  } catch (err) {
-    console.error('Shipping error:', err);
+  } catch (e) {
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        rates: [
-          {
-            userDefinedId: 'fallback',
-            description: 'Standard Shipping',
-            cost: 49,
-            guaranteedDaysToDelivery: 5,
-          },
-        ],
-      }),
+      body: JSON.stringify({ rates: [{ cost: 2999, description: 'Standard shipping' }] }),
     };
   }
 };

@@ -1,53 +1,53 @@
 'use client';
-
 import { useEffect } from 'react';
 
-interface SnipcartSettings {
-  publicApiKey: string;
-  templatesUrl?: string;
-  version?: string;
-}
-
-declare global {
-  interface Window {
-    SnipcartSettings?: SnipcartSettings;
-  }
-}
-
-const Snipcart = () => {
+export default function Snipcart() {
   useEffect(() => {
-    // Initialize Snipcart settings
-    if (typeof window !== 'undefined') {
-      window.SnipcartSettings = {
-        publicApiKey: 'NzhjOGJmOTEtY2Y1MS00MGRkLWIwNmEtNjkzYWVlNTYxMjViNjM4OTA0NTgxOTU4MTA2ODQy',
-        templatesUrl: '/snipcart-templates.html',
-        version: '3.6.0', // Specify version to avoid auto-update warning
-      };
+    let cancelled = false;
+
+    async function injectTemplatesOnce() {
+      try {
+        if (document.getElementById('snipcart-templates')) return; // already present
+
+        const res = await fetch('/snipcart-templates.html', { cache: 'no-cache' });
+        if (!res.ok) return;
+
+        const html = await res.text();
+        if (cancelled || !html) return;
+
+        // Create a container and insert into body BEFORE Snipcart initializes deeper screens.
+        const container = document.createElement('div');
+        container.innerHTML = html.trim();
+
+        // Ensure we actually have a single-root element with the right id
+        const root = container.firstElementChild;
+        if (root && root.id === 'snipcart-templates') {
+          document.body.appendChild(root);
+        }
+      } catch {
+        // swallow – missing templates must not crash checkout
+      }
     }
 
-    // Load Snipcart script
-    if (!document.getElementById('snipcart-script')) {
-      const script = document.createElement('script');
-      script.id = 'snipcart-script';
-      script.src = 'https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js';
-      script.async = true;
-      document.body.appendChild(script);
-
-      return () => {
-        document.body.removeChild(script);
-      };
-    }
+    injectTemplatesOnce();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
-    <div
-      id="snipcart"
-      hidden={true}
-      data-api-key="NzhjOGJmOTEtY2Y1MS00MGRkLWIwNmEtNjkzYWVlNTYxMjViNjM4OTA0NTgxOTU4MTA2ODQy"
-      data-config-modal-style="side"
-      data-config-add-product-behavior="none" // Fixes history.replaceState conflict in Next.js static
-    />
+    <>
+      {/* Snipcart stylesheet */}
+      <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css" />
+      {/* Snipcart script */}
+      <script async src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js" />
+      {/* Root: keep config minimal */}
+      <div
+        hidden
+        id="snipcart"
+        data-api-key={process.env.NEXT_PUBLIC_SNIPCART_API_KEY}
+        data-config-modal-style="side"
+      />
+    </>
   );
-};
-
-export default Snipcart;
+}
