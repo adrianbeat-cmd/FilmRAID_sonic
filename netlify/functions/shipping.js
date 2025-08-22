@@ -67,14 +67,14 @@ exports.handler = async (event) => {
     ].includes(shippingAddress.country)
   ) {
     rates.push({
-      id: 'dhl-eu',
+      userDefinedId: 'dhl-eu',
       cost: 50,
       description: 'DHL Express (EU)',
       guaranteedDaysToDelivery: 2,
     });
   } else {
     rates.push({
-      id: 'fedex-int',
+      userDefinedId: 'fedex-int',
       cost: 100,
       description: 'FedEx International',
       guaranteedDaysToDelivery: 5,
