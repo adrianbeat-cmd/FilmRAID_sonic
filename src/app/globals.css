@@ -427,3 +427,27 @@ html.snipcart-modal-open .snipcart-overlay {
     min-width: 150px !important;
   }
 }
+/* --- Snipcart dropdown arrow/value overlap fix (global) --- */
+#snipcart .snipcart-form__select {
+  padding-right: 2rem !important; /* space for arrow */
+  background-repeat: no-repeat !important;
+  background-position: right 0.6rem center !important;
+  appearance: auto !important; /* ensure native arrow shows */
+  -webkit-appearance: menulist !important; /* Safari */
+  -moz-appearance: menulist !important; /* Firefox */
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+}
+
+/* On wider screens make selects a touch wider for readability */
+@media (min-width: 768px) {
+  #snipcart .snipcart-form__select {
+    min-width: 140px !important;
+  }
+}
+@media (min-width: 1024px) {
+  #snipcart .snipcart-form__select {
+    min-width: 160px !important;
+  }
+}
