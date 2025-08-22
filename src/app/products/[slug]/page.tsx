@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 
 import ProductClient from './ProductClient';
 
-// Model data with images, back images, descriptions, and specs
+// Model data with images, back images, description, and specs
 const modelData = [
   {
     name: 'FilmRaid-4A',
@@ -230,7 +230,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         data-item-url={`https://www.filmraid.pro/products/${slug}`}
         data-item-description={currentModel.description}
         data-item-name={`${currentModel.name} ${raid0}TB`}
-        data-item-image={`https://www.filmraid.pro${images[0]}`}
+        data-item-image={images[0]}
         data-item-quantity={1}
         data-item-custom1-name="RAID Level"
         data-item-custom1-options={availableRaids.join('|')}
@@ -243,7 +243,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       </button>
       <ProductClient
         currentModel={currentModel}
-        tb={perDriveTb}
         raid0={raid0}
         raid5={raid5}
         price={price}
