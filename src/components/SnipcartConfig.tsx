@@ -6,16 +6,14 @@ const SnipcartConfig = () => {
   useEffect(() => {
     const handleSnipcartReady = () => {
       if (typeof window !== 'undefined' && window.Snipcart) {
-        // @ts-ignore - Snipcart type not fully defined in TS; ignoring for API access
-        const snipcart = window.Snipcart;
-
+        const snipcart = window.Snipcart; // Type guard
         // Client-side validation for VAT (adds error if invalid; taxes handled server-side)
-        // @ts-ignore - events.on type inference limited in Snipcart API
+        // @ts-ignore - Snipcart event types infer no-params but docs show (ev); using unknown for params
         snipcart.events.on('page.validating', async (ev) => {
           if (ev.type === 'billing-address') {
-            // @ts-ignore - api.cart.getCustomFieldValue not typed in Snipcart
+            // @ts-ignore - api.cart methods defined in d.ts but TS not recognizing on Snipcart type
             const vatNumber = snipcart.api.cart.getCustomFieldValue('vatNumber');
-            // @ts-ignore - api.cart.getBillingAddress not typed in Snipcart
+            // @ts-ignore - api.cart methods defined in d.ts but TS not recognizing on Snipcart type
             const billingAddress = snipcart.api.cart.getBillingAddress();
             const country = billingAddress.country;
 
@@ -55,11 +53,9 @@ const SnipcartConfig = () => {
                 );
                 const data = await response.json();
                 if (!data.valid) {
-                  // @ts-ignore - addError not fully typed in Snipcart
                   ev.addError('vatNumber', 'Invalid EU VAT number. Leave blank for standard VAT.');
                 }
               } catch {
-                // @ts-ignore - addError not fully typed in Snipcart
                 ev.addError('vatNumber', 'VAT validation failed. Try again.');
               }
             }
@@ -67,7 +63,6 @@ const SnipcartConfig = () => {
         });
 
         // Show confirmation for valid VAT on field change
-        // @ts-ignore - events.on type inference limited in Snipcart API
         snipcart.events.on('snipcart.ready', () => {
           const vatInput = document.querySelector('[name="vatNumber"]') as HTMLInputElement;
           if (vatInput) {
@@ -110,9 +105,6 @@ const SnipcartConfig = () => {
                 messageEl = document.createElement('span');
                 messageEl.id = 'vat-message';
                 messageEl.style.color = 'green';
-                messageEl.style.fontSize = '0.875rem';
-                messageEl.style.marginTop = '0.25rem';
-                messageEl.style.display = 'block';
                 vatInput.parentNode?.appendChild(messageEl);
               }
 
@@ -124,26 +116,38 @@ const SnipcartConfig = () => {
                   const data = await response.json();
                   if (data.valid) {
                     if (country === 'ES') {
-                      messageEl.textContent = 'Valid - IVA charged (local sale)';
+                      messageEl.textContent = ' Valid - IVA charged';
                       messageEl.style.color = 'green';
                     } else if (euCountries.includes(country)) {
-                      messageEl.textContent = 'Valid - 0% VAT applied (intra-EU B2B)';
+                      messageEl.textContent = ' Valid - 0% VAT applied';
                       messageEl.style.color = 'green';
                     } else {
                       messageEl.textContent = '';
                     }
                   } else {
-                    messageEl.textContent = 'Invalid VAT number';
+                    messageEl.textContent = ' Invalid';
                     messageEl.style.color = 'red';
                   }
                 } catch {
-                  messageEl.textContent = 'Validation failed - try again';
+                  messageEl.textContent = ' Validation failed';
                   messageEl.style.color = 'red';
                 }
               } else {
                 messageEl.textContent = '';
               }
             });
+          }
+
+          // Reorder VAT before checkbox
+          const vatField = document
+            .querySelector('.snipcart-form__field [name="vatNumber"]')
+            ?.closest('.snipcart-form__field');
+          const checkboxField = document
+            .querySelector('.snipcart-form__field-checkbox [name="shipToBillingAddress"]')
+            ?.closest('.snipcart-form__field-checkbox');
+
+          if (vatField && checkboxField && checkboxField.parentNode) {
+            checkboxField.parentNode.insertBefore(vatField, checkboxField.nextSibling);
           }
         });
       }
