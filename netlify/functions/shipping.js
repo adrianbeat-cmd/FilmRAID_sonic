@@ -1,42 +1,30 @@
-// @ts-nocheck
+// netlify/functions/shipping.js
 exports.handler = async (event) => {
-  const data = JSON.parse(event.body);
-  const content = data.content;
-  const shippingAddress = content.shippingAddress || {};
-  const items = content.items || [];
+  try {
+    const payload = JSON.parse(event.body || '{}');
+    const country = payload?.shippingAddress?.country || payload?.country || 'ES';
+    const items = payload?.items || [];
 
-  console.log('Shipping webhook called with:', { country: shippingAddress.country, items });
+    // Calculate total weight (fallback if item.weight is null)
+    let totalWeight = 0;
+    items.forEach((item) => {
+      if (item.weight) {
+        totalWeight += item.weight * (item.quantity || 1);
+      } else {
+        // fallback: approximate by model name
+        if (item.name.includes('FilmRaid-4A')) totalWeight += 8;
+        else if (item.name.includes('FilmRaid-6')) totalWeight += 12;
+        else if (item.name.includes('FilmRaid-8')) totalWeight += 18;
+        else if (item.name.includes('FilmRaid-12E')) totalWeight += 22;
+        else totalWeight += 10; // default
+      }
+    });
 
-  let rates = [];
+    console.log('Shipping webhook called with:', payload);
+    console.log('Calculated totalWeight:', totalWeight);
 
-  // Calculate total weight (kg) and dims (cm) dynamically
-  let totalWeight = 0;
-  items.forEach((item) => {
-    const model = item.name.split(' ')[0]; // e.g., FilmRaid-4A
-    let baseWeight;
-    switch (model) {
-      case 'FilmRaid-4A':
-        baseWeight = 3.6;
-        break;
-      case 'FilmRaid-6':
-        baseWeight = 4.8;
-        break;
-      case 'FilmRaid-8':
-        baseWeight = 5.2;
-        break;
-      default:
-        baseWeight = 5; // Fallback
-    }
-    let hddCount = parseInt(model.split('-')[1]) || 4; // e.g., 4 from 4A
-    if (isNaN(hddCount)) hddCount = 4; // Fix if parseInt NaN
-    const driveWeight = 0.7; // Per 18-22TB HDD
-    totalWeight += (baseWeight + hddCount * driveWeight) * item.quantity;
-  });
-
-  console.log('Calculated totalWeight:', totalWeight);
-
-  if (
-    [
+    // Simple EU check
+    const euCountries = [
       'AT',
       'BE',
       'BG',
@@ -45,7 +33,6 @@ exports.handler = async (event) => {
       'DE',
       'DK',
       'EE',
-      'ES',
       'FI',
       'FR',
       'GR',
@@ -64,27 +51,36 @@ exports.handler = async (event) => {
       'SE',
       'SI',
       'SK',
-    ].includes(shippingAddress.country)
-  ) {
-    rates.push({
-      userDefinedId: 'dhl-eu',
-      cost: 50,
-      description: 'DHL Express (EU)',
-      guaranteedDaysToDelivery: 2,
-    });
-  } else {
-    rates.push({
-      userDefinedId: 'fedex-int',
-      cost: 100,
-      description: 'FedEx International',
-      guaranteedDaysToDelivery: 5,
-    });
+      'ES',
+    ];
+
+    let rates = [];
+
+    if (euCountries.includes(country)) {
+      rates.push({
+        userDefinedId: 'dhl-eu',
+        cost: 50 + totalWeight * 2, // simple formula
+        description: 'DHL Express (EU)',
+        guaranteedDaysToDelivery: 2,
+      });
+    } else {
+      rates.push({
+        userDefinedId: 'fedex-intl',
+        cost: 100 + totalWeight * 3,
+        description: 'FedEx International',
+        guaranteedDaysToDelivery: 5,
+      });
+    }
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ rates }),
+    };
+  } catch (error) {
+    console.error('Shipping function error:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Shipping rates calculation failed' }),
+    };
   }
-
-  console.log('Returning rates:', rates);
-
-  return {
-    statusCode: 200,
-    body: JSON.stringify({ rates }),
-  };
 };
