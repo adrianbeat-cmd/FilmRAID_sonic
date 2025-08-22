@@ -1,6 +1,4 @@
 // netlify/functions/taxes.js
-const fetch = require('node-fetch');
-
 exports.handler = async (event) => {
   try {
     const payload = JSON.parse(event.body || '{}');
