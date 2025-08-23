@@ -120,6 +120,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
           strategy="afterInteractive"
         />
+        {/* VAT checker (UI + VIES call) */}
+        <Script src="/vat-check.js" strategy="afterInteractive" />
 
         {/* EU VAT format hint that can see inside shadow DOM */}
         <Script id="eu-vat-format-check" strategy="afterInteractive">
