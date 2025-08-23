@@ -96,7 +96,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Snipcart v3 CSS */}
         <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css" />
 
-        {/* Snipcart settings */}
+        {/* Snipcart settings (no templatesUrl; keep simple) */}
         <Script
           id="snipcart-settings"
           strategy="beforeInteractive"
@@ -107,8 +107,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         loadStrategy: "always",
         modalStyle: "full",
         addProductBehavior: "open",
-        timeoutDuration: 2000,
-        templatesUrl: "/snipcart-templates.html",
+        timeoutDuration: 4000,
         version: "3.6.0"
       };
     `,
@@ -244,7 +243,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     }
   }
 
-  document.addEventListener('snipcart.ready', arm);
+  // give Snipcart time to boot and attach its root
+  document.addEventListener('snipcart.ready', () => setTimeout(arm, 200));
 })();
 `}
         </Script>
@@ -253,13 +253,24 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Script id="snipcart-diagnostics" strategy="afterInteractive">
           {`
             document.addEventListener('snipcart.ready', () => {
-              console.log('[FilmRAID] snipcart-root present:', !!document.querySelector('snipcart-root'));
+              setTimeout(() => {
+                console.log('[FilmRAID] snipcart-root present:', !!document.querySelector('snipcart-root'));
+              }, 600);
             });
           `}
         </Script>
       </head>
 
       <body className={`${sfProDisplay.variable} antialiased`}>
+        {/* Snipcart container MUST be present exactly once and not conditionally rendered */}
+        <div
+          hidden
+          id="snipcart"
+          data-api-key={publicKey}
+          data-config-add-product-behavior="open"
+          data-config-modal-style="full"
+        />
+
         <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
           <NavigationProvider>
             <Navbar />
@@ -267,13 +278,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <main>{children}</main>
             <CTA />
             <Footer />
-            <div
-              hidden
-              id="snipcart"
-              data-api-key={publicKey}
-              data-config-add-product-behavior="open"
-              data-config-modal-style="full"
-            />
             <SnipcartConfig />
           </NavigationProvider>
         </ThemeProvider>
