@@ -174,6 +174,94 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             });
           `}
         </Script>
+        {/* EU VAT real check (uses our /api/vat-verify) */}
+        <Script id="eu-vat-real-check" strategy="afterInteractive">
+          {`
+document.addEventListener("snipcart.ready", () => {
+  const vatInput = document.querySelector('#vatNumber');
+  const vatMsg = document.querySelector('#vat-message');
+  if (!vatInput || !vatMsg) return;
+
+  let lastValue = '';
+  let lastResult = null;
+  let inFlight = false;
+
+  const setMsg = (text, color) => {
+    vatMsg.textContent = text;
+    vatMsg.style.color = color || '';
+  };
+
+  const EU_VAT_REGEX = /^[A-Z]{2}[A-Z0-9]{8,12}$/i;
+
+  async function verifyReal(v) {
+    try {
+      inFlight = true;
+      setMsg('Checking VAT…', '#555');
+      const res = await fetch('/api/vat-verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vat: v })
+      });
+      const json = await res.json();
+      inFlight = false;
+
+      if (!json.ok) {
+        lastResult = null;
+        setMsg('Couldn\\'t verify VAT right now (service busy). You can still continue.', 'orange');
+        return;
+      }
+
+      if (json.valid) {
+        lastResult = { valid: true, name: json.name || '', address: json.address || '' };
+        setMsg('✓ Valid VAT (VIES)', 'green');
+      } else {
+        lastResult = { valid: false };
+        setMsg('✗ VAT not found in VIES', 'crimson');
+      }
+    } catch {
+      inFlight = false;
+      lastResult = null;
+      setMsg('Couldn\\'t verify VAT right now (network). You can still continue.', 'orange');
+    }
+  }
+
+  async function onChange() {
+    const raw = (vatInput.value || '').replace(/\\s+/g, '').toUpperCase();
+    if (!raw) { setMsg('', ''); lastResult = null; return; }
+
+    if (!EU_VAT_REGEX.test(raw)) {
+      setMsg('✗ VAT format looks invalid', 'crimson');
+      lastResult = { valid: false, reason: 'format' };
+      return;
+    }
+
+    // format OK → check real
+    if (raw !== lastValue) {
+      lastValue = raw;
+      await verifyReal(raw);
+    }
+  }
+
+  vatInput.addEventListener('input', onChange);
+  onChange();
+
+  // Soft gate: prevent payment click when we know it's invalid (format or VIES)
+  // Users can still remove VAT or correct it to proceed.
+  document.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement)?.closest('.snipcart-button-primary');
+    if (!btn) return;
+
+    // If user filled VAT but it's invalid, stop & nudge
+    const v = (vatInput.value || '').replace(/\\s+/g, '');
+    if (v && lastResult && lastResult.valid === false && !inFlight) {
+      e.preventDefault();
+      e.stopPropagation();
+      setMsg('Please enter a valid EU VAT number (or clear the field to continue).', 'crimson');
+    }
+  }, true);
+});
+`}
+        </Script>
 
         {/* Diagnostics (light) */}
         <Script id="snipcart-diagnostics" strategy="afterInteractive">
