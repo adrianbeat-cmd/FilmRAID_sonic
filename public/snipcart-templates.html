@@ -1,4 +1,43 @@
-<!-- FilmRAID – Safe Snipcart templates file (no overrides).
-     Keeping this file present because layout points to /snipcart-templates.html.
-     Since there are no <script data-snipcart-template="..."> blocks here,
-     Snipcart will use its default templates (cart summary shows items, etc.). -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Snipcart templates</title>
+  </head>
+  <body>
+    <!-- Snipcart requires all overrides inside this single root -->
+    <div id="snipcart-templates">
+      <!-- Add Company + EU VAT at the very end of the Billing step -->
+      <billing section="bottom">
+        <!-- Single root for this component override -->
+        <div>
+          <fieldset class="snipcart-form__set">
+            <!-- Company FIRST -->
+            <div class="snipcart-form__field">
+              <snipcart-label class="snipcart__font--tiny" for="companyName">
+                Company Name (Optional)
+              </snipcart-label>
+              <snipcart-input name="companyName" type="text" placeholder="Your Company">
+              </snipcart-input>
+            </div>
+
+            <!-- EU VAT SECOND -->
+            <div class="snipcart-form__field">
+              <snipcart-label class="snipcart__font--tiny" for="vatNumber">
+                EU VAT Number
+              </snipcart-label>
+              <snipcart-input
+                id="vatNumber"
+                name="vatNumber"
+                type="text"
+                placeholder="e.g. ESB10680478"
+              >
+              </snipcart-input>
+              <span id="vat-message" style="display: block; margin-top: 0.25rem"></span>
+            </div>
+          </fieldset>
+        </div>
+      </billing>
+    </div>
+  </body>
+</html>
