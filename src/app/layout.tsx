@@ -96,21 +96,22 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Snipcart v3 CSS */}
         <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css" />
 
-        {/* Snipcart settings: full-page modal + open on add + templates file */}
+        {/* Snipcart settings: full-page modal + open on add + templates file + version */}
         <Script
           id="snipcart-settings"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
-              window.SnipcartSettings = {
-                publicApiKey: "${publicKey}",
-                loadStrategy: "always",
-                modalStyle: "full",
-                addProductBehavior: "open",
-                timeoutDuration: 2000,
-                templatesUrl: "/snipcart-templates.html"
-              };
-            `,
+      window.SnipcartSettings = {
+        publicApiKey: "${process.env.NEXT_PUBLIC_SNIPCART_PUBLIC_API_KEY ?? 'NzhjOGJmOTEtY2Y1MS00MGRkLWIwNmEtNjkzYWVlNTYxMjViNjM4OTA0NTgxOTU4MTA2ODQy'}",
+        loadStrategy: "always",
+        modalStyle: "full",
+        addProductBehavior: "open",
+        timeoutDuration: 2000,
+        templatesUrl: "/snipcart-templates.html",
+        version: "3.6.0"
+      };
+    `,
           }}
         />
 
@@ -120,48 +121,65 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           strategy="afterInteractive"
         />
 
-        {/* Live EU VAT format check (visual only) */}
+        {/* EU VAT format hint that can see inside shadow DOM */}
         <Script id="eu-vat-format-check" strategy="afterInteractive">
           {`
-            document.addEventListener("snipcart.ready", () => {
-              const vatInput = document.querySelector('#vatNumber');
-              const vatMsg = document.querySelector('#vat-message');
-              if (!vatInput || !vatMsg) return;
+            // Find elements even when Snipcart renders them inside shadow DOM
+            function queryDeepAll(selector, root = document) {
+              const results = [];
+              const walker = (node) => {
+                if (!node) return;
+                if (node.querySelectorAll) node.querySelectorAll(selector).forEach(el => results.push(el));
+                const descend = node.querySelectorAll ? node.querySelectorAll('*') : [];
+                descend.forEach(el => { if (el.shadowRoot) walker(el.shadowRoot); });
+                if (node instanceof ShadowRoot) node.childNodes.forEach(ch => { if (ch.shadowRoot) walker(ch.shadowRoot); });
+              };
+              walker(root);
+              return results;
+            }
+
+            function bindVatHint() {
+              const input = queryDeepAll('input#vatNumber, input[name="vatNumber"]')[0];
+              const msg   = queryDeepAll('#vat-message')[0];
+              if (!input || !msg) return false;
 
               const EU_VAT_REGEX = /^[A-Z]{2}[A-Z0-9]{8,12}$/i;
-
-              function update() {
-                const v = (vatInput.value || '').replace(/\\s+/g, '');
-                if (!v) { vatMsg.textContent = ''; vatMsg.style.color = ''; return; }
+              const update = () => {
+                const v = (input.value || '').replace(/\\s+/g, '');
+                if (!v) { msg.textContent = ''; msg.style.color = ''; return; }
                 if (EU_VAT_REGEX.test(v)) {
-                  vatMsg.textContent = '✓ VAT format looks valid';
-                  vatMsg.style.color = 'green';
+                  msg.textContent = '✓ VAT format looks valid';
+                  msg.style.color = 'green';
                 } else {
-                  vatMsg.textContent = '✗ VAT format looks invalid';
-                  vatMsg.style.color = 'crimson';
+                  msg.textContent = '✗ VAT format looks invalid';
+                  msg.style.color = 'crimson';
                 }
-              }
-              vatInput.addEventListener('input', update);
+              };
+
+              input.addEventListener('input', update, true);
               update();
+              return true;
+            }
+
+            document.addEventListener('snipcart.ready', () => {
+              // try now + a few retries as Snipcart swaps steps
+              const delays = [80, 250, 600, 1200, 2000];
+              let ok = bindVatHint();
+              delays.forEach(ms => setTimeout(() => { if (!ok) ok = bindVatHint(); }, ms));
+
+              // rebind on route changes inside the cart/checkout
+              if (window.Snipcart?.events?.on) {
+                Snipcart.events.on('route.changed', () => setTimeout(bindVatHint, 200));
+              }
             });
           `}
         </Script>
 
-        {/* Diagnostics */}
+        {/* Diagnostics (light) */}
         <Script id="snipcart-diagnostics" strategy="afterInteractive">
           {`
-            document.addEventListener('DOMContentLoaded', () => {
-              const roots = document.querySelectorAll('#snipcart');
-              if (roots.length !== 1) {
-                console.warn('[FilmRAID] Snipcart roots found:', roots.length, '→ must be exactly 1');
-              } else {
-                console.log('[FilmRAID] Single Snipcart root OK');
-              }
-            });
             document.addEventListener('snipcart.ready', () => {
-              const billingFields = document.querySelectorAll('#snipcart [name="companyName"], #snipcart [name="vatNumber"]');
-              console.log('[FilmRAID] Billing custom fields count:', billingFields.length);
-              console.log('[FilmRAID] VAT input present:', !!document.querySelector('#snipcart #vatNumber'));
+              console.log('[FilmRAID] snipcart-root present:', !!document.querySelector('snipcart-root'));
             });
           `}
         </Script>
