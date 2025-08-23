@@ -225,7 +225,7 @@ const ProductPage = async ({ params }: { params: Promise<Params> }) => {
         data-item-name={`${currentModel.name} ${raid0}TB`}
         data-item-image={`https://www.filmraid.pro${images[0]}`}
         data-item-quantity={1}
-        data-item-custom1-name="RAID Level"
+        data-item-custom1-name="RAID-Level"
         data-item-custom1-options={availableRaids.join('|')}
         data-item-custom1-value={availableRaids[0] || '0'}
         data-item-shippable="true"

@@ -69,8 +69,11 @@ exports.handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({ ok: true, valid, name, address }),
     };
-  } catch (e) {
-    // VIES can be flaky/rate-limited. Return “unknown” so UI can inform the user gracefully.
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'production') {
+      /* eslint-disable-next-line no-console */
+      console.error('[vat-verify] VIES error:', err);
+    }
     return {
       statusCode: 200,
       body: JSON.stringify({ ok: false, error: 'VIES unavailable' }),
