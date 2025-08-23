@@ -295,10 +295,6 @@ html.page-transition:after {
   color: #1a1a1a;
 }
 
-#snipcart .snipcart-cart__content {
-  max-width: 600px;
-  margin: 0 auto;
-}
 #snipcart .snipcart-amount {
   color: #1a1a1a;
   font-weight: 600;
@@ -384,18 +380,30 @@ html.snipcart-modal-open .snipcart-overlay {
   box-sizing: border-box;
 }
 
-/* Normalize select caret */
+/* Normalize select caret — hide native arrow so Snipcart's SVG is the only one */
 #snipcart .snipcart-form__select {
+  appearance: none !important;
+  -webkit-appearance: none !important; /* Safari/iOS */
+  -moz-appearance: none !important; /* Firefox */
+  background: none !important;
+  background-image: none !important;
+  padding-right: 2rem !important; /* space for the SVG caret */
   color: #333 !important;
-  background-color: #fff !important;
-  padding: 0.75rem 2rem 0.75rem 0.75rem !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  appearance: menulist;
-  -webkit-appearance: menulist;
-  -moz-appearance: menulist;
+  overflow: hidden !important; /* avoids weird overlaps on some browsers */
 }
+
+/* Slightly wider selects on larger screens */
+@media (min-width: 768px) {
+  #snipcart .snipcart-form__select {
+    min-width: 140px !important;
+  }
+}
+@media (min-width: 1024px) {
+  #snipcart .snipcart-form__select {
+    min-width: 160px !important;
+  }
+}
+
 #snipcart .snipcart-form__select option {
   padding-right: 1.5rem;
 }
@@ -419,4 +427,27 @@ html.snipcart-modal-open .snipcart-overlay {
   -webkit-appearance: menulist !important;
   -moz-appearance: menulist !important;
   padding-right: 1.5rem !important;
+}
+/* Mild, layout-safe inner padding for cart content */
+#snipcart .snipcart-cart__content {
+  padding-inline: 1rem;
+}
+
+@media (min-width: 1024px) {
+  #snipcart .snipcart-cart__content {
+    padding-inline: 1.25rem;
+  }
+}
+/* --- Fix double caret on Snipcart selects (Mobile, Desktop 1 & 2) --- */
+/* Hide Snipcart's injected SVG caret; keep the native select arrow */
+#snipcart .snipcart-form__select-wrapper > svg.snipcart__icon {
+  display: none !important;
+}
+
+/* Make sure the native arrow has room and nothing else is drawn */
+#snipcart select.snipcart-form__select,
+#snipcart select.snipcart-dropdown-custom-field {
+  background-image: none !important;
+  background: transparent !important;
+  padding-right: 2rem !important; /* space on the right for native arrow */
 }
