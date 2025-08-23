@@ -96,7 +96,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Snipcart v3 CSS */}
         <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css" />
 
-        {/* Snipcart settings: full-page modal + open on add + templates file + version */}
+        {/* Snipcart settings */}
         <Script
           id="snipcart-settings"
           strategy="beforeInteractive"
@@ -120,97 +120,50 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
           strategy="afterInteractive"
         />
+
         {/* VAT checker (UI + VIES call) */}
         <Script src="/vat-check.js" strategy="afterInteractive" />
 
-        {/* EU VAT format hint that can see inside shadow DOM */}
-        <Script id="eu-vat-format-check" strategy="afterInteractive">
-          {`
-            // Find elements even when Snipcart renders them inside shadow DOM
-            function queryDeepAll(selector, root = document) {
-              const results = [];
-              const walk = (node) => {
-                if (!node) return;
-                if (node.querySelectorAll) node.querySelectorAll(selector).forEach(el => results.push(el));
-                const descend = node.querySelectorAll ? node.querySelectorAll('*') : [];
-                descend.forEach(el => { if (el.shadowRoot) walk(el.shadowRoot); });
-                const isShadow = (typeof ShadowRoot !== 'undefined') && (node instanceof ShadowRoot);
-                if (isShadow) node.childNodes.forEach(ch => { if (ch.shadowRoot) walk(ch.shadowRoot); });
-              };
-              walk(root);
-              return results;
-            }
-
-            function bindVatHint() {
-              const input = queryDeepAll('input#vatNumber, input[name="vatNumber"]')[0];
-              const msg   = queryDeepAll('#vat-message')[0];
-              if (!input || !msg) return false;
-
-              const EU_VAT_REGEX = /^[A-Z]{2}[A-Z0-9]{8,12}$/i;
-              const update = () => {
-                const v = (input.value || '').replace(/\\s+/g, '');
-                if (!v) { msg.textContent = ''; msg.style.color = ''; return; }
-                if (EU_VAT_REGEX.test(v)) {
-                  msg.textContent = '✓ VAT format looks valid';
-                  msg.style.color = 'green';
-                } else {
-                  msg.textContent = '✗ VAT format looks invalid';
-                  msg.style.color = 'crimson';
-                }
-              };
-
-              input.addEventListener('input', update, true);
-              update();
-              return true;
-            }
-
-            document.addEventListener('snipcart.ready', () => {
-              // try now + a few retries as Snipcart swaps steps
-              const delays = [80, 250, 600, 1200, 2000];
-              let ok = bindVatHint();
-              delays.forEach(ms => setTimeout(() => { if (!ok) ok = bindVatHint(); }, ms));
-
-              // rebind on route changes inside the cart/checkout
-              if (window.Snipcart?.events?.on) {
-                Snipcart.events.on('route.changed', () => setTimeout(bindVatHint, 200));
-              }
-            });
-          `}
-        </Script>
-
-        {/* EU VAT real check (uses our /api/vat-verify) */}
-        <Script id="eu-vat-real-check" strategy="afterInteractive">
+        {/* EU VAT check (format + real) */}
+        <Script id="eu-vat-check" strategy="afterInteractive">
           {`
 (function () {
   function queryDeepAll(selector, root = document) {
     const results = [];
-    const walk = (node) => {
-      if (!node) return;
-      if (node.querySelectorAll) node.querySelectorAll(selector).forEach(el => results.push(el));
-      const descend = node.querySelectorAll ? node.querySelectorAll('*') : [];
-      descend.forEach(el => { if (el.shadowRoot) walk(el.shadowRoot); });
-      const isShadow = (typeof ShadowRoot !== 'undefined') && (node instanceof ShadowRoot);
-      if (isShadow) node.childNodes.forEach(ch => { if (ch.shadowRoot) walk(ch.shadowRoot); });
-    };
+    const seen = new Set();
+    function walk(node) {
+      if (!node || seen.has(node)) return;
+      seen.add(node);
+      if (node.querySelectorAll) {
+        node.querySelectorAll(selector).forEach((el) => results.push(el));
+        node.querySelectorAll('*').forEach((el) => {
+          if (el.shadowRoot) walk(el.shadowRoot);
+        });
+      }
+      if (node instanceof ShadowRoot) {
+        node.childNodes.forEach((ch) => {
+          if (ch.shadowRoot) walk(ch.shadowRoot);
+        });
+      }
+    }
     walk(root);
     return results;
   }
 
-  document.addEventListener('snipcart.ready', () => {
-    const vatInput = queryDeepAll('input#vatNumber, input[name="vatNumber"]')[0];
-    const vatMsg   = queryDeepAll('#vat-message')[0];
-    if (!vatInput || !vatMsg) return;
+  function bindVatHandlers() {
+    const input = queryDeepAll('input#vatNumber, input[name="vatNumber"]')[0];
+    const msg   = queryDeepAll('#vat-message')[0];
+    if (!input || !msg) return false;
 
+    const EU_VAT_REGEX = /^[A-Z]{2}[A-Z0-9]{8,12}$/i;
     let lastValue = '';
     let lastResult = null;
     let inFlight = false;
 
-    const setMsg = (text, color) => {
-      vatMsg.textContent = text;
-      vatMsg.style.color = color || '';
-    };
-
-    const EU_VAT_REGEX = /^[A-Z]{2}[A-Z0-9]{8,12}$/i;
+    function setMsg(text, color) {
+      msg.textContent = text || '';
+      msg.style.color = color || '';
+    }
 
     async function verifyReal(v) {
       try {
@@ -219,14 +172,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         const res = await fetch('/api/vat-verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ vat: v })
+          body: JSON.stringify({ vat: v }),
         });
         const json = await res.json();
         inFlight = false;
 
         if (!json.ok) {
           lastResult = null;
-          setMsg('Couldn\\'t verify VAT right now (service busy). You can still continue.', 'orange');
+          setMsg("Couldn't verify VAT right now (service busy).", 'orange');
           return;
         }
 
@@ -240,13 +193,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       } catch {
         inFlight = false;
         lastResult = null;
-        setMsg('Couldn\\'t verify VAT right now (network). You can still continue.', 'orange');
+        setMsg("Couldn't verify VAT right now (network).", 'orange');
       }
     }
 
-    async function onChange() {
-      const raw = (vatInput.value || '').replace(/\\s+/g, '').toUpperCase();
-      if (!raw) { setMsg('', ''); lastResult = null; return; }
+    function onChange() {
+      const raw = String(input.value || '').replace(/\\s+/g, '').toUpperCase();
+      if (!raw) { setMsg(''); lastResult = null; return; }
 
       if (!EU_VAT_REGEX.test(raw)) {
         setMsg('✗ VAT format looks invalid', 'crimson');
@@ -254,36 +207,49 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         return;
       }
 
-      // format OK → check real
       if (raw !== lastValue) {
         lastValue = raw;
-        await verifyReal(raw);
+        verifyReal(raw);
       }
     }
 
-    vatInput.addEventListener('input', onChange, true);
+    input.addEventListener('input', onChange, true);
     onChange();
 
-    // Soft gate: prevent payment click when we know it's invalid (format or VIES)
-    // Users can still remove VAT or correct it to proceed.
     document.addEventListener('click', function (e) {
-      var t = e.target;
-      var btn = (t && typeof t.closest === 'function') ? t.closest('.snipcart-button-primary') : null;
+      const el = e && e.target instanceof Element ? e.target : null;
+      const btn = el ? el.closest('.snipcart-button-primary') : null;
       if (!btn) return;
 
-      var v = (vatInput.value || '').replace(/\\s+/g, '');
+      const v = String(input.value || '').replace(/\\s+/g, '');
       if (v && lastResult && lastResult.valid === false && !inFlight) {
         e.preventDefault();
         e.stopPropagation();
-        setMsg('Please enter a valid EU VAT number (or clear the field to continue).', 'crimson');
+        setMsg('Please enter a valid EU VAT number (or clear the field).', 'crimson');
       }
     }, true);
-  });
+
+    return true;
+  }
+
+  function arm() {
+    const delays = [80, 250, 600, 1200, 2000, 3500];
+    let ok = bindVatHandlers();
+    delays.forEach((ms) => setTimeout(() => { if (!ok) ok = bindVatHandlers(); }, ms));
+
+    if (window.Snipcart && window.Snipcart.events && window.Snipcart.events.on) {
+      window.Snipcart.events.on('route.changed', function () {
+        setTimeout(bindVatHandlers, 200);
+      });
+    }
+  }
+
+  document.addEventListener('snipcart.ready', arm);
 })();
 `}
         </Script>
 
-        {/* Diagnostics (light) */}
+        {/* Diagnostics */}
         <Script id="snipcart-diagnostics" strategy="afterInteractive">
           {`
             document.addEventListener('snipcart.ready', () => {
@@ -301,8 +267,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <main>{children}</main>
             <CTA />
             <Footer />
-
-            {/* Snipcart container (keep EMPTY; templates file injects fields) */}
             <div
               hidden
               id="snipcart"
@@ -310,8 +274,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               data-config-add-product-behavior="open"
               data-config-modal-style="full"
             />
-
-            {/* VAT/tax event wiring */}
             <SnipcartConfig />
           </NavigationProvider>
         </ThemeProvider>
