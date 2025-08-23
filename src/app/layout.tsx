@@ -252,12 +252,27 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Diagnostics */}
         <Script id="snipcart-diagnostics" strategy="afterInteractive">
           {`
-            document.addEventListener('snipcart.ready', () => {
-              setTimeout(() => {
-                console.log('[FilmRAID] snipcart-root present:', !!document.querySelector('snipcart-root'));
-              }, 600);
-            });
-          `}
+    document.addEventListener('snipcart.ready', () => {
+      const check = (label) => {
+        console.log('[FilmRAID]', label || 'check', 'snipcart-root present:', !!document.querySelector('snipcart-root'));
+      };
+
+      // initial check (before cart is ever opened this will likely be false)
+      check('ready');
+
+      // when cart opens or route changes inside Snipcart, check again
+      if (window.Snipcart && window.Snipcart.events && window.Snipcart.events.on) {
+        Snipcart.events.on('cart.opened',   () => check('cart.opened'));
+        Snipcart.events.on('route.changed', () => check('route.changed'));
+      }
+
+      // also watch DOM in case Snipcart injects root later
+      try {
+        new MutationObserver(() => check('mutation'))
+          .observe(document.body, { childList: true, subtree: true });
+      } catch {}
+    });
+  `}
         </Script>
       </head>
 
