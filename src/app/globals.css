@@ -243,7 +243,7 @@ html.page-transition:after {
   }
 }
 
-/* ---------- Snipcart Customization ---------- */
+/* ---------- Snipcart Customization (clean) ---------- */
 #snipcart {
   font-family: var(--font-sf-pro-display);
   --snipcart-font-size: 1rem;
@@ -252,6 +252,7 @@ html.page-transition:after {
   z-index: 10000 !important;
 }
 
+/* Header / content / footer basics */
 #snipcart-header {
   background-color: var(--primary);
   color: var(--primary-foreground);
@@ -259,19 +260,18 @@ html.page-transition:after {
   font-size: 1.25rem;
   font-weight: 500;
 }
-
 #snipcart-content {
   background-color: #ffffff;
   color: #1a1a1a;
   padding: 1rem;
 }
-
 #snipcart-footer {
   background-color: var(--muted);
   color: var(--muted-foreground);
   padding: 1rem;
 }
 
+/* Primary buttons */
 #snipcart .snipcart-cart-button {
   background-color: var(--primary);
   color: var(--primary-foreground);
@@ -284,6 +284,7 @@ html.page-transition:after {
   background-color: hsl(240, 3%, 10%);
 }
 
+/* Cart item line */
 #snipcart .snipcart-item-line {
   border-bottom: 1px solid var(--border);
   padding: 1rem 0;
@@ -295,6 +296,7 @@ html.page-transition:after {
   color: #1a1a1a;
 }
 
+/* Amounts / titles */
 #snipcart .snipcart-amount {
   color: #1a1a1a;
   font-weight: 600;
@@ -305,6 +307,7 @@ html.page-transition:after {
   font-weight: 600;
 }
 
+/* Form fields */
 #snipcart .snipcart-form__field {
   margin-bottom: 1rem;
 }
@@ -329,7 +332,7 @@ html.page-transition:after {
   outline: none;
 }
 
-/* Close button */
+/* Close button in header */
 #snipcart .snipcart-cart-header {
   position: relative;
   display: flex;
@@ -347,12 +350,12 @@ html.page-transition:after {
   color: hsl(240, 3%, 10%);
 }
 
-/* Hide navbar when modal open */
+/* Hide site navbar when modal open */
 html.snipcart-modal-open header {
   display: none !important;
 }
 
-/* Overlay cover */
+/* Modal overlay z-index */
 html.snipcart-modal-open .snipcart-overlay {
   z-index: 9998 !important;
   background-color: rgba(0, 0, 0, 0.5) !important;
@@ -361,93 +364,54 @@ html.snipcart-modal-open .snipcart-overlay {
   z-index: 9999 !important;
 }
 
-/* Product custom field width */
+/* Custom fields sizing */
 #snipcart .snipcart-item-line__customfields,
 #snipcart .snipcart-form__field--custom {
   width: 100%;
 }
 
-/* Stack actions on item line */
+/* Stack item actions neatly */
 #snipcart .snipcart-item-line__actions {
   flex-direction: column !important;
   align-items: flex-start !important;
 }
 
-/* Select width inside item custom fields */
-#snipcart .snipcart-item-line__customfields .snipcart-form__field--select .snipcart-form__select {
-  width: 100% !important;
-  min-width: 100% !important;
-  box-sizing: border-box;
-}
-
-/* Normalize select caret — hide native arrow so Snipcart's SVG is the only one */
-#snipcart .snipcart-form__select {
-  appearance: none !important;
-  -webkit-appearance: none !important; /* Safari/iOS */
-  -moz-appearance: none !important; /* Firefox */
-  background: none !important;
-  background-image: none !important;
-  padding-right: 2rem !important; /* space for the SVG caret */
-  color: #333 !important;
-  overflow: hidden !important; /* avoids weird overlaps on some browsers */
-}
-
-/* Slightly wider selects on larger screens */
-@media (min-width: 768px) {
-  #snipcart .snipcart-form__select {
-    min-width: 140px !important;
-  }
-}
-@media (min-width: 1024px) {
-  #snipcart .snipcart-form__select {
-    min-width: 160px !important;
-  }
-}
-
-#snipcart .snipcart-form__select option {
-  padding-right: 1.5rem;
-}
-
-/* Slightly wider selects on larger screens */
-@media (min-width: 768px) {
-  #snipcart .snipcart-form__select {
-    min-width: 140px !important;
-  }
-}
-@media (min-width: 1024px) {
-  #snipcart .snipcart-form__select {
-    min-width: 160px !important;
-  }
-}
-
-/* Remove double caret */
-#snipcart .snipcart-form__select {
-  background-image: none !important;
-  appearance: menulist !important;
-  -webkit-appearance: menulist !important;
-  -moz-appearance: menulist !important;
-  padding-right: 1.5rem !important;
-}
-/* Mild, layout-safe inner padding for cart content */
+/* --- Padding fix for cart content --- */
 #snipcart .snipcart-cart__content {
   padding-inline: 1rem;
 }
-
 @media (min-width: 1024px) {
   #snipcart .snipcart-cart__content {
     padding-inline: 1.25rem;
   }
 }
-/* --- Fix double caret on Snipcart selects (Mobile, Desktop 1 & 2) --- */
-/* Hide Snipcart's injected SVG caret; keep the native select arrow */
+
+/* --- Single-caret fix for selects (Mobile + Desktop 1 + Desktop 2) --- */
+/* 1) Remove Snipcart’s injected SVG caret */
 #snipcart .snipcart-form__select-wrapper > svg.snipcart__icon {
   display: none !important;
 }
 
-/* Make sure the native arrow has room and nothing else is drawn */
+/* 2) Use the native select arrow and give it space */
 #snipcart select.snipcart-form__select,
 #snipcart select.snipcart-dropdown-custom-field {
+  appearance: auto !important;
+  -webkit-appearance: menulist !important;
+  -moz-appearance: menulist !important;
+  background: #fff !important;
   background-image: none !important;
-  background: transparent !important;
-  padding-right: 2rem !important; /* space on the right for native arrow */
+  padding-right: 2rem !important;
+  color: #333 !important;
+}
+
+/* Optional: a little width help on larger screens */
+@media (min-width: 768px) {
+  #snipcart .snipcart-form__select {
+    min-width: 140px !important;
+  }
+}
+@media (min-width: 1024px) {
+  #snipcart .snipcart-form__select {
+    min-width: 160px !important;
+  }
 }
