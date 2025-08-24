@@ -96,7 +96,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Snipcart v3 CSS */}
         <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css" />
 
-        {/* Snipcart settings (point to our template file) */}
+        {/* Snipcart settings */}
         <Script
           id="snipcart-settings"
           strategy="beforeInteractive"
@@ -115,24 +115,39 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         />
 
-        {/* Guard history state so Snipcart + Next router don't clash */}
+        {/* Robust history guard (self-reinstalls) */}
         <Script id="history-guard" strategy="beforeInteractive">
           {`
   (function () {
     try {
-      var _push = history.pushState, _replace = history.replaceState;
-      history.pushState = function (state, title, url) {
-        if (state != null && (typeof state !== 'object' && typeof state !== 'function')) {
-          state = { value: state };
+      var H = window.history;
+      var WRAP_FLAG = '__frWrapped';
+
+      function wrap(fn) {
+        var bound = fn.bind(H);
+        function safe(state, title, url) {
+          if (state != null && (typeof state !== 'object' && typeof state !== 'function')) {
+            state = { value: state };
+          }
+          return bound(state, title, url);
         }
-        return _push.apply(this, [state, title, url]);
-      };
-      history.replaceState = function (state, title, url) {
-        if (state != null && (typeof state !== 'object' && typeof state !== 'function')) {
-          state = { value: state };
-        }
-        return _replace.apply(this, [state, title, url]);
-      };
+        try { Object.defineProperty(safe, WRAP_FLAG, { value: true }); } catch (_) {}
+        return safe;
+      }
+
+      function install() {
+        if (H.pushState && !H.pushState[WRAP_FLAG]) H.pushState = wrap(H.pushState);
+        if (H.replaceState && !H.replaceState[WRAP_FLAG]) H.replaceState = wrap(H.replaceState);
+      }
+
+      install();
+      var tries = 0;
+      var id = setInterval(function () {
+        install();
+        if (++tries > 50) clearInterval(id); // ~5s
+      }, 100);
+
+      addEventListener('DOMContentLoaded', install);
     } catch (_) {}
   })();
           `}
@@ -149,8 +164,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           {`
 (function () {
   const VAT_RE = /^[A-Z]{2}[A-Z0-9]{8,14}$/;
-
-  // Utility
   const $ = (sel, root) => (root || document).querySelector(sel);
 
   function setMsg(el, text, color) {
@@ -178,11 +191,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   }
 
   function bindOnce() {
-    // Look inside the cart container (preferred) and globally as fallback
     const root = document.getElementById('snipcart') || document;
     const input = $('#vatNumber', root) || $('input[name="vatNumber"]', root);
     const msg   = $('#vat-message', root);
-
     if (!input || !msg) return false;
 
     let last = '';
@@ -206,7 +217,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       if (state === 'error') { setMsg(msg, 'Validation service unavailable. You can proceed or try again.', '#f59e0b'); lastResult = null; return; }
       if (state === 'invalid') { setMsg(msg, '✕ VAT number not valid in VIES.', '#dc2626'); lastResult = { valid: false }; return; }
 
-      // valid
       const suffix = info && info.name ? ' — ' + info.name : '';
       setMsg(msg, '✓ VAT validated' + suffix, '#16a34a');
       lastResult = { valid: true, info };
@@ -216,10 +226,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     input.addEventListener('blur', run);
     run();
 
-    // Block the "Continue" button only if VAT is present AND invalid
+    // Only block when VAT is present AND invalid
     document.addEventListener('click', function (e) {
       const el = e && e.target instanceof Element ? e.target : null;
-      const btn = el ? el.closest('#snipcart .snipcart-button-primary') : null;
+      const btn = el ? el.closest('.snipcart-button-primary') : null; // fixed selector
       if (!btn) return;
 
       const v = String(input.value || '').replace(/\\s+/g, '').toUpperCase();
@@ -234,20 +244,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   }
 
   function arm() {
-    // Try immediately
     if (bindOnce()) return;
-
-    // Watch for the VAT field to appear
     const obs = new MutationObserver(() => { if (bindOnce()) obs.disconnect(); });
     obs.observe(document.documentElement, { childList: true, subtree: true });
 
-    // Also re-try on Snipcart route changes
     if (window.Snipcart?.events?.on) {
       window.Snipcart.events.on('route.changed', () => { setTimeout(bindOnce, 150); });
     }
   }
 
-  // Start once Snipcart is ready or soon after
   if (document.readyState !== 'loading') arm();
   else document.addEventListener('DOMContentLoaded', arm);
   document.addEventListener('snipcart.ready', arm);
@@ -257,7 +262,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
 
       <body className={`${sfProDisplay.variable} antialiased`}>
-        {/* Snipcart container MUST be present exactly once and not conditionally rendered */}
+        {/* Snipcart container */}
         <div
           hidden
           id="snipcart"
