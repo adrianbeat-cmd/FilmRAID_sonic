@@ -124,7 +124,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* VAT checker (UI + VIES call) */}
         <Script src="/vat-check.js" strategy="afterInteractive" />
 
-        {/* EU VAT check (format + real) */}
+        {/* EU VAT check (format + real via Netlify Function) */}
         <Script id="eu-vat-check" strategy="afterInteractive">
           {`
 (function () {
@@ -170,7 +170,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         inFlight = true;
         setMsg('Checking VAT…', '#555');
         const res = await fetch('/.netlify/functions/vat-verify', {
-
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ vat: v }),
@@ -245,10 +244,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     }
   }
 
-  // give Snipcart time to boot and attach its root
   document.addEventListener('snipcart.ready', () => setTimeout(arm, 200));
 })();
-`}
+  `}
         </Script>
 
         {/* Diagnostics */}
