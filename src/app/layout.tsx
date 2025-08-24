@@ -254,26 +254,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 })();
           `}
         </Script>
-
-        {/* Diagnostics (optional) */}
-        <Script id="snipcart-diagnostics" strategy="afterInteractive">
-          {`
-    document.addEventListener('snipcart.ready', () => {
-      const check = (label) => {
-        console.log('[FilmRAID]', label || 'check', 'snipcart-root present:', !!document.querySelector('snipcart-root'));
-      };
-      check('ready');
-      if (window.Snipcart && window.Snipcart.events && window.Snipcart.events.on) {
-        Snipcart.events.on('cart.opened',   () => check('cart.opened'));
-        Snipcart.events.on('route.changed', () => check('route.changed'));
-      }
-      try {
-        new MutationObserver(() => check('mutation'))
-          .observe(document.body, { childList: true, subtree: true });
-      } catch {}
-    });
-          `}
-        </Script>
       </head>
 
       <body className={`${sfProDisplay.variable} antialiased`}>
