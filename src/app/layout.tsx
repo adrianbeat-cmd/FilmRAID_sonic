@@ -115,6 +115,29 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         />
 
+        {/* Guard history state so Snipcart + Next router don't clash */}
+        <Script id="history-guard" strategy="beforeInteractive">
+          {`
+  (function () {
+    try {
+      var _push = history.pushState, _replace = history.replaceState;
+      history.pushState = function (state, title, url) {
+        if (state != null && (typeof state !== 'object' && typeof state !== 'function')) {
+          state = { value: state };
+        }
+        return _push.apply(this, [state, title, url]);
+      };
+      history.replaceState = function (state, title, url) {
+        if (state != null && (typeof state !== 'object' && typeof state !== 'function')) {
+          state = { value: state };
+        }
+        return _replace.apply(this, [state, title, url]);
+      };
+    } catch (_) {}
+  })();
+          `}
+        </Script>
+
         {/* Snipcart script */}
         <Script
           src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
@@ -229,33 +252,27 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   else document.addEventListener('DOMContentLoaded', arm);
   document.addEventListener('snipcart.ready', arm);
 })();
-  `}
+          `}
         </Script>
 
-        {/* Diagnostics */}
+        {/* Diagnostics (optional) */}
         <Script id="snipcart-diagnostics" strategy="afterInteractive">
           {`
     document.addEventListener('snipcart.ready', () => {
       const check = (label) => {
         console.log('[FilmRAID]', label || 'check', 'snipcart-root present:', !!document.querySelector('snipcart-root'));
       };
-
-      // initial check (before cart is ever opened this will likely be false)
       check('ready');
-
-      // when cart opens or route changes inside Snipcart, check again
       if (window.Snipcart && window.Snipcart.events && window.Snipcart.events.on) {
         Snipcart.events.on('cart.opened',   () => check('cart.opened'));
         Snipcart.events.on('route.changed', () => check('route.changed'));
       }
-
-      // also watch DOM in case Snipcart injects root later
       try {
         new MutationObserver(() => check('mutation'))
           .observe(document.body, { childList: true, subtree: true });
       } catch {}
     });
-  `}
+          `}
         </Script>
       </head>
 
