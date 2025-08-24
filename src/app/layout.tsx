@@ -121,9 +121,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           strategy="afterInteractive"
         />
 
-        {/* VAT checker (UI + VIES call) */}
-        <Script src="/vat-check.js" strategy="afterInteractive" />
-
         {/* EU VAT check (format + real via Netlify Function) */}
         <Script id="eu-vat-check" strategy="afterInteractive">
           {`
