@@ -1,56 +1,19 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Snipcart templates</title>
-  </head>
-  <body>
-    <div id="snipcart-templates">
-      <!-- Billing: Company + EU VAT Number together -->
-      <billing section="bottom">
-        <fieldset class="snipcart-form__set">
-          <!-- Company (optional) — saved as billing address 'company' -->
-          <div class="snipcart-form__field">
-            <snipcart-label class="snipcart__font--tiny" for="company"
-              >Company (optional)</snipcart-label
-            >
-            <snipcart-input
-              id="company"
-              name="company"
-              autocomplete="organization"
-              placeholder="Your company"
-            ></snipcart-input>
-          </div>
-
-          <!-- EU VAT Number (optional) — custom field 'vatNumber' -->
-          <div class="snipcart-form__field">
-            <snipcart-label class="snipcart__font--tiny" for="vatNumber"
-              >EU VAT Number (optional)</snipcart-label
-            >
-
-            <!-- Important fixes:
-                 1) Simpler, valid pattern (avoid hyphen-range pitfalls)
-                 2) Left padding so text is not glued to the border -->
-            <input
-              id="vatNumber"
-              name="vatNumber"
-              type="text"
-              class="snipcart-input snipcart-input--text"
-              inputmode="text"
-              placeholder="e.g. ESB10680478"
-              pattern="^[A-Z]{2}[A-Za-z0-9]{8,14}$"
-              title="Use country code + number, e.g. ESB10680478"
-              style="padding-left: 0.75rem"
-            />
-
-            <small
-              id="vat-message"
-              class="snipcart__font--tiny"
-              style="display: block; margin-top: 0.25rem"
-            ></small>
-          </div>
-        </fieldset>
-      </billing>
-    </div>
-  </body>
-</html>
+<!-- EU VAT Number (optional) — stored as order customFields.vatNumber -->
+<snipcart-field name="vatNumber">
+  <snipcart-label class="snipcart__font--tiny" for="vatNumber"
+    >EU VAT Number (optional)</snipcart-label
+  >
+  <snipcart-input
+    id="vatNumber"
+    name="vatNumber"
+    placeholder="e.g. ESB10680478"
+    pattern="^[A-Z]{2}[A-Za-z0-9]{8,14}$"
+    style="padding-left: 0.75rem"
+  ></snipcart-input>
+  <snipcart-field-error name="vatNumber"></snipcart-field-error>
+  <small
+    id="vat-message"
+    class="snipcart__font--tiny"
+    style="display: block; margin-top: 0.25rem"
+  ></small>
+</snipcart-field>

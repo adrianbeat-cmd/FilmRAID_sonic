@@ -37,20 +37,25 @@ exports.handler = async (event) => {
 
     const body = JSON.parse(event.body || '{}');
 
-    // Snipcart sends different shapes depending on hook.
-    const cart = body?.content?.cart || body?.cart || body?.content || {};
+    // Snipcart sends { eventName, content: { ...cart-like... } }
+    const content = body?.content || body || {};
 
-    const billing = cart.billingAddress || {};
-    const country = String(billing.country || '').toUpperCase();
+    // Try both shapes: top-level and nested under .cart
+    const shipping = content.shippingAddress || content.cart?.shippingAddress || {};
+    const billing = content.billingAddress || content.cart?.billingAddress || {};
 
-    // Extract custom field 'vatNumber' whether it’s an object map or an array
+    // Prefer shipping country; fall back to billing
+    const country = String(shipping.country || billing.country || '').toUpperCase();
+
+    // Extract custom field 'vatNumber' (array or object)
     let vatNumber = '';
-    if (cart.customFields) {
-      if (Array.isArray(cart.customFields)) {
-        vatNumber = cart.customFields.find((f) => (f?.name || f?.key) === 'vatNumber')?.value || '';
-      } else if (typeof cart.customFields === 'object') {
-        vatNumber = cart.customFields.vatNumber || '';
-      }
+    const cf = content.customFields || content.cart?.customFields || {};
+
+    if (Array.isArray(cf)) {
+      const hit = cf.find((f) => (f?.name || f?.key) === 'vatNumber');
+      vatNumber = hit?.value || '';
+    } else if (typeof cf === 'object' && cf) {
+      vatNumber = cf.vatNumber || '';
     }
 
     // Normalize VAT
@@ -58,49 +63,52 @@ exports.handler = async (event) => {
       .replace(/\s+/g, '')
       .toUpperCase();
 
-    // Server-side VIES check (only if looks like a VAT)
+    // Validate VAT only for EU; skip for non-EU (always 0%) and Spain (we charge 21% anyway)
     let validVat = false;
-    if (/^[A-Z]{2}[A-Z0-9]{8,14}$/.test(vatNumber)) {
+    const looksLikeVat = /^[A-Z]{2}[A-Z0-9]{8,14}$/.test(vatNumber);
+
+    if (looksLikeVat && country && EU.has(country) && country !== 'ES') {
       try {
         const r = await fetch(
           `https://api.vatcomply.com/vat?vat_number=${encodeURIComponent(vatNumber)}`,
         );
         const j = await r.json();
         validVat = !!j.valid;
-      } catch (_) {
-        // If service is down, fall back to charging VAT unless ES not involved
-        validVat = false;
+      } catch {
+        validVat = false; // fail closed (charge VAT) if VIES is down
       }
     }
 
-    // Simple ES seller logic:
-    // - ES destination: 21%
-    // - EU (not ES) with valid VAT: 0%
-    // - EU (not ES) without valid VAT: 21%
-    // - Outside EU: 0%
+    // Decide rate
     const isEU = EU.has(country);
     let rate = 0;
 
+    if (!country) {
+      // No country yet: return no taxes to let checkout continue to address step
+      return ok({ taxes: [] });
+    }
+
     if (country === 'ES') {
-      rate = 0.21;
+      rate = 0.21; // Always charge Spanish IVA for ES destination
     } else if (isEU) {
-      rate = validVat ? 0 : 0.21;
+      rate = validVat ? 0 : 0.21; // intra-EU B2B 0%, otherwise consumer 21%
     } else {
-      rate = 0;
+      rate = 0; // Rest of world: 0%
     }
 
     const taxes = rate > 0 ? [{ name: 'VAT', rate }] : [];
-
-    return {
-      statusCode: 200,
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ taxes }),
-    };
+    return ok({ taxes });
   } catch (err) {
-    return {
-      statusCode: 200,
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ taxes: [] }),
-    };
+    // On error, don't block checkout—return no taxes
+    return ok({ taxes: [] });
   }
 };
+
+// Helper
+function ok(obj) {
+  return {
+    statusCode: 200,
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(obj),
+  };
+}
