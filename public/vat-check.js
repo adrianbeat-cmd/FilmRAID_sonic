@@ -1,82 +1,109 @@
 // /public/vat-check.js
 (function () {
-  var FN_URL = '/.netlify/functions/vat-verify';
-  var debounceTimer = null;
+  const log = (...a) => console.log('[FilmRAID VAT]', ...a);
 
-  function wireUp() {
-    var host = document.querySelector('snipcart-root');
-    if (!host || !host.shadowRoot) return;
-    var root = host.shadowRoot;
-
-    // Find an existing VAT input (common Snipcart names/ids)
-    var vatInput =
-      root.querySelector('input[id*="vat" i]') || root.querySelector('input[name*="vat" i]');
-
-    if (!vatInput) return;
-
-    // A small status element right after the input
-    var status = root.querySelector('#vat-status');
-    if (!status) {
-      status = document.createElement('div');
-      status.id = 'vat-status';
-      status.style.fontSize = '0.875rem';
-      status.style.marginTop = '0.25rem';
-      vatInput.insertAdjacentElement('afterend', status);
-    }
-
-    function setStatus(msg, color) {
-      status.textContent = msg || '';
-      status.style.color = color || 'inherit';
-    }
-
-    // Remove previous listener (in case Snipcart re-renders)
-    vatInput.oninput = null;
-
-    vatInput.addEventListener('input', function () {
-      clearTimeout(debounceTimer);
-
-      var raw = (vatInput.value || '').trim();
-      if (!raw) {
-        setStatus('', '');
-        return;
+  // Wait until Snipcart is ready and the Billing step is in DOM
+  function onReady(cb) {
+    if (document.querySelector('#snipcart')) return cb();
+    const obs = new MutationObserver(() => {
+      if (document.querySelector('#snipcart')) {
+        obs.disconnect();
+        cb();
       }
-
-      setStatus('Checking VAT…');
-
-      debounceTimer = setTimeout(function () {
-        fetch(FN_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ vat: raw }),
-        })
-          .then(function (r) {
-            return r.json();
-          })
-          .then(function (json) {
-            if (json && json.ok && json.valid) {
-              var who = json.name ? ' (' + json.name + ')' : '';
-              setStatus('Valid EU VAT' + who, '#0a7f2e');
-            } else if (json && json.ok === false && json.error === 'VIES unavailable') {
-              setStatus(
-                'Could not reach VIES right now. You can try again or continue.',
-                '#b45309',
-              );
-            } else {
-              setStatus('Invalid VAT number', '#b91c1c');
-            }
-          })
-          .catch(function () {
-            setStatus('Could not verify VAT right now.', '#b45309');
-          });
-      }, 450);
     });
+    obs.observe(document.documentElement, { childList: true, subtree: true });
   }
 
-  // Snipcart fires when its UI is ready
-  document.addEventListener('snipcart.ready', function () {
-    wireUp();
-    // Re-wire on route/view changes (cart -> checkout, etc.)
-    var host = document.querySelector('snipcart-root');
-    if (host) host.addEventListener('snipcart.routechanged', wireUp);
+  function $(sel, root) {
+    return (root || document).querySelector(sel);
+  }
+
+  function setMessage(el, type, text) {
+    el.textContent = text;
+    el.style.marginTop = '0.25rem';
+    el.style.display = 'block';
+    el.style.fontWeight = '600';
+    el.style.color = type === 'ok' ? '#16a34a' : type === 'warn' ? '#f59e0b' : '#dc2626';
+  }
+
+  async function validateVat(raw) {
+    const vat = String(raw || '')
+      .toUpperCase()
+      .trim();
+    if (!vat) return { state: 'empty' };
+
+    if (!/^[A-Z]{2}[A-Z0-9]{8,12}$/.test(vat)) {
+      return { state: 'bad-format' };
+    }
+
+    try {
+      const r = await fetch('/.netlify/functions/vat-verify', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ vat }),
+      });
+      const j = await r.json();
+      if (!j.ok) return { state: 'error' };
+      return j.valid ? { state: 'valid', info: j } : { state: 'invalid', info: j };
+    } catch {
+      return { state: 'error' };
+    }
+  }
+
+  function toggleContinue(disabled) {
+    const btn = document.querySelector('#snipcart .snipcart-button-primary');
+    if (btn) btn.disabled = !!disabled;
+  }
+
+  onReady(() => {
+    // Rebind every time the modal changes pages
+    const root = document.getElementById('snipcart');
+    const obs = new MutationObserver(() => {
+      const vatInput = $('#vatNumber', root);
+      const msg = $('#vat-message', root);
+
+      if (!vatInput || !msg) return;
+
+      // Debounced validation on input
+      let t;
+      const run = async () => {
+        const { state, info } = await validateVat(vatInput.value);
+        if (state === 'empty') {
+          setMessage(msg, 'warn', 'Optional. Add your EU VAT to remove VAT in intra‑EU B2B.');
+          toggleContinue(false);
+          return;
+        }
+        if (state === 'bad-format') {
+          setMessage(msg, 'bad', 'Invalid format. Use country code + number (e.g. ESB10680478).');
+          toggleContinue(true);
+          return;
+        }
+        if (state === 'error') {
+          setMessage(msg, 'warn', 'Validation service unavailable. You can proceed or try again.');
+          toggleContinue(false);
+          return;
+        }
+        if (state === 'invalid') {
+          setMessage(msg, 'bad', '✕ VAT number not valid in VIES.');
+          toggleContinue(true);
+          return;
+        }
+        // valid
+        const name = info && info.name ? ` — ${info.name}` : '';
+        setMessage(msg, 'ok', `✓ VAT validated${name}`);
+        toggleContinue(false);
+      };
+
+      vatInput.addEventListener('input', () => {
+        clearTimeout(t);
+        t = setTimeout(run, 400);
+      });
+      vatInput.addEventListener('blur', run);
+
+      // Initialize message once
+      setMessage(msg, 'warn', 'Optional. Add your EU VAT to remove VAT in intra‑EU B2B.');
+    });
+
+    obs.observe(root, { childList: true, subtree: true });
   });
 })();
