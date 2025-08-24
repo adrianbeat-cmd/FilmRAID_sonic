@@ -169,7 +169,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       try {
         inFlight = true;
         setMsg('Checking VAT…', '#555');
-        const res = await fetch('/api/vat-verify', {
+        const res = await fetch('/.netlify/functions/vat-verify', {
+
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ vat: v }),
