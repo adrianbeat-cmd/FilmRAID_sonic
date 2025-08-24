@@ -5,39 +5,43 @@
     <title>Snipcart templates</title>
   </head>
   <body>
-    <!-- Snipcart requires all overrides inside this single root -->
+    <!-- Put all overrides inside this single root is fine, but not required -->
     <div id="snipcart-templates">
-      <!-- Add Company + EU VAT at the very end of the Billing step -->
-      <billing section="bottom">
-        <!-- Single root for this component override -->
-        <div>
-          <fieldset class="snipcart-form__set">
-            <!-- Company FIRST -->
-            <div class="snipcart-form__field">
-              <snipcart-label class="snipcart__font--tiny" for="companyName">
-                Company Name (Optional)
-              </snipcart-label>
-              <snipcart-input name="companyName" type="text" placeholder="Your Company">
-              </snipcart-input>
-            </div>
+      <!-- Add Company + EU VAT at the bottom of the Billing step -->
+      <snipcart-billing section="bottom">
+        <snipcart-form class="snipcart-form">
+          <!-- Company -->
+          <snipcart-field name="companyName">
+            <snipcart-label class="snipcart__font--tiny" for="companyName">
+              Company Name (Optional)
+            </snipcart-label>
+            <snipcart-input
+              name="companyName"
+              type="text"
+              placeholder="Your Company"
+            ></snipcart-input>
+          </snipcart-field>
 
-            <!-- EU VAT SECOND -->
-            <div class="snipcart-form__field">
-              <snipcart-label class="snipcart__font--tiny" for="vatNumber">
-                EU VAT Number
-              </snipcart-label>
-              <snipcart-input
-                id="vatNumber"
-                name="vatNumber"
-                type="text"
-                placeholder="e.g. ESB10680478"
-              >
-              </snipcart-input>
-              <span id="vat-message" style="display: block; margin-top: 0.25rem"></span>
-            </div>
-          </fieldset>
-        </div>
-      </billing>
+          <!-- EU VAT -->
+          <snipcart-field>
+            <snipcart-label class="snipcart__font--tiny" for="vatNumber">
+              EU VAT Number
+            </snipcart-label>
+            <input
+              id="vatNumber"
+              name="vatNumber"
+              type="text"
+              class="snipcart-input snipcart-input--text"
+              placeholder="e.g. ESB10680478"
+            />
+            <small
+              id="vat-message"
+              class="snipcart__font--tiny"
+              style="display: block; margin-top: 0.25rem"
+            ></small>
+          </snipcart-field>
+        </snipcart-form>
+      </snipcart-billing>
     </div>
   </body>
 </html>
