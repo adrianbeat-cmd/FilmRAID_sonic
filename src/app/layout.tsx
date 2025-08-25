@@ -160,11 +160,39 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
 
         {/* EU VAT check (robust attach + Netlify Function) */}
+        {/* EU VAT check (shadow-DOM aware + Netlify Function) */}
         <Script id="eu-vat-check" strategy="afterInteractive">
           {`
 (function () {
   const VAT_RE = /^[A-Z]{2}[A-Z0-9]{8,14}$/;
-  const $ = (sel, root) => (root || document).querySelector(sel);
+
+  // Find the real <input> even if it's inside <snipcart-input>'s shadow DOM
+  function findVatInput() {
+    // 1) Native input by id/name
+    let el = document.querySelector('input#vatNumber, input[name="vatNumber"]');
+    if (el) return el;
+
+    // 2) The custom element <snipcart-input id="vatNumber">
+    const scInput = document.querySelector('snipcart-input#vatNumber, snipcart-field[name="vatNumber"] snipcart-input#vatNumber');
+    if (scInput && scInput.shadowRoot) {
+      const inner = scInput.shadowRoot.querySelector('input,textarea');
+      if (inner) return inner;
+    }
+
+    // 3) Fallback: search all snipcart-inputs for an inner input with name="vatNumber"
+    for (const node of document.querySelectorAll('snipcart-input')) {
+      if (node.shadowRoot) {
+        const inner = node.shadowRoot.querySelector('input[name="vatNumber"],textarea[name="vatNumber"],input,textarea');
+        if (inner) return inner;
+      }
+    }
+    return null;
+  }
+
+  function findMessageEl() {
+    // Our helper message element is outside shadow DOM
+    return document.querySelector('#vat-message');
+  }
 
   function setMsg(el, text, color) {
     if (!el) return;
@@ -191,9 +219,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   }
 
   function bindOnce() {
-    const root = document.getElementById('snipcart') || document;
-    const input = $('#vatNumber', root) || $('input[name="vatNumber"]', root);
-    const msg   = $('#vat-message', root);
+    const input = findVatInput();
+    const msg = findMessageEl();
     if (!input || !msg) return false;
 
     let last = '';
@@ -202,7 +229,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     let t;
 
     const run = async () => {
+      // Read current value from the real input
       const raw = String(input.value || '').replace(/\\s+/g, '').toUpperCase();
+
       if (!raw) { setMsg(msg, 'Optional. Add your EU VAT to remove VAT in intra-EU B2B.', '#f59e0b'); lastResult = null; return; }
       if (!VAT_RE.test(raw)) { setMsg(msg, '✕ VAT format looks invalid (e.g. ESB10680478).', '#dc2626'); lastResult = { valid: false, reason: 'format' }; return; }
 
@@ -222,14 +251,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       lastResult = { valid: true, info };
     };
 
-    input.addEventListener('input', () => { clearTimeout(t); t = setTimeout(run, 350); });
-    input.addEventListener('blur', run);
+    input.addEventListener('input', () => { clearTimeout(t); t = setTimeout(run, 300); }, true);
+    input.addEventListener('blur', run, true);
     run();
 
     // Only block when VAT is present AND invalid
     document.addEventListener('click', function (e) {
       const el = e && e.target instanceof Element ? e.target : null;
-      const btn = el ? el.closest('.snipcart-button-primary') : null; // fixed selector
+      const btn = el ? el.closest('.snipcart-button-primary') : null;
       if (!btn) return;
 
       const v = String(input.value || '').replace(/\\s+/g, '').toUpperCase();
@@ -245,11 +274,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
   function arm() {
     if (bindOnce()) return;
+
+    // Re-try as Snipcart renders steps
     const obs = new MutationObserver(() => { if (bindOnce()) obs.disconnect(); });
     obs.observe(document.documentElement, { childList: true, subtree: true });
 
     if (window.Snipcart?.events?.on) {
-      window.Snipcart.events.on('route.changed', () => { setTimeout(bindOnce, 150); });
+      window.Snipcart.events.on('route.changed', () => setTimeout(bindOnce, 150));
     }
   }
 
@@ -257,7 +288,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   else document.addEventListener('DOMContentLoaded', arm);
   document.addEventListener('snipcart.ready', arm);
 })();
-          `}
+  `}
         </Script>
       </head>
 
