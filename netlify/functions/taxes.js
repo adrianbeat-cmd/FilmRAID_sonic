@@ -56,7 +56,7 @@ exports.handler = async (event) => {
       Number(content.shippingInformation?.fees ?? content.cart?.shippingInformation?.fees ?? 0) ||
       0;
 
-    // Read customFields.vatNumber (object or array)
+    // customFields.vatNumber (array or object)
     const cf = content.customFields || content.cart?.customFields || {};
     let vatNumber = '';
     if (Array.isArray(cf)) {
@@ -100,12 +100,15 @@ exports.handler = async (event) => {
     const base = itemsTotal + shippingFees;
     const amount = Math.round(base * rate * 100) / 100;
 
+    // Friendly label in Order Summary
+    const label = rate === 0.21 ? 'Taxes / VAT / IVA (21%)' : 'Taxes / VAT / IVA';
+
     const taxes =
       rate > 0
         ? [
             {
-              name: rate === 0.21 ? 'VAT 21%' : 'VAT',
-              rate, // percentage
+              name: label,
+              rate, // percentage (for Snipcart)
               amount, // absolute (forces UI refresh)
               appliesOnShipping: true,
               includedInPrice: false,
@@ -115,7 +118,7 @@ exports.handler = async (event) => {
         : [];
 
     return ok({ taxes });
-  } catch (e) {
+  } catch {
     return ok({ taxes: [] });
   }
 };
