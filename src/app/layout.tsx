@@ -159,27 +159,23 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           strategy="afterInteractive"
         />
 
-        {/* EU VAT check (robust attach + Netlify Function) */}
-        {/* EU VAT check (shadow-DOM aware + Netlify Function) */}
-        <Script id="eu-vat-check" strategy="afterInteractive">
-          {`
+        {/* EU VAT check — resilient to route changes & shadow DOM rebuilds */}
+        <Script id="eu-vat-check" strategy="afterInteractive">{`
 (function () {
   const VAT_RE = /^[A-Z]{2}[A-Z0-9]{8,14}$/;
+  let boundInput = null; // the real <input> inside <snipcart-input>
 
-  // Find the real <input> even if it's inside <snipcart-input>'s shadow DOM
   function findVatInput() {
-    // 1) Native input by id/name
+    // Try native
     let el = document.querySelector('input#vatNumber, input[name="vatNumber"]');
     if (el) return el;
-
-    // 2) The custom element <snipcart-input id="vatNumber">
-    const scInput = document.querySelector('snipcart-input#vatNumber, snipcart-field[name="vatNumber"] snipcart-input#vatNumber');
-    if (scInput && scInput.shadowRoot) {
-      const inner = scInput.shadowRoot.querySelector('input,textarea');
+    // Try shadow DOM under <snipcart-input id="vatNumber">
+    const sc = document.querySelector('snipcart-input#vatNumber, snipcart-field[name="vatNumber"] snipcart-input#vatNumber');
+    if (sc && sc.shadowRoot) {
+      const inner = sc.shadowRoot.querySelector('input,textarea');
       if (inner) return inner;
     }
-
-    // 3) Fallback: search all snipcart-inputs for an inner input with name="vatNumber"
+    // Fallback: inspect all snipcart-inputs
     for (const node of document.querySelectorAll('snipcart-input')) {
       if (node.shadowRoot) {
         const inner = node.shadowRoot.querySelector('input[name="vatNumber"],textarea[name="vatNumber"],input,textarea');
@@ -189,13 +185,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     return null;
   }
 
-  function findMessageEl() {
-    // Our helper message element is outside shadow DOM
-    return document.querySelector('#vat-message');
-  }
-
-  function setMsg(el, text, color) {
-    if (!el) return;
+  function msgEl(){ return document.querySelector('#vat-message'); }
+  function setMsg(text, color){
+    const el = msgEl(); if (!el) return;
     el.textContent = text || '';
     el.style.display = 'block';
     el.style.marginTop = '0.25rem';
@@ -203,25 +195,28 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     el.style.color = color || '';
   }
 
-  async function verifyVat(vat) {
-    try {
-      const res = await fetch('/.netlify/functions/vat-verify', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ vat }),
+  async function verifyVat(vat){
+    try{
+      const r = await fetch('/.netlify/functions/vat-verify', {
+        method: 'POST', headers: {'content-type':'application/json'},
+        body: JSON.stringify({ vat })
       });
-      const json = await res.json();
-      if (!json.ok) return { state: 'error' };
-      return json.valid ? { state: 'valid', info: json } : { state: 'invalid', info: json };
-    } catch {
-      return { state: 'error' };
-    }
+      const j = await r.json();
+      if (!j.ok) return { state:'error' };
+      return j.valid ? { state:'valid', info:j } : { state:'invalid', info:j };
+    }catch{ return { state:'error' }; }
   }
 
-  function bindOnce() {
+  function bind(force=false){
     const input = findVatInput();
-    const msg = findMessageEl();
+    const msg = msgEl();
     if (!input || !msg) return false;
+
+    // re-bind if new input or forced
+    if (boundInput === input && !force && input.__frBound) return true;
+    // clean previous
+    if (boundInput && boundInput.__frUnsub) { try{ boundInput.__frUnsub(); }catch{} }
+    boundInput = input;
 
     let last = '';
     let inflight = false;
@@ -229,67 +224,69 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     let t;
 
     const run = async () => {
-      // Read current value from the real input
       const raw = String(input.value || '').replace(/\\s+/g, '').toUpperCase();
-
-      if (!raw) { setMsg(msg, 'Optional. Add your EU VAT to remove VAT in intra-EU B2B.', '#f59e0b'); lastResult = null; return; }
-      if (!VAT_RE.test(raw)) { setMsg(msg, '✕ VAT format looks invalid (e.g. ESB10680478).', '#dc2626'); lastResult = { valid: false, reason: 'format' }; return; }
-
-      if (raw === last && lastResult) return;
+      if (!raw){ setMsg('Optional. Add your EU VAT to remove VAT in intra-EU B2B.', '#f59e0b'); lastResult=null; return; }
+      if (!VAT_RE.test(raw)){ setMsg('✕ VAT format looks invalid (e.g. ESB10680478).', '#dc2626'); lastResult={valid:false,reason:'format'}; return; }
+      if (raw===last && lastResult) return;
       last = raw;
-
       inflight = true;
-      setMsg(msg, 'Checking VAT…', '#555');
+      setMsg('Checking VAT…', '#555');
       const { state, info } = await verifyVat(raw);
       inflight = false;
-
-      if (state === 'error') { setMsg(msg, 'Validation service unavailable. You can proceed or try again.', '#f59e0b'); lastResult = null; return; }
-      if (state === 'invalid') { setMsg(msg, '✕ VAT number not valid in VIES.', '#dc2626'); lastResult = { valid: false }; return; }
-
+      if (state==='error'){ setMsg('Validation service unavailable. You can proceed or try again.', '#f59e0b'); lastResult=null; return; }
+      if (state==='invalid'){ setMsg('✕ VAT number not valid in VIES.', '#dc2626'); lastResult={valid:false}; return; }
       const suffix = info && info.name ? ' — ' + info.name : '';
-      setMsg(msg, '✓ VAT validated' + suffix, '#16a34a');
-      lastResult = { valid: true, info };
+      setMsg('✓ VAT validated' + suffix, '#16a34a');
+      lastResult = { valid:true, info };
     };
 
-    input.addEventListener('input', () => { clearTimeout(t); t = setTimeout(run, 300); }, true);
-    input.addEventListener('blur', run, true);
-    run();
+    const onInput = () => { clearTimeout(t); t = setTimeout(run, 300); };
+    const onBlur  = () => run();
 
-    // Only block when VAT is present AND invalid
-    document.addEventListener('click', function (e) {
-      const el = e && e.target instanceof Element ? e.target : null;
-      const btn = el ? el.closest('.snipcart-button-primary') : null;
+    input.addEventListener('input', onInput, true);
+    input.addEventListener('blur', onBlur, true);
+
+    // block primary submit only when VAT present AND invalid
+    const onClick = (e) => {
+      const btn = e.target instanceof Element ? e.target.closest('.snipcart-button-primary') : null;
       if (!btn) return;
-
       const v = String(input.value || '').replace(/\\s+/g, '').toUpperCase();
-      if (v && lastResult && lastResult.valid === false && !inflight) {
-        e.preventDefault();
-        e.stopPropagation();
-        setMsg(msg, 'Please enter a valid EU VAT number (or clear the field).', '#dc2626');
+      if (v && lastResult && lastResult.valid===false){
+        e.preventDefault(); e.stopPropagation();
+        setMsg('Please enter a valid EU VAT number (or clear the field).', '#dc2626');
       }
-    }, true);
+    };
+    document.addEventListener('click', onClick, true);
 
+    input.__frBound = true;
+    input.__frUnsub = () => {
+      input.removeEventListener('input', onInput, true);
+      input.removeEventListener('blur', onBlur, true);
+      document.removeEventListener('click', onClick, true);
+      input.__frBound = false;
+    };
+
+    run();
     return true;
   }
 
-  function arm() {
-    if (bindOnce()) return;
-
-    // Re-try as Snipcart renders steps
-    const obs = new MutationObserver(() => { if (bindOnce()) obs.disconnect(); });
-    obs.observe(document.documentElement, { childList: true, subtree: true });
-
-    if (window.Snipcart?.events?.on) {
-      window.Snipcart.events.on('route.changed', () => setTimeout(bindOnce, 150));
+  function arm(){
+    // initial
+    bind(true);
+    // re-bind on every route change (e.g., navigating steps)
+    if (window.Snipcart?.events?.on){
+      window.Snipcart.events.on('theme.routechanged', () => setTimeout(() => bind(true), 120));
     }
+    // also watch DOM mutations just in case
+    const mo = new MutationObserver(() => bind());
+    mo.observe(document.body, {subtree:true, childList:true});
   }
 
-  if (document.readyState !== 'loading') arm();
+  if (document.readyState!=='loading') arm();
   else document.addEventListener('DOMContentLoaded', arm);
   document.addEventListener('snipcart.ready', arm);
 })();
-  `}
-        </Script>
+`}</Script>
       </head>
 
       <body className={`${sfProDisplay.variable} antialiased`}>
