@@ -1,4 +1,5 @@
 // netlify/functions/taxes.js
+
 const EU = new Set([
   'AT',
   'BE',
@@ -29,21 +30,37 @@ const EU = new Set([
   'SE',
 ]);
 
+function ok(obj) {
+  return {
+    statusCode: 200,
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(obj),
+  };
+}
+
 exports.handler = async (event) => {
+  // Lightweight GET to verify the function is reachable from a browser
+  if (event.httpMethod === 'GET') {
+    return ok({ ok: true, info: 'tax function alive' });
+  }
+
   try {
     if (event.httpMethod !== 'POST') {
       return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
     const body = JSON.parse(event.body || '{}');
+    // Log once per invocation (shows in Netlify > Functions > taxes > Logs)
+    console.log('[TAXES] incoming body keys:', Object.keys(body || {}));
+
+    // Snipcart payload variations: body.content.{...} or nested under body.content.cart.{...}
     const content = body?.content || body || {};
 
-    // shipping/billing can be on content or content.cart
     const shipping = content.shippingAddress || content.cart?.shippingAddress || {};
     const billing = content.billingAddress || content.cart?.billingAddress || {};
     const country = String(shipping.country || billing.country || '').toUpperCase();
 
-    // customFields can be array or object, on content or content.cart
+    // Read vatNumber from customFields (array or object) at content or content.cart
     const cf = content.customFields || content.cart?.customFields || {};
     let vatNumber = '';
     if (Array.isArray(cf)) {
@@ -55,13 +72,18 @@ exports.handler = async (event) => {
       .replace(/\s+/g, '')
       .toUpperCase();
 
-    // default: no taxes until we know the country
-    if (!country) return ok({ taxes: [] });
+    console.log('[TAXES] country:', country, 'vatNumber:', vatNumber);
+
+    // If no country yet, return no taxes (Snipcart will call again after address is entered)
+    if (!country) {
+      console.log('[TAXES] no country yet -> taxes: []');
+      return ok({ taxes: [] });
+    }
 
     const isEU = EU.has(country);
-    let validVat = false;
 
-    // Validate VAT only for EU (non-ES) destinations
+    // Validate VAT only for EU (non-ES). Outside EU: 0% anyway. Spain: 21% anyway.
+    let validVat = false;
     if (isEU && country !== 'ES' && /^[A-Z]{2}[A-Z0-9]{8,14}$/.test(vatNumber)) {
       try {
         const r = await fetch(
@@ -69,13 +91,15 @@ exports.handler = async (event) => {
         );
         const j = await r.json();
         validVat = !!j.valid;
-      } catch {
-        validVat = false; // fail closed (charge VAT) if service fails
+        console.log('[TAXES] VIES valid:', validVat, 'name:', j.name || '');
+      } catch (e) {
+        console.log('[TAXES] VIES error:', e && e.message);
+        validVat = false; // fail closed (charge VAT) if the service fails
       }
     }
 
     // Rules:
-    // - Spain -> 21%
+    // - ES destination -> 21%
     // - Other EU -> 0% if valid VAT, else 21%
     // - Outside EU -> 0%
     let rate = 0;
@@ -88,17 +112,11 @@ exports.handler = async (event) => {
     }
 
     const taxes = rate > 0 ? [{ name: 'VAT', rate }] : [];
+    console.log('[TAXES] result:', taxes);
     return ok({ taxes });
-  } catch (e) {
-    // don't block checkout on errors
+  } catch (err) {
+    console.log('[TAXES] error:', err && err.message);
+    // Don’t block checkout
     return ok({ taxes: [] });
   }
 };
-
-function ok(obj) {
-  return {
-    statusCode: 200,
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(obj),
-  };
-}
