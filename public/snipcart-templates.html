@@ -35,7 +35,7 @@
     </fieldset>
   </billing>
 
-  <!-- Order summary: dynamic tax name from webhook (IVA/VAT/Taxes); show 0 row when empty -->
+  <!-- Order summary: derive label from destination (IVA/VAT/Taxes) -->
   <cart-summary-fees>
     <div class="snipcart-cart-summary-fees">
       <div
@@ -46,6 +46,7 @@
       </div>
 
       <div class="snipcart-cart-summary-fees">
+        <!-- Discounts -->
         <div
           class="snipcart-cart-summary-fees__item snipcart-cart-summary-fees__discounts snipcart__font--slim"
           v-if="discountsTotal"
@@ -58,6 +59,7 @@
           >
         </div>
 
+        <!-- Subtotal -->
         <div class="snipcart-cart-summary-fees__item snipcart__font--slim" v-if="subtotal">
           <span class="snipcart-cart-summary-fees__title"
             >{{ $localize('cart_summary.subtotal') }}</span
@@ -67,6 +69,7 @@
           >
         </div>
 
+        <!-- Shipping -->
         <div
           class="snipcart-cart-summary-fees__item snipcart__font--slim"
           v-if="shipping.cost != null"
@@ -79,14 +82,24 @@
           >
         </div>
 
-        <!-- Taxes -->
+        <!-- Taxes (bulletproof label derived from destination) -->
         <template v-if="taxes && taxes.length">
           <div
             class="snipcart-cart-summary-fees__item snipcart__font--slim"
             v-for="tax in taxes"
             :key="tax.name"
           >
-            <span class="snipcart-cart-summary-fees__title">{{ tax.name }}</span>
+            <span class="snipcart-cart-summary-fees__title">
+              {{ (function() { var C = (cart && cart.shippingAddress &&
+              cart.shippingAddress.country) || (cart && cart.billingAddress &&
+              cart.billingAddress.country) || ''; var EU =
+              ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'];
+              if (C === 'ES') return 'IVA'; if (EU.indexOf(C) !== -1) return 'VAT'; return 'Taxes';
+              })() }}
+              <template v-if="tax.rate && tax.rate > 0">
+                ({{ Math.round(tax.rate * 100) }}%)</template
+              >
+            </span>
             <span class="snipcart-cart-summary-fees__amount"
               >{{ tax.amount | money(cart.currency) }}</span
             >
@@ -99,6 +112,7 @@
           </div>
         </template>
 
+        <!-- Total -->
         <div
           class="snipcart-cart-summary-fees__item snipcart-cart-summary-fees__total snipcart__font--bold snipcart__font--secondary"
         >
