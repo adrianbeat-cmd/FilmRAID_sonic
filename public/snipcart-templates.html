@@ -37,71 +37,90 @@
     </fieldset>
   </billing>
 
-  <!-- Address fields override: plain street input (no autocomplete),
-       keep country/province as dropdowns to prevent schema warnings -->
-  <address-fields>
-    <div>
-      <fieldset class="snipcart-form__set">
-        <div class="snipcart-form__row">
-          <!-- Street address (plain input, no provider/typeahead) -->
-          <div class="snipcart-form__field snipcart-form__cell--large">
-            <snipcart-label class="snipcart__font--tiny" for="address1">
-              {{ $localize('address_form.address1') }}
-            </snipcart-label>
-            <snipcart-input name="address1" placeholder="Street address"></snipcart-input>
-            <snipcart-error-message name="address1"></snipcart-error-message>
-          </div>
+  <!-- Order summary: always render a Taxes line with our label -->
+  <cart-summary-fees>
+    <div class="snipcart-cart-summary-fees">
+      <!-- Keep Snipcart's default notice until address is provided -->
+      <div
+        class="snipcart-cart-summary-fees__notice snipcart__font--regular"
+        v-if="!hasShippingAddress"
+      >
+        <slot>{{ $localize('checkout.shipping_taxes_calculated_when_address_provided') }}</slot>
+      </div>
 
-          <div class="snipcart-form__field snipcart-form__cell--tidy">
-            <snipcart-label class="snipcart__font--tiny" for="address2">
-              {{ $localize('address_form.address2') }}
-            </snipcart-label>
-            <snipcart-input name="address2"></snipcart-input>
-            <snipcart-error-message name="address2"></snipcart-error-message>
-          </div>
+      <div class="snipcart-cart-summary-fees">
+        <!-- Discounts -->
+        <div
+          class="snipcart-cart-summary-fees__item snipcart-cart-summary-fees__discounts snipcart__font--slim"
+          v-if="discountsTotal"
+        >
+          <span class="snipcart-cart-summary-fees__title"
+            >{{ $localize('cart_summary.discount') }}</span
+          >
+          <span class="snipcart-cart-summary-fees__amount"
+            >{{ discountsTotal | money(cart.currency) }}</span
+          >
         </div>
 
-        <div class="snipcart-form__field">
-          <snipcart-label class="snipcart__font--tiny" for="city">
-            {{ $localize('address_form.city') }}
-          </snipcart-label>
-          <snipcart-input name="city"></snipcart-input>
-          <snipcart-error-message name="city"></snipcart-error-message>
+        <!-- Subtotal -->
+        <div class="snipcart-cart-summary-fees__item snipcart__font--slim" v-if="subtotal">
+          <span class="snipcart-cart-summary-fees__title"
+            >{{ $localize('cart_summary.subtotal') }}</span
+          >
+          <span class="snipcart-cart-summary-fees__amount"
+            >{{ subtotal | money(cart.currency) }}</span
+          >
         </div>
 
-        <!-- Keep as dropdowns -->
-        <div class="snipcart-form__field">
-          <snipcart-label class="snipcart__font--tiny" for="country">
-            {{ $localize('address_form.country') }}
-          </snipcart-label>
-          <snipcart-typeahead
-            type="dropdown"
-            name="country"
-            autocomplete="country"
-          ></snipcart-typeahead>
+        <!-- Shipping -->
+        <div
+          class="snipcart-cart-summary-fees__item snipcart__font--slim"
+          v-if="shipping.cost != null"
+        >
+          <span class="snipcart-cart-summary-fees__title"
+            >{{ $localize('cart_summary.shipping') }}</span
+          >
+          <span class="snipcart-cart-summary-fees__amount"
+            >{{ shipping.cost | money(cart.currency) }}</span
+          >
         </div>
 
-        <div class="snipcart-form__row">
-          <div class="snipcart-form__field snipcart-form__cell--large">
-            <snipcart-label class="snipcart__font--tiny" for="province">
-              {{ $localize('address_form.province') }}
-            </snipcart-label>
-            <snipcart-typeahead
-              type="dropdown"
-              name="province"
-              autocomplete="province state"
-            ></snipcart-typeahead>
+        <!-- Taxes: when present, show each line but force our label -->
+        <template v-if="taxes && taxes.length">
+          <div
+            class="snipcart-cart-summary-fees__item snipcart__font--slim"
+            v-for="tax in taxes"
+            :key="tax.name"
+          >
+            <span class="snipcart-cart-summary-fees__title">Taxes / VAT / IVA</span>
+            <span class="snipcart-cart-summary-fees__amount"
+              >{{ tax.amount | money(cart.currency) }}</span
+            >
           </div>
+        </template>
 
-          <div class="snipcart-form__field snipcart-form__cell--tidy">
-            <snipcart-label class="snipcart__font--tiny" for="postalCode">
-              {{ $localize('address_form.postalCode') }}
-            </snipcart-label>
-            <snipcart-input name="postalCode"></snipcart-input>
-            <snipcart-error-message name="postalCode"></snipcart-error-message>
+        <!-- Taxes: when absent, show a 0 line with our label -->
+        <template v-else>
+          <div class="snipcart-cart-summary-fees__item snipcart__font--slim">
+            <span class="snipcart-cart-summary-fees__title">Taxes / VAT / IVA</span>
+            <span class="snipcart-cart-summary-fees__amount">{{ 0 | money(cart.currency) }}</span>
           </div>
+        </template>
+
+        <!-- Total -->
+        <div
+          class="snipcart-cart-summary-fees__item snipcart-cart-summary-fees__total snipcart__font--bold snipcart__font--secondary"
+        >
+          <span
+            class="snipcart-cart-summary-fees__title snipcart-cart-summary-fees__title--highlight snipcart__font--large"
+            >{{ $localize('cart_summary.total') }}</span
+          >
+          <span
+            class="snipcart-cart-summary-fees__amount snipcart-cart-summary-fees__amount--highlight snipcart__font--large"
+            >{{ total | money(cart.currency) }}</span
+          >
         </div>
-      </fieldset>
+      </div>
     </div>
-  </address-fields>
+  </cart-summary-fees>
 </div>
