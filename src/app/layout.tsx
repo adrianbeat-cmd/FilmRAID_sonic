@@ -96,7 +96,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Snipcart v3 CSS */}
         <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css" />
 
-        {/* Snipcart settings */}
+        {/* Snipcart settings (must load BEFORE snipcart.js) */}
         <Script
           id="snipcart-settings"
           strategy="beforeInteractive"
@@ -108,7 +108,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         modalStyle: "full",
         addProductBehavior: "open",
         timeoutDuration: 2000,
-        templatesUrl: "/snipcart-templates.html",
+        // cache-bust so Snipcart fetches the latest template
+        templatesUrl: "/snipcart-templates.html?v=20250825-1",
         version: "3.6.0"
       };
     `,
