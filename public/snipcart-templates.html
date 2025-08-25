@@ -85,17 +85,25 @@
           >
         </div>
 
-        <!-- Taxes: when present, show each line but force our label -->
+        <!-- Taxes: show webhook's dynamic name (IVA / VAT / Taxes) -->
         <template v-if="taxes && taxes.length">
           <div
             class="snipcart-cart-summary-fees__item snipcart__font--slim"
             v-for="tax in taxes"
             :key="tax.name"
           >
-            <span class="snipcart-cart-summary-fees__title">Taxes / VAT / IVA</span>
+            <span class="snipcart-cart-summary-fees__title">{{ tax.name }}</span>
             <span class="snipcart-cart-summary-fees__amount"
               >{{ tax.amount | money(cart.currency) }}</span
             >
+          </div>
+        </template>
+
+        <!-- When taxes array is empty (no country yet), keep a neutral 0 row -->
+        <template v-else>
+          <div class="snipcart-cart-summary-fees__item snipcart__font--slim">
+            <span class="snipcart-cart-summary-fees__title">Taxes</span>
+            <span class="snipcart-cart-summary-fees__amount">{{ 0 | money(cart.currency) }}</span>
           </div>
         </template>
 
