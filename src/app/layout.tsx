@@ -109,7 +109,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         addProductBehavior: "open",
         timeoutDuration: 2000,
         // cache-bust so Snipcart fetches the latest template
-        templatesUrl: "/snipcart-templates.html?v=20250825-1",
+        templatesUrl: "/snipcart-templates.html?v=20250825-2",
         version: "3.6.0"
       };
     `,
