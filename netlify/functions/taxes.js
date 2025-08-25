@@ -39,24 +39,24 @@ function ok(obj) {
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'GET') return ok({ ok: true, info: 'tax function alive' });
+  if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
 
   try {
-    if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
     const body = JSON.parse(event.body || '{}');
     const content = body?.content || body || {};
 
-    // Addresses (prefer shipping; fallback billing)
+    // Prefer shipping, fallback billing
     const shipping = content.shippingAddress || content.cart?.shippingAddress || {};
     const billing = content.billingAddress || content.cart?.billingAddress || {};
     const country = String(shipping.country || billing.country || '').toUpperCase();
 
-    // Cart numbers
+    // Totals
     const itemsTotal = Number(content.itemsTotal ?? content.cart?.itemsTotal ?? 0) || 0;
     const shippingFees =
       Number(content.shippingInformation?.fees ?? content.cart?.shippingInformation?.fees ?? 0) ||
       0;
 
-    // customFields.vatNumber (array or object)
+    // VAT number from custom fields (object or array)
     const cf = content.customFields || content.cart?.customFields || {};
     let vatNumber = '';
     if (Array.isArray(cf)) {
@@ -68,6 +68,7 @@ exports.handler = async (event) => {
       .replace(/\s+/g, '')
       .toUpperCase();
 
+    // If country not chosen yet → let UI show placeholder
     if (!country) return ok({ taxes: [] });
 
     const isEU = EU.has(country);
@@ -82,11 +83,11 @@ exports.handler = async (event) => {
         const j = await r.json();
         validVat = !!j.valid;
       } catch {
-        validVat = false; // fail closed (charge VAT)
+        validVat = false; // fail closed
       }
     }
 
-    // Rules
+    // Rate logic
     let rate = 0;
     if (country === 'ES') {
       rate = 0.21;
@@ -96,28 +97,29 @@ exports.handler = async (event) => {
       rate = 0;
     }
 
-    // Compute amount (VAT applies on shipping in EU)
+    // Base and amount (VAT applies on shipping in EU)
     const base = itemsTotal + shippingFees;
     const amount = Math.round(base * rate * 100) / 100;
 
-    // Friendly label in Order Summary
-    const label = rate === 0.21 ? 'Taxes / VAT / IVA (21%)' : 'Taxes / VAT / IVA';
+    // Region label
+    let baseLabel = 'Taxes';
+    if (country === 'ES') baseLabel = 'IVA';
+    else if (isEU) baseLabel = 'VAT';
 
-    const taxes =
-      rate > 0
-        ? [
-            {
-              name: label,
-              rate, // percentage (for Snipcart)
-              amount, // absolute (forces UI refresh)
-              appliesOnShipping: true,
-              includedInPrice: false,
-              numberForInvoice: 'ES-IVA',
-            },
-          ]
-        : [];
+    const label = rate > 0 ? `${baseLabel} (${Math.round(rate * 100)}%)` : baseLabel;
 
-    return ok({ taxes });
+    return ok({
+      taxes: [
+        {
+          name: label,
+          rate,
+          amount,
+          appliesOnShipping: true,
+          includedInPrice: false,
+          numberForInvoice: 'ES-IVA',
+        },
+      ],
+    });
   } catch {
     return ok({ taxes: [] });
   }
