@@ -1,5 +1,4 @@
 // netlify/functions/taxes.js
-
 const EU = new Set([
   'AT',
   'BE',
@@ -39,28 +38,25 @@ function ok(obj) {
 }
 
 exports.handler = async (event) => {
-  // Lightweight GET to verify the function is reachable from a browser
-  if (event.httpMethod === 'GET') {
-    return ok({ ok: true, info: 'tax function alive' });
-  }
+  if (event.httpMethod === 'GET') return ok({ ok: true, info: 'tax function alive' });
 
   try {
-    if (event.httpMethod !== 'POST') {
-      return { statusCode: 405, body: 'Method Not Allowed' };
-    }
-
+    if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
     const body = JSON.parse(event.body || '{}');
-    // Log once per invocation (shows in Netlify > Functions > taxes > Logs)
-    console.log('[TAXES] incoming body keys:', Object.keys(body || {}));
-
-    // Snipcart payload variations: body.content.{...} or nested under body.content.cart.{...}
     const content = body?.content || body || {};
 
+    // Addresses (prefer shipping; fallback billing)
     const shipping = content.shippingAddress || content.cart?.shippingAddress || {};
     const billing = content.billingAddress || content.cart?.billingAddress || {};
     const country = String(shipping.country || billing.country || '').toUpperCase();
 
-    // Read vatNumber from customFields (array or object) at content or content.cart
+    // Cart numbers
+    const itemsTotal = Number(content.itemsTotal ?? content.cart?.itemsTotal ?? 0) || 0;
+    const shippingFees =
+      Number(content.shippingInformation?.fees ?? content.cart?.shippingInformation?.fees ?? 0) ||
+      0;
+
+    // Read customFields.vatNumber (object or array)
     const cf = content.customFields || content.cart?.customFields || {};
     let vatNumber = '';
     if (Array.isArray(cf)) {
@@ -72,17 +68,11 @@ exports.handler = async (event) => {
       .replace(/\s+/g, '')
       .toUpperCase();
 
-    console.log('[TAXES] country:', country, 'vatNumber:', vatNumber);
-
-    // If no country yet, return no taxes (Snipcart will call again after address is entered)
-    if (!country) {
-      console.log('[TAXES] no country yet -> taxes: []');
-      return ok({ taxes: [] });
-    }
+    if (!country) return ok({ taxes: [] });
 
     const isEU = EU.has(country);
 
-    // Validate VAT only for EU (non-ES). Outside EU: 0% anyway. Spain: 21% anyway.
+    // Validate VAT only for EU (non-ES)
     let validVat = false;
     if (isEU && country !== 'ES' && /^[A-Z]{2}[A-Z0-9]{8,14}$/.test(vatNumber)) {
       try {
@@ -91,17 +81,12 @@ exports.handler = async (event) => {
         );
         const j = await r.json();
         validVat = !!j.valid;
-        console.log('[TAXES] VIES valid:', validVat, 'name:', j.name || '');
-      } catch (e) {
-        console.log('[TAXES] VIES error:', e && e.message);
-        validVat = false; // fail closed (charge VAT) if the service fails
+      } catch {
+        validVat = false; // fail closed (charge VAT)
       }
     }
 
-    // Rules:
-    // - ES destination -> 21%
-    // - Other EU -> 0% if valid VAT, else 21%
-    // - Outside EU -> 0%
+    // Rules
     let rate = 0;
     if (country === 'ES') {
       rate = 0.21;
@@ -111,12 +96,26 @@ exports.handler = async (event) => {
       rate = 0;
     }
 
-    const taxes = rate > 0 ? [{ name: 'VAT', rate }] : [];
-    console.log('[TAXES] result:', taxes);
+    // Compute amount (VAT applies on shipping in EU)
+    const base = itemsTotal + shippingFees;
+    const amount = Math.round(base * rate * 100) / 100;
+
+    const taxes =
+      rate > 0
+        ? [
+            {
+              name: rate === 0.21 ? 'VAT 21%' : 'VAT',
+              rate, // percentage
+              amount, // absolute (forces UI refresh)
+              appliesOnShipping: true,
+              includedInPrice: false,
+              numberForInvoice: 'ES-IVA',
+            },
+          ]
+        : [];
+
     return ok({ taxes });
-  } catch (err) {
-    console.log('[TAXES] error:', err && err.message);
-    // Don’t block checkout
+  } catch (e) {
     return ok({ taxes: [] });
   }
 };
