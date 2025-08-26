@@ -1,6 +1,6 @@
 // public/tax-label-fallback.js
 (function () {
-  // Quick EU set for label logic
+  // EU list for label logic
   var EU = new Set([
     'AT',
     'BE',
@@ -31,7 +31,7 @@
     'SE',
   ]);
 
-  function computeLabel(country) {
+  function computeRegionLabel(country) {
     country = (country || '').toUpperCase();
     if (!country) return 'Taxes';
     if (country === 'ES') return 'IVA';
@@ -39,118 +39,112 @@
     return 'Taxes';
   }
 
-  function getCountryFromState() {
+  function getState() {
     try {
-      var state =
-        window.Snipcart && window.Snipcart.store && window.Snipcart.store.getState
-          ? window.Snipcart.store.getState()
-          : null;
-      if (!state) return '';
-      var cart = state.cart || {};
-      return (
-        (cart.shippingAddress && cart.shippingAddress.country) ||
-        (cart.billingAddress && cart.billingAddress.country) ||
-        ''
-      );
+      return window.Snipcart && window.Snipcart.store && window.Snipcart.store.getState
+        ? window.Snipcart.store.getState()
+        : null;
     } catch (_) {
-      return '';
+      return null;
     }
+  }
+
+  function getCountry() {
+    var s = getState();
+    if (!s) return '';
+    var c = s.cart || {};
+    return (
+      (c.shippingAddress && c.shippingAddress.country) ||
+      (c.billingAddress && c.billingAddress.country) ||
+      ''
+    );
   }
 
   function relabel() {
     try {
-      var label = computeLabel(getCountryFromState());
+      var s = getState();
+      var cart = (s && s.cart) || {};
+      var taxes = cart.taxes || [];
+      var country = getCountry();
+      var regionLabel = computeRegionLabel(country);
 
-      // 1) If our webhook provided a proper name (e.g., "IVA (21%)"), prefer that.
-      //    If present, do nothing—Snipcart will already show it.
-      var state =
-        window.Snipcart && window.Snipcart.store && window.Snipcart.store.getState
-          ? window.Snipcart.store.getState()
-          : null;
-      var taxes = (state && state.cart && state.cart.taxes) || [];
+      // If webhook gave us a name (e.g., "IVA (21%)"), prefer that when we see a generic "Taxes"
+      var desiredText = taxes.length === 1 && taxes[0].name ? taxes[0].name : regionLabel;
 
-      if (taxes && taxes.length) {
-        // If taxes exist and have custom names, let them show as-is.
-        // Fallback: if Snipcart still rendered a generic "Taxes", replace that text.
-        var nodes = document.querySelectorAll(
-          '.snipcart-cart-summary-fees__item .snipcart-cart-summary-fees__title',
-        );
-        nodes.forEach(function (n) {
-          if (/^\s*Taxes\s*$/i.test(n.textContent)) {
-            n.textContent = taxes.length === 1 ? taxes[0].name || label : label;
-          }
-        });
-        return;
-      }
-
-      // 2) No taxes yet → show a friendly 0 row label (Taxes/VAT/IVA)
-      var zeroRows = document.querySelectorAll(
-        '.snipcart-cart-summary-fees__item .snipcart-cart-summary-fees__title',
+      // Find “Taxes” titles in the summary and swap them
+      var nodes = document.querySelectorAll(
+        '.snipcart-cart-summary-fees__item .snipcart-cart-summary-fees__title,' +
+          '.snipcart-summary-fees__item .snipcart-summary-fees__title',
       );
-      zeroRows.forEach(function (n) {
-        // Only touch neutral “Taxes” rows (avoid “Subtotal”, “Shipping”, etc.)
+
+      nodes.forEach(function (n) {
+        // Only touch the generic label (avoid Subtotal/Shipping/etc.)
         if (/^\s*Taxes\s*$/i.test(n.textContent)) {
-          n.textContent = label;
+          n.textContent = desiredText;
         }
       });
     } catch (_) {}
   }
 
   function arm() {
+    // Initial
     relabel();
 
-    // Re-run on Snipcart route changes
+    // React to common Snipcart events
     if (
       window.Snipcart &&
       window.Snipcart.events &&
       typeof window.Snipcart.events.on === 'function'
     ) {
-      window.Snipcart.events.on('theme.routechanged', function () {
-        setTimeout(relabel, 80);
-      });
-      window.Snipcart.events.on('cart.confirmed', function () {
-        setTimeout(relabel, 80);
-      });
-      window.Snipcart.events.on('item.added', function () {
-        setTimeout(relabel, 80);
-      });
-      window.Snipcart.events.on('customer.information_submitted', function () {
-        setTimeout(relabel, 80);
+      var ev = window.Snipcart.events;
+      [
+        'theme.routechanged',
+        'item.added',
+        'item.removed',
+        'cart.confirmed',
+        'customer.updated',
+        'customer.information_submitted',
+        'shippingrates.changed',
+        'cart.closed',
+        'cart.opened',
+      ].forEach(function (e) {
+        ev.on(e, function () {
+          setTimeout(relabel, 80);
+        });
       });
     }
 
-    // Also observe DOM changes just in case
+    // Observe DOM changes (Vue rerenders)
     var mo = new MutationObserver(function () {
       relabel();
     });
     mo.observe(document.body, { subtree: true, childList: true });
   }
 
-  // Wait for Snipcart to boot, then arm
   function init() {
+    // If Snipcart is ready, arm immediately; otherwise retry briefly
     if (
       window.Snipcart &&
       window.Snipcart.events &&
       typeof window.Snipcart.events.on === 'function'
     ) {
       arm();
-    } else {
-      // Retry a few times while Snipcart initializes
-      var tries = 0;
-      var id = setInterval(function () {
-        tries++;
-        if (
-          window.Snipcart &&
-          window.Snipcart.events &&
-          typeof window.Snipcart.events.on === 'function'
-        ) {
-          clearInterval(id);
-          arm();
-        } else if (tries > 60) {
-          clearInterval(id); // give up silently after ~6s
-        }
-      }, 100);
+      return;
     }
+    var tries = 0;
+    var id = setInterval(function () {
+      tries++;
+      if (
+        window.Snipcart &&
+        window.Snipcart.events &&
+        typeof window.Snipcart.events.on === 'function'
+      ) {
+        clearInterval(id);
+        arm();
+      } else if (tries > 80) {
+        clearInterval(id); // give up quietly after ~8s
+      }
+    }, 100);
   }
 
   if (document.readyState !== 'loading') init();
