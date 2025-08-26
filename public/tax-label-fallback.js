@@ -1,7 +1,6 @@
 // public/tax-label-fallback.js
 (function () {
-  // EU list for label logic
-  var EU = new Set([
+  const EU = new Set([
     'AT',
     'BE',
     'BG',
@@ -31,120 +30,127 @@
     'SE',
   ]);
 
-  function computeRegionLabel(country) {
-    country = (country || '').toUpperCase();
-    if (!country) return 'Taxes';
-    if (country === 'ES') return 'IVA';
-    if (EU.has(country)) return 'VAT';
-    return 'Taxes';
-  }
-
   function getState() {
     try {
-      return window.Snipcart && window.Snipcart.store && window.Snipcart.store.getState
-        ? window.Snipcart.store.getState()
-        : null;
-    } catch (_) {
-      return null;
+      return (window.Snipcart.store && window.Snipcart.store.getState()) || {};
+    } catch {
+      return {};
     }
   }
 
-  function getCountry() {
-    var s = getState();
-    if (!s) return '';
-    var c = s.cart || {};
-    return (
-      (c.shippingAddress && c.shippingAddress.country) ||
-      (c.billingAddress && c.billingAddress.country) ||
-      ''
-    );
-  }
-
-  function relabel() {
+  function nf(amount, currency) {
     try {
-      var s = getState();
-      var cart = (s && s.cart) || {};
-      var taxes = cart.taxes || [];
-      var country = getCountry();
-      var regionLabel = computeRegionLabel(country);
-
-      // If webhook gave us a name (e.g., "IVA (21%)"), prefer that when we see a generic "Taxes"
-      var desiredText = taxes.length === 1 && taxes[0].name ? taxes[0].name : regionLabel;
-
-      // Find “Taxes” titles in the summary and swap them
-      var nodes = document.querySelectorAll(
-        '.snipcart-cart-summary-fees__item .snipcart-cart-summary-fees__title,' +
-          '.snipcart-summary-fees__item .snipcart-summary-fees__title',
-      );
-
-      nodes.forEach(function (n) {
-        // Only touch the generic label (avoid Subtotal/Shipping/etc.)
-        if (/^\s*Taxes\s*$/i.test(n.textContent)) {
-          n.textContent = desiredText;
-        }
-      });
-    } catch (_) {}
+      return new Intl.NumberFormat(undefined, {
+        style: 'currency',
+        currency: (currency || 'EUR').toUpperCase(),
+      }).format(amount);
+    } catch {
+      return Number(amount || 0).toFixed(2);
+    }
   }
 
-  function arm() {
-    // Initial
-    relabel();
+  function labelAndAmount() {
+    const s = getState();
+    const cart = s.cart || {};
+    const shipping = cart.shippingAddress || {};
+    const billing = cart.billingAddress || {};
+    const country = String(shipping.country || billing.country || '').toUpperCase();
+    const isEU = EU.has(country);
+    const currency = String(cart.currency || 'EUR').toUpperCase();
 
-    // React to common Snipcart events
-    if (
-      window.Snipcart &&
-      window.Snipcart.events &&
-      typeof window.Snipcart.events.on === 'function'
-    ) {
-      var ev = window.Snipcart.events;
-      [
-        'theme.routechanged',
-        'item.added',
-        'item.removed',
-        'cart.confirmed',
-        'customer.updated',
-        'customer.information_submitted',
-        'shippingrates.changed',
-        'cart.closed',
-        'cart.opened',
-      ].forEach(function (e) {
-        ev.on(e, function () {
-          setTimeout(relabel, 80);
-        });
-      });
+    // taxesTotal is reliable even if cart.taxes is a Vue observable
+    const taxesTotal = Number(cart.taxesTotal || 0);
+
+    // Try to read rate (%) from cart.taxes[0].rate when available
+    let ratePct = null;
+    try {
+      const taxesArr = Array.isArray(cart.taxes) ? cart.taxes : [];
+      if (taxesArr.length && typeof taxesArr[0].rate === 'number') {
+        ratePct = Math.round(taxesArr[0].rate * 100);
+      }
+    } catch {}
+
+    let base = 'Taxes';
+    if (country === 'ES') base = 'IVA';
+    else if (isEU) base = 'VAT';
+
+    // If we know the rate and it's > 0, append it; otherwise keep bare label
+    const label = ratePct && ratePct > 0 ? `${base} (${ratePct}%)` : base;
+
+    return { label, amount: taxesTotal, currency };
+  }
+
+  function ensureRow() {
+    const box = document.querySelector('.snipcart-cart-summary-fees');
+    if (!box) return null;
+
+    // Hide Snipcart's own taxes row so we don't show it twice
+    for (const it of box.querySelectorAll('.snipcart-cart-summary-fees__item')) {
+      const t = it.querySelector('.snipcart-cart-summary-fees__title');
+      if (t && /^(Taxes|VAT|IVA)\b/i.test((t.textContent || '').trim())) {
+        it.style.display = 'none';
+      }
     }
 
-    // Observe DOM changes (Vue rerenders)
-    var mo = new MutationObserver(function () {
-      relabel();
-    });
-    mo.observe(document.body, { subtree: true, childList: true });
+    let row = box.querySelector('#fr-tax-row');
+    if (row) return row;
+
+    row = document.createElement('div');
+    row.id = 'fr-tax-row';
+    row.className = 'snipcart-cart-summary-fees__item snipcart__font--slim';
+    row.innerHTML = `
+      <span class="snipcart-cart-summary-fees__title"></span>
+      <span class="snipcart-cart-summary-fees__amount"></span>
+    `;
+
+    const total = box.querySelector('.snipcart-cart-summary-fees__total');
+    if (total && total.parentElement === box) box.insertBefore(row, total);
+    else box.appendChild(row);
+
+    return row;
+  }
+
+  function update() {
+    const row = ensureRow();
+    if (!row) return;
+
+    const { label, amount, currency } = labelAndAmount();
+    const titleEl = row.querySelector('.snipcart-cart-summary-fees__title');
+    const amountEl = row.querySelector('.snipcart-cart-summary-fees__amount');
+
+    if (titleEl) titleEl.textContent = label;
+    if (amountEl) amountEl.textContent = nf(amount, currency);
   }
 
   function init() {
-    // If Snipcart is ready, arm immediately; otherwise retry briefly
     if (
-      window.Snipcart &&
-      window.Snipcart.events &&
-      typeof window.Snipcart.events.on === 'function'
-    ) {
-      arm();
-      return;
-    }
-    var tries = 0;
-    var id = setInterval(function () {
-      tries++;
-      if (
+      !(
         window.Snipcart &&
         window.Snipcart.events &&
         typeof window.Snipcart.events.on === 'function'
-      ) {
-        clearInterval(id);
-        arm();
-      } else if (tries > 80) {
-        clearInterval(id); // give up quietly after ~8s
-      }
-    }, 100);
+      )
+    )
+      return;
+
+    // Update now & on relevant events
+    update();
+    const ev = window.Snipcart.events;
+    [
+      'theme.routechanged',
+      'cart.ready',
+      'cart.updated',
+      'cart.closed',
+      'cart.shippingaddress.changed',
+      'cart.billingaddress.changed',
+      'cart.confirmed',
+    ].forEach((e) => ev.on(e, () => setTimeout(update, 80)));
+
+    // Also track DOM rebuilds
+    const mo = new MutationObserver(() => update());
+    mo.observe(document.body, { subtree: true, childList: true });
+
+    // Expose manual trigger for debugging
+    window.__frUpdateTaxRow = update;
   }
 
   if (document.readyState !== 'loading') init();
