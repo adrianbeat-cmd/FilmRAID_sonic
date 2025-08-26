@@ -154,14 +154,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           `}
         </Script>
 
-        {/* Snipcart script */}
+        {/* Snipcart core */}
         <Script
           src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
           strategy="afterInteractive"
         />
 
-        {/* NEW: Tax label fallback (IVA/VAT/Taxes) */}
-        <Script src="/tax-label-fallback.js" strategy="afterInteractive" />
+        {/* Tax label fallback (IVA/VAT/Taxes) — cache-busted */}
+        <Script src="/tax-label-fallback.js?v=20250826-2" strategy="afterInteractive" />
 
         {/* EU VAT check — resilient to route changes & shadow DOM rebuilds */}
         <Script id="eu-vat-check" strategy="afterInteractive">{`

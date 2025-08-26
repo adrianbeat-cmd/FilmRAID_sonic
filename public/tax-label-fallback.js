@@ -1,7 +1,7 @@
 // public/tax-label-fallback.js
 (function () {
-  // EU countries
-  const EU = new Set([
+  // Quick EU set for label logic
+  var EU = new Set([
     'AT',
     'BE',
     'BG',
@@ -31,84 +31,129 @@
     'SE',
   ]);
 
-  function getCountry() {
-    // 1) Ask Snipcart store if available
-    try {
-      const st = window.Snipcart?.store?.getState?.();
-      const c = st?.cart?.shippingAddress?.country || st?.cart?.billingAddress?.country || '';
-      if (c) return String(c).toUpperCase();
-    } catch (_) {}
-
-    // 2) Fallback: read the currently visible country field (input or select)
-    const el =
-      document.querySelector('[name="country"]') ||
-      document.querySelector('select[name="country"]');
-    if (!el) return '';
-    let v = (el.value || '').toString().trim().toUpperCase();
-    if (!v && el.tagName === 'SELECT') {
-      v = el.options[el.selectedIndex]?.value?.toString().trim().toUpperCase() || '';
-    }
-    return v;
-  }
-
-  function labelFor(country) {
+  function computeLabel(country) {
+    country = (country || '').toUpperCase();
     if (!country) return 'Taxes';
     if (country === 'ES') return 'IVA';
     if (EU.has(country)) return 'VAT';
     return 'Taxes';
   }
 
-  function applyLabel() {
-    const want = labelFor(getCountry());
-
-    // Find all “fee” title spans and rewrite ones that look like taxes
-    const titles = document.querySelectorAll(
-      '.snipcart-cart-summary-fees__item .snipcart-cart-summary-fees__title',
-    );
-
-    let touched = false;
-    titles.forEach((span) => {
-      const txt = (span.textContent || '').trim();
-      // Only touch rows that are clearly tax-related
-      if (/^(Taxes|Tax|VAT|IVA)(\s|\(|$)/i.test(txt)) {
-        if (txt !== want && !new RegExp(`^${want}(\\s|\\(|$)`).test(txt)) {
-          span.textContent = want;
-        }
-        touched = true;
-      }
-    });
-
-    // If no tax row is rendered yet, do nothing — Snipcart adds it
-    // after address/shipping selection or when a webhook returns taxes.
-    return touched;
-  }
-
-  function arm() {
-    // Run now
-    applyLabel();
-
-    // Update on any DOM change inside Snipcart modal
-    const mo = new MutationObserver(() => applyLabel());
-    mo.observe(document.body, { subtree: true, childList: true });
-
-    // Update on Snipcart route/cart changes
-    if (window.Snipcart?.events?.on) {
-      window.Snipcart.events.on('theme.routechanged', () => setTimeout(applyLabel, 50));
-      window.Snipcart.events.on('cart.updated', () => setTimeout(applyLabel, 0));
-      window.Snipcart.events.on('item.added', () => setTimeout(applyLabel, 0));
-      window.Snipcart.events.on('shipping.selected', () => setTimeout(applyLabel, 0));
+  function getCountryFromState() {
+    try {
+      var state =
+        window.Snipcart && window.Snipcart.store && window.Snipcart.store.getState
+          ? window.Snipcart.store.getState()
+          : null;
+      if (!state) return '';
+      var cart = state.cart || {};
+      return (
+        (cart.shippingAddress && cart.shippingAddress.country) ||
+        (cart.billingAddress && cart.billingAddress.country) ||
+        ''
+      );
+    } catch (_) {
+      return '';
     }
   }
 
-  // Start when Snipcart is ready, or as soon as DOM is ready
-  if (document.readyState !== 'loading') {
-    document.addEventListener('snipcart.ready', arm, { once: true });
-    // Also try immediately in case Snipcart was already ready
-    setTimeout(arm, 0);
-  } else {
-    document.addEventListener('DOMContentLoaded', () => {
-      document.addEventListener('snipcart.ready', arm, { once: true });
-      setTimeout(arm, 0);
-    });
+  function relabel() {
+    try {
+      var label = computeLabel(getCountryFromState());
+
+      // 1) If our webhook provided a proper name (e.g., "IVA (21%)"), prefer that.
+      //    If present, do nothing—Snipcart will already show it.
+      var state =
+        window.Snipcart && window.Snipcart.store && window.Snipcart.store.getState
+          ? window.Snipcart.store.getState()
+          : null;
+      var taxes = (state && state.cart && state.cart.taxes) || [];
+
+      if (taxes && taxes.length) {
+        // If taxes exist and have custom names, let them show as-is.
+        // Fallback: if Snipcart still rendered a generic "Taxes", replace that text.
+        var nodes = document.querySelectorAll(
+          '.snipcart-cart-summary-fees__item .snipcart-cart-summary-fees__title',
+        );
+        nodes.forEach(function (n) {
+          if (/^\s*Taxes\s*$/i.test(n.textContent)) {
+            n.textContent = taxes.length === 1 ? taxes[0].name || label : label;
+          }
+        });
+        return;
+      }
+
+      // 2) No taxes yet → show a friendly 0 row label (Taxes/VAT/IVA)
+      var zeroRows = document.querySelectorAll(
+        '.snipcart-cart-summary-fees__item .snipcart-cart-summary-fees__title',
+      );
+      zeroRows.forEach(function (n) {
+        // Only touch neutral “Taxes” rows (avoid “Subtotal”, “Shipping”, etc.)
+        if (/^\s*Taxes\s*$/i.test(n.textContent)) {
+          n.textContent = label;
+        }
+      });
+    } catch (_) {}
   }
+
+  function arm() {
+    relabel();
+
+    // Re-run on Snipcart route changes
+    if (
+      window.Snipcart &&
+      window.Snipcart.events &&
+      typeof window.Snipcart.events.on === 'function'
+    ) {
+      window.Snipcart.events.on('theme.routechanged', function () {
+        setTimeout(relabel, 80);
+      });
+      window.Snipcart.events.on('cart.confirmed', function () {
+        setTimeout(relabel, 80);
+      });
+      window.Snipcart.events.on('item.added', function () {
+        setTimeout(relabel, 80);
+      });
+      window.Snipcart.events.on('customer.information_submitted', function () {
+        setTimeout(relabel, 80);
+      });
+    }
+
+    // Also observe DOM changes just in case
+    var mo = new MutationObserver(function () {
+      relabel();
+    });
+    mo.observe(document.body, { subtree: true, childList: true });
+  }
+
+  // Wait for Snipcart to boot, then arm
+  function init() {
+    if (
+      window.Snipcart &&
+      window.Snipcart.events &&
+      typeof window.Snipcart.events.on === 'function'
+    ) {
+      arm();
+    } else {
+      // Retry a few times while Snipcart initializes
+      var tries = 0;
+      var id = setInterval(function () {
+        tries++;
+        if (
+          window.Snipcart &&
+          window.Snipcart.events &&
+          typeof window.Snipcart.events.on === 'function'
+        ) {
+          clearInterval(id);
+          arm();
+        } else if (tries > 60) {
+          clearInterval(id); // give up silently after ~6s
+        }
+      }, 100);
+    }
+  }
+
+  if (document.readyState !== 'loading') init();
+  else document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('snipcart.ready', init);
 })();
