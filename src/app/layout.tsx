@@ -109,7 +109,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         addProductBehavior: "open",
         timeoutDuration: 2000,
         // cache-bust so Snipcart fetches the latest template
-        templatesUrl: "/snipcart-templates.html?v=20250825-5",
+        templatesUrl: "/snipcart-templates.html?v=20250825-6",
         version: "3.6.0"
       };
     `,
@@ -159,6 +159,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
           strategy="afterInteractive"
         />
+
+        {/* NEW: Tax label fallback (IVA/VAT/Taxes) */}
+        <Script src="/tax-label-fallback.js" strategy="afterInteractive" />
 
         {/* EU VAT check — resilient to route changes & shadow DOM rebuilds */}
         <Script id="eu-vat-check" strategy="afterInteractive">{`
