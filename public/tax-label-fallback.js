@@ -30,130 +30,157 @@
     'SE',
   ]);
 
-  function getState() {
+  const N = (x) => Number(x || 0);
+
+  function getCart() {
     try {
-      return (window.Snipcart.store && window.Snipcart.store.getState()) || {};
+      return (window.Snipcart.store?.getState?.() || {}).cart || {};
     } catch {
       return {};
     }
   }
 
-  function nf(amount, currency) {
-    try {
-      return new Intl.NumberFormat(undefined, {
-        style: 'currency',
-        currency: (currency || 'EUR').toUpperCase(),
-      }).format(amount);
-    } catch {
-      return Number(amount || 0).toFixed(2);
-    }
+  function selectSummaryBox() {
+    return (
+      document.querySelector('.snipcart-cart-summary-fees') ||
+      document.querySelector('[class*="cart-summary-fees"]')
+    );
   }
 
-  function labelAndAmount() {
-    const s = getState();
-    const cart = s.cart || {};
-    const shipping = cart.shippingAddress || {};
-    const billing = cart.billingAddress || {};
-    const country = String(shipping.country || billing.country || '').toUpperCase();
-    const isEU = EU.has(country);
-    const currency = String(cart.currency || 'EUR').toUpperCase();
+  function baseLabel(country) {
+    const c = String(country || '').toUpperCase();
+    if (c === 'ES') return 'IVA';
+    if (EU.has(c)) return 'VAT';
+    return 'Taxes';
+  }
 
-    // taxesTotal is reliable even if cart.taxes is a Vue observable
-    const taxesTotal = Number(cart.taxesTotal || 0);
-
-    // Try to read rate (%) from cart.taxes[0].rate when available
-    let ratePct = null;
+  function computeRatePct(cart) {
+    // 1) prefer cart.taxes[0].rate
     try {
-      const taxesArr = Array.isArray(cart.taxes) ? cart.taxes : [];
-      if (taxesArr.length && typeof taxesArr[0].rate === 'number') {
-        ratePct = Math.round(taxesArr[0].rate * 100);
-      }
+      const arr = Array.isArray(cart.taxes) ? cart.taxes : [];
+      if (arr.length && typeof arr[0].rate === 'number') return Math.round(arr[0].rate * 100);
     } catch {}
+    // 2) fallback: derive from totals (items + shipping)
+    const base = N(cart.itemsTotal) + N(cart.shippingInformation?.fees);
+    const total = N(cart.taxesTotal);
+    if (base > 0 && total > 0) {
+      const pct = Math.round((total / base) * 100);
+      if (pct > 0 && pct < 50) return pct; // sanity
+    }
+    return null;
+  }
 
-    let base = 'Taxes';
-    if (country === 'ES') base = 'IVA';
-    else if (isEU) base = 'VAT';
-
-    // If we know the rate and it's > 0, append it; otherwise keep bare label
-    const label = ratePct && ratePct > 0 ? `${base} (${ratePct}%)` : base;
-
-    return { label, amount: taxesTotal, currency };
+  function hideNativeTaxes(box) {
+    if (!box) return;
+    for (const it of box.querySelectorAll('.snipcart-cart-summary-fees__item')) {
+      const t = it.querySelector('.snipcart-cart-summary-fees__title');
+      const txt = (t?.textContent || '').trim();
+      // Hide any built-in Taxes/VAT/IVA rows so we don’t double-render
+      if (/^(Taxes|VAT|IVA)\b/i.test(txt)) it.style.display = 'none';
+    }
   }
 
   function ensureRow() {
-    const box = document.querySelector('.snipcart-cart-summary-fees');
+    const box = selectSummaryBox();
     if (!box) return null;
 
-    // Hide Snipcart's own taxes row so we don't show it twice
-    for (const it of box.querySelectorAll('.snipcart-cart-summary-fees__item')) {
-      const t = it.querySelector('.snipcart-cart-summary-fees__title');
-      if (t && /^(Taxes|VAT|IVA)\b/i.test((t.textContent || '').trim())) {
-        it.style.display = 'none';
-      }
-    }
+    hideNativeTaxes(box);
 
     let row = box.querySelector('#fr-tax-row');
-    if (row) return row;
-
-    row = document.createElement('div');
-    row.id = 'fr-tax-row';
-    row.className = 'snipcart-cart-summary-fees__item snipcart__font--slim';
-    row.innerHTML = `
-      <span class="snipcart-cart-summary-fees__title"></span>
-      <span class="snipcart-cart-summary-fees__amount"></span>
-    `;
-
-    const total = box.querySelector('.snipcart-cart-summary-fees__total');
-    if (total && total.parentElement === box) box.insertBefore(row, total);
-    else box.appendChild(row);
-
+    if (!row) {
+      row = document.createElement('div');
+      row.id = 'fr-tax-row';
+      row.className = 'snipcart-cart-summary-fees__item snipcart__font--slim';
+      row.innerHTML = `
+        <span class="snipcart-cart-summary-fees__title"></span>
+        <span class="snipcart-cart-summary-fees__amount"></span>
+      `;
+      const total = box.querySelector('.snipcart-cart-summary-fees__total');
+      if (total) box.insertBefore(row, total);
+      else box.appendChild(row);
+    } else {
+      row.style.display = '';
+    }
     return row;
   }
 
   function update() {
+    const cart = getCart();
+    const country = cart.shippingAddress?.country || cart.billingAddress?.country || '';
+    const labelBase = baseLabel(country);
+    const ratePct = computeRatePct(cart);
+    const label = ratePct ? `${labelBase} (${ratePct}%)` : labelBase;
+    const amount = N(cart.taxesTotal);
+    const currency = (cart.currency || 'EUR').toUpperCase();
+
     const row = ensureRow();
     if (!row) return;
 
-    const { label, amount, currency } = labelAndAmount();
-    const titleEl = row.querySelector('.snipcart-cart-summary-fees__title');
-    const amountEl = row.querySelector('.snipcart-cart-summary-fees__amount');
-
-    if (titleEl) titleEl.textContent = label;
-    if (amountEl) amountEl.textContent = nf(amount, currency);
+    const t = row.querySelector('.snipcart-cart-summary-fees__title');
+    const a = row.querySelector('.snipcart-cart-summary-fees__amount');
+    if (t) t.textContent = label;
+    if (a) {
+      try {
+        a.textContent = new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(
+          amount,
+        );
+      } catch {
+        a.textContent = amount.toFixed(2);
+      }
+    }
   }
 
-  function init() {
-    if (
-      !(
-        window.Snipcart &&
-        window.Snipcart.events &&
-        typeof window.Snipcart.events.on === 'function'
-      )
-    )
-      return;
+  // Expose manual trigger immediately so you can test in console
+  window.__frUpdateTaxRow = function () {
+    try {
+      update();
+    } catch (_) {}
+  };
 
-    // Update now & on relevant events
-    update();
-    const ev = window.Snipcart.events;
-    [
-      'theme.routechanged',
-      'cart.ready',
-      'cart.updated',
-      'cart.closed',
-      'cart.shippingaddress.changed',
-      'cart.billingaddress.changed',
-      'cart.confirmed',
-    ].forEach((e) => ev.on(e, () => setTimeout(update, 80)));
+  function boot() {
+    // Hook Snipcart events if present
+    const ev = window.Snipcart?.events;
+    if (ev && typeof ev.on === 'function') {
+      [
+        'theme.routechanged',
+        'cart.ready',
+        'cart.updated',
+        'cart.closed',
+        'cart.confirmed',
+        'item.added',
+        'item.removed',
+        'shippingrates.changed',
+        'cart.shippingaddress.changed',
+        'cart.billingaddress.changed',
+      ].forEach((e) => ev.on(e, () => setTimeout(update, 60)));
+    }
 
-    // Also track DOM rebuilds
+    // Watch DOM rebuilds from Snipcart (Vue re-mounts)
     const mo = new MutationObserver(() => update());
     mo.observe(document.body, { subtree: true, childList: true });
 
-    // Expose manual trigger for debugging
-    window.__frUpdateTaxRow = update;
+    // Periodic nudge for stubborn cases (stops after 15s)
+    const t0 = Date.now();
+    const tick = setInterval(() => {
+      update();
+      if (Date.now() - t0 > 15000) clearInterval(tick);
+    }, 250);
+
+    // First paint
+    update();
   }
 
-  if (document.readyState !== 'loading') init();
-  else document.addEventListener('DOMContentLoaded', init);
-  document.addEventListener('snipcart.ready', init);
+  function waitAndBoot() {
+    const ok = () => !!selectSummaryBox() || !!window.Snipcart?.events?.on;
+    const id = setInterval(() => {
+      if (ok()) {
+        clearInterval(id);
+        boot();
+      }
+    }, 120);
+    setTimeout(() => clearInterval(id), 30000); // give up after 30s
+  }
+
+  if (document.readyState !== 'loading') waitAndBoot();
+  else document.addEventListener('DOMContentLoaded', waitAndBoot);
 })();
