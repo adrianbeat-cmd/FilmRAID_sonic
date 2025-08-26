@@ -38,11 +38,12 @@
 
   function computeLabel(cart) {
     try {
-      // If webhook already provided a nice name, keep it.
+      // If webhook already set a nice label (not just "Taxes"), keep it.
       const taxes = cart?.taxes || [];
-      const first = Array.isArray(taxes) ? taxes[0] : null;
-      if (first && typeof first.name === 'string' && first.name.trim() && first.name !== 'Taxes') {
-        return first.name.trim();
+      const t0 = Array.isArray(taxes) ? taxes[0] : null;
+      if (t0 && typeof t0.name === 'string') {
+        const n = t0.name.trim();
+        if (n && n.toLowerCase() !== 'taxes') return n;
       }
       const ctry = String(
         cart?.shippingAddress?.country || cart?.billingAddress?.country || '',
@@ -51,112 +52,142 @@
       if (ctry === 'ES') return 'IVA';
       if (EU.has(ctry)) return 'VAT';
       return 'Taxes';
-    } catch (_) {
+    } catch {
       return 'Taxes';
     }
   }
 
-  // Find *all* likely “Taxes” title nodes across Snipcart UIs
-  function findTaxTitleNodes() {
-    const out = new Set();
-
-    // Primary fee rows (Order summary)
-    document.querySelectorAll('.snipcart-cart-summary-fees__item').forEach((item) => {
-      const title = item.querySelector('.snipcart-cart-summary-fees__title');
-      const amount = item.querySelector('.snipcart-cart-summary-fees__amount');
-      const t = (title?.textContent || '').trim();
-      if (title && amount && (/^tax(es)?$/i.test(t) || /^taxes\s*\/\s*vat\s*\/\s*iva$/i.test(t))) {
-        out.add(title);
-      }
-    });
-
-    // Any other headings that render “Taxes” in different screens
-    document
-      .querySelectorAll(
-        '.snipcart__font--slim, .snipcart__font--regular, .snipcart__font--secondary, .snipcart__font--bold',
-      )
-      .forEach((el) => {
-        const t = (el.textContent || '').trim();
-        if (/^tax(es)?$/i.test(t) || /^taxes\s*\/\s*vat\s*\/\s*iva$/i.test(t)) {
-          // Only keep ones that sit in a summary/fee-ish context to avoid false positives
-          if (
-            el.closest(
-              '.snipcart-cart-summary, .snipcart-cart__summary, .snipcart-cart-summary-fees, .snipcart-order__invoice, .snipcart-order__summary',
-            )
-          ) {
-            out.add(el);
-          }
-        }
-      });
-
-    return Array.from(out);
+  // Deep query across *all* nested shadow roots
+  function deepQueryAll(root, selector, acc) {
+    acc = acc || [];
+    if (!root) return acc;
+    if (root.querySelectorAll) {
+      root.querySelectorAll(selector).forEach((el) => acc.push(el));
+    }
+    // Walk children and pierce their shadowRoots too
+    const kids = root instanceof ShadowRoot ? root.children : root.children || [];
+    for (const el of kids) {
+      if (el.shadowRoot) deepQueryAll(el.shadowRoot, selector, acc);
+      // Also descend into regular subtree
+      deepQueryAll(el, selector, acc);
+    }
+    return acc;
   }
 
-  function updateTaxRows() {
-    safe(() => {
-      const state = window.Snipcart?.store?.getState ? window.Snipcart.store.getState() : {};
-      const cart = state?.cart || state;
-      const label = computeLabel(cart);
-      const nodes = findTaxTitleNodes();
-
-      nodes.forEach((el) => {
-        safe(() => {
-          el.textContent = label;
-        });
-      });
-    });
+  // Replace text nodes that are exactly "Taxes" (or our previous fallbacks) inside summary-ish containers
+  function replaceInContainer(container, newLabel) {
+    const walker = document.createTreeWalker(
+      container,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode(node) {
+          if (!node.nodeValue) return NodeFilter.FILTER_REJECT;
+          const s = node.nodeValue.trim();
+          // Only exact matches to avoid false positives:
+          if (/^tax(es)?$/i.test(s)) return NodeFilter.FILTER_ACCEPT;
+          if (/^vat$/i.test(s)) return NodeFilter.FILTER_ACCEPT;
+          if (/^iva$/i.test(s)) return NodeFilter.FILTER_ACCEPT;
+          if (/^taxes\s*\/\s*vat\s*\/\s*iva$/i.test(s)) return NodeFilter.FILTER_ACCEPT;
+          return NodeFilter.FILTER_REJECT;
+        },
+      },
+      false,
+    );
+    const targets = [];
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) targets.push(n);
+    targets.forEach((n) =>
+      safe(() => {
+        n.nodeValue = newLabel;
+      }),
+    );
   }
 
-  // Small poller when the cart opens / step changes (handles re-renders)
-  function burstUpdate() {
-    for (let i = 0; i < 20; i++) {
-      setTimeout(updateTaxRows, 100 + i * 150); // ~3s of light retries
+  function updateTaxLabelsDeep() {
+    const state =
+      safe(() => window.Snipcart?.store?.getState && window.Snipcart.store.getState()) || {};
+    const cart = state?.cart || state;
+    const label = computeLabel(cart);
+
+    // Likely containers where fee lines / order summary render:
+    const selectors = [
+      '.snipcart-cart-summary-fees',
+      '.snipcart-order__summary',
+      '.snipcart-cart__summary',
+      '.snipcart-summary',
+      '.snipcart-order__invoice',
+    ];
+
+    // Search both light DOM and every Snipcart shadow root
+    const containers = new Set();
+    selectors.forEach((sel) => deepQueryAll(document, sel, []).forEach((el) => containers.add(el)));
+
+    containers.forEach((c) => replaceInContainer(c, label));
+  }
+
+  // Light retries right after cart opens / route changes
+  function burst() {
+    for (let i = 0; i < 20; i++) setTimeout(updateTaxLabelsDeep, 100 + i * 150);
+  }
+
+  // Observe DOM to catch re-renders
+  function arm() {
+    updateTaxLabelsDeep();
+    const mo = new MutationObserver(() => updateTaxLabelsDeep());
+    mo.observe(document.documentElement, { childList: true, subtree: true });
+
+    const on = safe(() => window.Snipcart?.events?.on);
+    if (typeof on === 'function') {
+      on('cart.opened', burst);
+      on('cart.updated', burst);
+      on('theme.routechanged', burst);
+      on('item.added', burst);
+      on('item.updated', burst);
+      on('item.removed', burst);
+      on('shippingrate.selected', burst);
+      on('cart.closed', updateTaxLabelsDeep);
     }
   }
 
-  // Expose for console debugging
-  window.__frUpdateTaxRow = updateTaxRows;
-  window.__frDebugTaxes = function () {
-    const state = window.Snipcart?.store?.getState ? window.Snipcart.store.getState() : {};
+  // Expose helpers for console
+  window.__frUpdateTaxRow = updateTaxLabelsDeep;
+  window.__frDeepDebug = function () {
+    const state =
+      safe(() => window.Snipcart?.store?.getState && window.Snipcart.store.getState()) || {};
     const cart = state?.cart || state;
-    const nodes = findTaxTitleNodes();
-    const label = computeLabel(cart);
     console.log({
       country: cart?.shippingAddress?.country || cart?.billingAddress?.country,
       taxes: cart?.taxes,
-      computedLabel: label,
-      nodes,
+      computedLabel: computeLabel(cart),
     });
+    // Count exact “Taxes/VAT/IVA” text nodes inside likely containers:
+    const selectors = [
+      '.snipcart-cart-summary-fees',
+      '.snipcart-order__summary',
+      '.snipcart-cart__summary',
+      '.snipcart-summary',
+      '.snipcart-order__invoice',
+    ];
+    let count = 0;
+    const matches = [];
+    selectors.forEach((sel) => {
+      deepQueryAll(document, sel, []).forEach((c) => {
+        const tw = document.createTreeWalker(c, NodeFilter.SHOW_TEXT);
+        for (let n = tw.nextNode(); n; n = tw.nextNode()) {
+          const s = (n.nodeValue || '').trim();
+          if (/^(tax(es)?)$|^(vat)$|^(iva)$|^taxes\s*\/\s*vat\s*\/\s*iva$/i.test(s)) {
+            count++;
+            matches.push({ text: s, node: n, container: c });
+          }
+        }
+      });
+    });
+    console.log({ matchedTextNodes: count, sample: matches.slice(0, 5) });
   };
 
-  function arm() {
-    // Try now, then lightly whenever DOM changes
-    updateTaxRows();
-    const mo = new MutationObserver(() => updateTaxRows());
-    mo.observe(document.body, { childList: true, subtree: true });
-
-    // Hook Snipcart events if present
-    const on = window.Snipcart?.events?.on;
-    if (typeof on === 'function') {
-      on('cart.opened', burstUpdate);
-      on('cart.closed', updateTaxRows);
-      on('cart.updated', burstUpdate);
-      on('theme.routechanged', burstUpdate);
-      on('shippingrate.selected', burstUpdate);
-      on('item.added', burstUpdate);
-      on('item.updated', burstUpdate);
-      on('item.removed', burstUpdate);
-    }
-  }
-
-  function init() {
-    setTimeout(arm, 0);
-  }
-
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', arm);
   } else {
-    init();
+    arm();
   }
-  document.addEventListener('snipcart.ready', () => safe(burstUpdate));
+  document.addEventListener('snipcart.ready', arm);
 })();
