@@ -1,32 +1,6 @@
 <div id="snipcart-templates">
-  <!-- Billing (TOP): put Phone right after Email -->
-  <billing section="top">
-    <fieldset class="snipcart-form__set">
-      <!-- Phone (required) — appears immediately after email and before address -->
-      <snipcart-field name="phone">
-        <snipcart-label class="snipcart__font--tiny" for="phone">Phone (required)</snipcart-label>
-        <snipcart-input
-          id="phone"
-          name="phone"
-          autocomplete="tel"
-          inputmode="tel"
-          placeholder="+34 612 345 678"
-          pattern="^[+]?[\d\s().-]{7,}$"
-          required
-          style="padding-left: 0.75rem"
-        ></snipcart-input>
-        <snipcart-field-error name="phone"></snipcart-field-error>
-        <small
-          class="snipcart__font--tiny"
-          style="display: block; margin-top: 0.25rem; color: #6b7280"
-        >
-          Required by the courier for delivery updates.
-        </small>
-      </snipcart-field>
-    </fieldset>
-  </billing>
-
-  <!-- Billing (BOTTOM): Company + EU VAT -->
+  <!-- Billing: keep default Snipcart order (Full name → Email → Phone),
+       then add Company + EU VAT **after** the core fields. -->
   <billing section="bottom">
     <fieldset class="snipcart-form__set">
       <!-- Company (optional) -->
@@ -42,7 +16,7 @@
         ></snipcart-input>
       </div>
 
-      <!-- EU VAT -->
+      <!-- EU VAT (optional) -->
       <snipcart-field name="vatNumber">
         <snipcart-label class="snipcart__font--tiny" for="vatNumber"
           >EU VAT Number (optional)</snipcart-label
@@ -55,7 +29,7 @@
           style="padding-left: 0.75rem"
         ></snipcart-input>
         <snipcart-field-error name="vatNumber"></snipcart-field-error>
-        <!-- extra bottom margin so it doesn't touch the next field -->
+        <!-- nice breathing room so it doesn't collide with anything above/below -->
         <small
           id="vat-message"
           class="snipcart__font--tiny"
@@ -65,7 +39,7 @@
     </fieldset>
   </billing>
 
-  <!-- Order summary: ALWAYS render one tax row (IVA/VAT/Taxes), 0 when empty -->
+  <!-- Order summary: ALWAYS show one taxes row (IVA/VAT/Taxes), even when 0 -->
   <cart-summary-fees>
     <div class="snipcart-cart-summary-fees">
       <div
@@ -112,20 +86,20 @@
           >
         </div>
 
-        <!-- Single Taxes/VAT/IVA row (0 when empty) -->
+        <!-- Single, always-present IVA/VAT/Taxes row (shows 0.00 if no taxes yet) -->
         <div class="snipcart-cart-summary-fees__item snipcart__font--slim">
           <span class="snipcart-cart-summary-fees__title">
             {{ (function () { var C = (cart && cart.shippingAddress && cart.shippingAddress.country)
             || (cart && cart.billingAddress && cart.billingAddress.country) || ''; var EU =
             ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'];
             var label = (C === 'ES') ? 'IVA' : (EU.indexOf(C) !== -1 ? 'VAT' : 'Taxes'); var T =
-            (taxes || []); var positive = T.filter(function(t){ return t && t.rate > 0; }); var pct
-            = (positive.length === 1) ? Math.round(positive[0].rate * 100) : null; return label +
-            (pct ? (' (' + pct + '%)') : ''); })() }}
+            (taxes || []); var positive = T.filter(function (t) { return t && t.rate > 0; }); var
+            pct = (positive.length === 1) ? Math.round(positive[0].rate * 100) : null; return label
+            + (pct ? (' (' + pct + '%)') : ''); })() }}
           </span>
           <span class="snipcart-cart-summary-fees__amount">
-            {{ ( (taxes && taxes.length) ? taxes.reduce(function (a, t) { return a + (t && t.amount
-            || 0); }, 0) : 0 ) | money(cart.currency) }}
+            {{ ((taxes && taxes.length) ? taxes.reduce(function (a, t) { return a + (t && t.amount
+            || 0); }, 0) : 0) | money(cart.currency) }}
           </span>
         </div>
 
