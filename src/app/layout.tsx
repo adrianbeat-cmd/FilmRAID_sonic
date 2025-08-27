@@ -161,7 +161,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
 
         {/* Tax label fallback (IVA/VAT/Taxes) — cache-busted */}
-        <Script src="/tax-label-fallback.js?v=20250826-18" strategy="afterInteractive" />
+        <Script src="/tax-label-fallback.js?v=20250826-19" strategy="afterInteractive" />
+
+        {/* Reorder phone: Full name → Email → Phone → Street address */}
+        <Script src="/snipcart-reorder.js?v=20250826-1" strategy="afterInteractive" />
 
         {/* EU VAT check — resilient to route changes & shadow DOM rebuilds */}
         <Script id="eu-vat-check" strategy="afterInteractive">{`
