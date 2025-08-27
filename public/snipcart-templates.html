@@ -159,15 +159,20 @@
         <span class="snipcart-summary-fees__amount">{{ subtotal | money(cart.currency) }}</span>
       </div>
 
-      <!-- Shipping -->
-      <div class="snipcart-summary-fees__item snipcart__font--slim" v-if="shipping.cost != null">
+      <!-- Shipping: show as soon as it exists (selected rate or computed fees) -->
+      <div
+        class="snipcart-summary-fees__item snipcart__font--slim"
+        v-if="(shipping && shipping.cost != null) || (cart && cart.shippingInformation && cart.shippingInformation.fees != null)"
+      >
         <span class="snipcart-summary-fees__title">{{ $localize('cart_summary.shipping') }}</span>
-        <span class="snipcart-summary-fees__amount"
-          >{{ shipping.cost | money(cart.currency) }}</span
-        >
+        <span class="snipcart-summary-fees__amount">
+          {{ ( (shipping && shipping.cost != null) ? shipping.cost : (cart &&
+          cart.shippingInformation && cart.shippingInformation.fees != null ?
+          cart.shippingInformation.fees : 0) ) | money(cart.currency) }}
+        </span>
       </div>
 
-      <!-- ALWAYS show a single IVA/VAT/Taxes row (Shipping view) -->
+      <!-- ALWAYS show a single IVA/VAT/Taxes row (even if amount is 0) -->
       <div class="snipcart-summary-fees__item snipcart__font--slim">
         <span class="snipcart-summary-fees__title">
           {{ (function () { var C = (cart && cart.shippingAddress && cart.shippingAddress.country)
@@ -181,6 +186,22 @@
         <span class="snipcart-summary-fees__amount">
           {{ ((taxes && taxes.length) ? taxes.reduce(function(a,t){ return a + (t && t.amount || 0);
           }, 0) : 0) | money(cart.currency) }}
+        </span>
+      </div>
+
+      <!-- Total (bring it back) -->
+      <div
+        class="snipcart-summary-fees__item snipcart-summary-fees__total snipcart__font--bold snipcart__font--secondary"
+      >
+        <span
+          class="snipcart-summary-fees__title snipcart-summary-fees__title--highlight snipcart__font--large"
+        >
+          {{ $localize('cart_summary.total') }}
+        </span>
+        <span
+          class="snipcart-summary-fees__amount snipcart-summary-fees__amount--highlight snipcart__font--large"
+        >
+          {{ total | money(cart.currency) }}
         </span>
       </div>
     </div>
