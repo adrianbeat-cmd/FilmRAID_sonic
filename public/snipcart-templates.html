@@ -1,5 +1,32 @@
 <div id="snipcart-templates">
-  <!-- Billing: Company + EU VAT + Phone (we'll move Phone just after Email) -->
+  <!-- Billing (TOP): put Phone right after Email -->
+  <billing section="top">
+    <fieldset class="snipcart-form__set">
+      <!-- Phone (required) — appears immediately after email and before address -->
+      <snipcart-field name="phone">
+        <snipcart-label class="snipcart__font--tiny" for="phone">Phone (required)</snipcart-label>
+        <snipcart-input
+          id="phone"
+          name="phone"
+          autocomplete="tel"
+          inputmode="tel"
+          placeholder="+34 612 345 678"
+          pattern="^[+]?[\d\s().-]{7,}$"
+          required
+          style="padding-left: 0.75rem"
+        ></snipcart-input>
+        <snipcart-field-error name="phone"></snipcart-field-error>
+        <small
+          class="snipcart__font--tiny"
+          style="display: block; margin-top: 0.25rem; color: #6b7280"
+        >
+          Required by the courier for delivery updates.
+        </small>
+      </snipcart-field>
+    </fieldset>
+  </billing>
+
+  <!-- Billing (BOTTOM): Company + EU VAT -->
   <billing section="bottom">
     <fieldset class="snipcart-form__set">
       <!-- Company (optional) -->
@@ -28,39 +55,17 @@
           style="padding-left: 0.75rem"
         ></snipcart-input>
         <snipcart-field-error name="vatNumber"></snipcart-field-error>
-        <!-- bottom margin so it doesn't touch the phone field -->
+        <!-- extra bottom margin so it doesn't touch the next field -->
         <small
           id="vat-message"
           class="snipcart__font--tiny"
           style="display: block; margin: 0.25rem 0 0.75rem"
         ></small>
       </snipcart-field>
-
-      <!-- Phone (required) — will be MOVED right after Email by the script below -->
-      <snipcart-field name="phone" id="fr-phone-field">
-        <snipcart-label class="snipcart__font--tiny" for="phone">Phone (required)</snipcart-label>
-        <snipcart-input
-          id="phone"
-          name="phone"
-          autocomplete="tel"
-          inputmode="tel"
-          placeholder="+34 612 345 678"
-          pattern="^[+]?[\d\s().-]{7,}$"
-          required
-          style="padding-left: 0.75rem"
-        ></snipcart-input>
-        <snipcart-field-error name="phone"></snipcart-field-error>
-        <small
-          class="snipcart__font--tiny"
-          style="display: block; margin-top: 0.25rem; color: #6b7280"
-        >
-          Required by the courier for delivery updates.
-        </small>
-      </snipcart-field>
     </fieldset>
   </billing>
 
-  <!-- Order summary: ALWAYS render one IVA/VAT/Taxes row -->
+  <!-- Order summary: ALWAYS render one tax row (IVA/VAT/Taxes), 0 when empty -->
   <cart-summary-fees>
     <div class="snipcart-cart-summary-fees">
       <div
@@ -107,7 +112,7 @@
           >
         </div>
 
-        <!-- Single, always-present tax row -->
+        <!-- Single Taxes/VAT/IVA row (0 when empty) -->
         <div class="snipcart-cart-summary-fees__item snipcart__font--slim">
           <span class="snipcart-cart-summary-fees__title">
             {{ (function () { var C = (cart && cart.shippingAddress && cart.shippingAddress.country)
@@ -119,8 +124,8 @@
             (pct ? (' (' + pct + '%)') : ''); })() }}
           </span>
           <span class="snipcart-cart-summary-fees__amount">
-            {{ ( (taxes && taxes.length) ? taxes.reduce(function(a,t){ return a + (t && t.amount ||
-            0); }, 0) : 0 ) | money(cart.currency) }}
+            {{ ( (taxes && taxes.length) ? taxes.reduce(function (a, t) { return a + (t && t.amount
+            || 0); }, 0) : 0 ) | money(cart.currency) }}
           </span>
         </div>
 
@@ -142,61 +147,4 @@
       </div>
     </div>
   </cart-summary-fees>
-
-  <!-- Tiny helper: move the Phone field right after Email on the Billing step -->
-  <script>
-    (function () {
-      function movePhoneAfterEmail() {
-        var phone = document.getElementById('fr-phone-field');
-        if (!phone) return;
-
-        // Try to find the live email input in the billing form
-        var emailInput =
-          document.querySelector('input[type="email"]') ||
-          (function () {
-            // look inside snipcart-input shadow roots too
-            var host = document.querySelector('snipcart-input[name="email"]');
-            return host && host.shadowRoot
-              ? host.shadowRoot.querySelector('input[type="email"]')
-              : null;
-          })();
-
-        if (!emailInput) return;
-
-        var emailField =
-          emailInput.closest('.snipcart-form__field') ||
-          emailInput.closest('snipcart-field') ||
-          emailInput.parentElement;
-
-        if (!emailField || phone.__frMoved) return;
-
-        // Insert phone right after email field container
-        try {
-          emailField.parentNode.insertBefore(phone, emailField.nextSibling);
-          phone.__frMoved = true;
-        } catch (_) {}
-      }
-
-      function arm() {
-        movePhoneAfterEmail();
-        if (
-          window.Snipcart &&
-          window.Snipcart.events &&
-          typeof window.Snipcart.events.on === 'function'
-        ) {
-          window.Snipcart.events.on('theme.routechanged', function () {
-            setTimeout(movePhoneAfterEmail, 120);
-          });
-        }
-        var mo = new MutationObserver(function () {
-          movePhoneAfterEmail();
-        });
-        mo.observe(document.body, { subtree: true, childList: true });
-      }
-
-      if (document.readyState !== 'loading') arm();
-      else document.addEventListener('DOMContentLoaded', arm);
-      document.addEventListener('snipcart.ready', arm);
-    })();
-  </script>
 </div>
