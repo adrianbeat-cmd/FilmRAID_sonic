@@ -1,131 +1,54 @@
-<div id="snipcart-templates">
-  <!-- Billing: Company + EU VAT Number together -->
-  <billing section="bottom">
-    <fieldset class="snipcart-form__set">
-      <div class="snipcart-form__field">
-        <snipcart-label class="snipcart__font--tiny" for="company"
-          >Company (optional)</snipcart-label
-        >
-        <snipcart-input
-          id="company"
-          name="company"
-          autocomplete="organization"
-          placeholder="Your company"
-        ></snipcart-input>
-      </div>
-
-      <snipcart-field name="vatNumber">
-        <snipcart-label class="snipcart__font--tiny" for="vatNumber"
-          >EU VAT Number (optional)</snipcart-label
-        >
-        <snipcart-input
-          id="vatNumber"
-          name="vatNumber"
-          placeholder="e.g. ESB10680478"
-          pattern="^[A-Z]{2}[A-Za-z0-9]{8,14}$"
-          style="padding-left: 0.75rem"
-        ></snipcart-input>
-        <snipcart-field-error name="vatNumber"></snipcart-field-error>
-        <small
-          id="vat-message"
-          class="snipcart__font--tiny"
-          style="display: block; margin-top: 0.25rem"
-        ></small>
-      </snipcart-field>
-    </fieldset>
-  </billing>
-
-  <!-- Order summary: derive label from destination (IVA/VAT/Taxes) -->
-  <cart-summary-fees>
-    <div class="snipcart-cart-summary-fees">
-      <div
-        class="snipcart-cart-summary-fees__notice snipcart__font--regular"
-        v-if="!hasShippingAddress"
-      >
-        <slot>{{ $localize('checkout.shipping_taxes_calculated_when_address_provided') }}</slot>
-      </div>
-
-      <div class="snipcart-cart-summary-fees">
-        <!-- Discounts -->
-        <div
-          class="snipcart-cart-summary-fees__item snipcart-cart-summary-fees__discounts snipcart__font--slim"
-          v-if="discountsTotal"
-        >
-          <span class="snipcart-cart-summary-fees__title"
-            >{{ $localize('cart_summary.discount') }}</span
-          >
-          <span class="snipcart-cart-summary-fees__amount"
-            >{{ discountsTotal | money(cart.currency) }}</span
-          >
-        </div>
-
-        <!-- Subtotal -->
-        <div class="snipcart-cart-summary-fees__item snipcart__font--slim" v-if="subtotal">
-          <span class="snipcart-cart-summary-fees__title"
-            >{{ $localize('cart_summary.subtotal') }}</span
-          >
-          <span class="snipcart-cart-summary-fees__amount"
-            >{{ subtotal | money(cart.currency) }}</span
-          >
-        </div>
-
-        <!-- Shipping -->
-        <div
-          class="snipcart-cart-summary-fees__item snipcart__font--slim"
-          v-if="shipping.cost != null"
-        >
-          <span class="snipcart-cart-summary-fees__title"
-            >{{ $localize('cart_summary.shipping') }}</span
-          >
-          <span class="snipcart-cart-summary-fees__amount"
-            >{{ shipping.cost | money(cart.currency) }}</span
-          >
-        </div>
-
-        <!-- Taxes (bulletproof label derived from destination) -->
-        <template v-if="taxes && taxes.length">
-          <div
-            class="snipcart-cart-summary-fees__item snipcart__font--slim"
-            v-for="tax in taxes"
-            :key="tax.name"
-          >
-            <span class="snipcart-cart-summary-fees__title">
-              {{ (function() { var C = (cart && cart.shippingAddress &&
-              cart.shippingAddress.country) || (cart && cart.billingAddress &&
-              cart.billingAddress.country) || ''; var EU =
-              ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'];
-              if (C === 'ES') return 'IVA'; if (EU.indexOf(C) !== -1) return 'VAT'; return 'Taxes';
-              })() }}
-              <template v-if="tax.rate && tax.rate > 0">
-                ({{ Math.round(tax.rate * 100) }}%)</template
-              >
-            </span>
-            <span class="snipcart-cart-summary-fees__amount"
-              >{{ tax.amount | money(cart.currency) }}</span
-            >
-          </div>
-        </template>
-        <template v-else>
-          <div class="snipcart-cart-summary-fees__item snipcart__font--slim">
-            <span class="snipcart-cart-summary-fees__title">Taxes</span>
-            <span class="snipcart-cart-summary-fees__amount">{{ 0 | money(cart.currency) }}</span>
-          </div>
-        </template>
-
-        <!-- Total -->
-        <div
-          class="snipcart-cart-summary-fees__item snipcart-cart-summary-fees__total snipcart__font--bold snipcart__font--secondary"
-        >
-          <span
-            class="snipcart-cart-summary-fees__title snipcart-cart-summary-fees__title--highlight snipcart__font--large"
-            >{{ $localize('cart_summary.total') }}</span
-          >
-          <span
-            class="snipcart-cart-summary-fees__amount snipcart-cart-summary-fees__amount--highlight snipcart__font--large"
-            >{{ total | money(cart.currency) }}</span
-          >
-        </div>
-      </div>
+<!-- Order summary: always render a Taxes row (0 if none) -->
+<cart-summary-fees>
+  <div class="snipcart-summary-fees">
+    <!-- Subtotal -->
+    <div class="snipcart-summary-fees__item snipcart__font--slim" v-if="subtotal">
+      <span class="snipcart-summary-fees__title"> {{ $localize('cart_summary.subtotal') }} </span>
+      <span class="snipcart-summary-fees__amount">{{ subtotal | money(cart.currency) }}</span>
     </div>
-  </cart-summary-fees>
-</div>
+
+    <!-- Shipping -->
+    <div class="snipcart-summary-fees__item snipcart__font--slim" v-if="shipping.cost != null">
+      <span class="snipcart-summary-fees__title"> {{ $localize('cart_summary.shipping') }} </span>
+      <span class="snipcart-summary-fees__amount">{{ shipping.cost | money(cart.currency) }}</span>
+    </div>
+
+    <!-- Taxes present -> list them -->
+    <template v-if="taxes && taxes.length">
+      <div
+        class="snipcart-summary-fees__item snipcart__font--slim"
+        v-for="tax in taxes"
+        :key="tax.name"
+      >
+        <!-- The label below will be post-processed by our tax-label JS to IVA/VAT -->
+        <span class="snipcart-summary-fees__title"> {{ tax.name || 'Taxes' }} </span>
+        <span class="snipcart-summary-fees__amount">{{ tax.amount | money(cart.currency) }}</span>
+      </div>
+    </template>
+
+    <!-- No taxes -> still show a 0 row -->
+    <template v-else>
+      <div class="snipcart-summary-fees__item snipcart__font--slim">
+        <!-- Start as "Taxes"; our JS will rename to IVA/VAT based on country -->
+        <span class="snipcart-summary-fees__title">Taxes</span>
+        <span class="snipcart-summary-fees__amount">{{ 0 | money(cart.currency) }}</span>
+      </div>
+    </template>
+
+    <!-- Total -->
+    <div
+      class="snipcart-summary-fees__item snipcart-summary-fees__total snipcart__font--bold snipcart__font--secondary"
+    >
+      <span
+        class="snipcart-summary-fees__title snipcart-summary-fees__title--highlight snipcart__font--large"
+      >
+        {{ $localize('cart_summary.total') }}
+      </span>
+      <span
+        class="snipcart-summary-fees__amount snipcart-summary-fees__amount--highlight snipcart__font--large"
+      >
+        {{ total | money(cart.currency) }}
+      </span>
+    </div>
+  </div>
+</cart-summary-fees>
