@@ -2,11 +2,11 @@
   <!-- Billing: Company + EU VAT Number + Phone -->
   <billing section="bottom">
     <fieldset class="snipcart-form__set">
-      <!-- Company (optional) — writes into billing address -->
+      <!-- Company (optional) -->
       <div class="snipcart-form__field">
-        <snipcart-label class="snipcart__font--tiny" for="company">
-          Company (optional)
-        </snipcart-label>
+        <snipcart-label class="snipcart__font--tiny" for="company"
+          >Company (optional)</snipcart-label
+        >
         <snipcart-input
           id="company"
           name="company"
@@ -15,11 +15,11 @@
         ></snipcart-input>
       </div>
 
-      <!-- EU VAT — saved to order.customFields.vatNumber; message span kept for validator script -->
+      <!-- EU VAT -->
       <snipcart-field name="vatNumber">
-        <snipcart-label class="snipcart__font--tiny" for="vatNumber">
-          EU VAT Number (optional)
-        </snipcart-label>
+        <snipcart-label class="snipcart__font--tiny" for="vatNumber"
+          >EU VAT Number (optional)</snipcart-label
+        >
         <snipcart-input
           id="vatNumber"
           name="vatNumber"
@@ -28,17 +28,17 @@
           style="padding-left: 0.75rem"
         ></snipcart-input>
         <snipcart-field-error name="vatNumber"></snipcart-field-error>
+        <!-- add bottom margin so it doesn't touch the phone field -->
         <small
           id="vat-message"
           class="snipcart__font--tiny"
-          style="display: block; margin-top: 0.25rem"
+          style="display: block; margin: 0.25rem 0 0.75rem"
         ></small>
       </snipcart-field>
 
-      <!-- Phone (required) — writes into billingAddress.phone -->
+      <!-- Phone (required) -->
       <snipcart-field name="phone">
-        <snipcart-label class="snipcart__font--tiny" for="phone"> Phone (required) </snipcart-label>
-
+        <snipcart-label class="snipcart__font--tiny" for="phone">Phone (required)</snipcart-label>
         <snipcart-input
           id="phone"
           name="phone"
@@ -49,9 +49,7 @@
           required
           style="padding-left: 0.75rem"
         ></snipcart-input>
-
         <snipcart-field-error name="phone"></snipcart-field-error>
-
         <small
           class="snipcart__font--tiny"
           style="display: block; margin-top: 0.25rem; color: #6b7280"
@@ -62,10 +60,10 @@
     </fieldset>
   </billing>
 
-  <!-- Order summary: always render a tax row. Label derived from destination (IVA/VAT/Taxes). -->
+  <!-- Order summary: ALWAYS render one tax row (IVA/VAT/Taxes). -->
   <cart-summary-fees>
     <div class="snipcart-cart-summary-fees">
-      <!-- Keep Snipcart's default notice (we also still show a zero line below) -->
+      <!-- Snipcart's default notice still shows before address is set -->
       <div
         class="snipcart-cart-summary-fees__notice snipcart__font--regular"
         v-if="!hasShippingAddress"
@@ -110,44 +108,23 @@
           >
         </div>
 
-        <!-- Taxes: show returned lines if any (label derived from destination) -->
-        <template v-if="taxes && taxes.length">
-          <div
-            class="snipcart-cart-summary-fees__item snipcart__font--slim"
-            v-for="tax in taxes"
-            :key="tax.name"
-          >
-            <span class="snipcart-cart-summary-fees__title">
-              {{ (function () { var C = (cart && cart.shippingAddress &&
-              cart.shippingAddress.country) || (cart && cart.billingAddress &&
-              cart.billingAddress.country) || ''; var EU =
-              ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'];
-              if (C === 'ES') return 'IVA'; if (EU.indexOf(C) !== -1) return 'VAT'; return 'Taxes';
-              })() }}
-              <template v-if="tax.rate && tax.rate > 0">
-                ({{ Math.round(tax.rate * 100) }}%)
-              </template>
-            </span>
-            <span class="snipcart-cart-summary-fees__amount">
-              {{ tax.amount | money(cart.currency) }}
-            </span>
-          </div>
-        </template>
-
-        <!-- Taxes: even when none returned or zero, always show a 0 line with the right label -->
-        <template v-else>
-          <div class="snipcart-cart-summary-fees__item snipcart__font--slim">
-            <span class="snipcart-cart-summary-fees__title">
-              {{ (function () { var C = (cart && cart.shippingAddress &&
-              cart.shippingAddress.country) || (cart && cart.billingAddress &&
-              cart.billingAddress.country) || ''; var EU =
-              ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'];
-              if (C === 'ES') return 'IVA'; if (EU.indexOf(C) !== -1) return 'VAT'; return 'Taxes';
-              })() }}
-            </span>
-            <span class="snipcart-cart-summary-fees__amount"> {{ 0 | money(cart.currency) }} </span>
-          </div>
-        </template>
+        <!-- Taxes/VAT/IVA: single, always-present row -->
+        <div class="snipcart-cart-summary-fees__item snipcart__font--slim">
+          <span class="snipcart-cart-summary-fees__title">
+            {{ (function () { var C = (cart && cart.shippingAddress && cart.shippingAddress.country)
+            || (cart && cart.billingAddress && cart.billingAddress.country) || ''; var EU =
+            ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'];
+            var label = (C === 'ES') ? 'IVA' : (EU.indexOf(C) !== -1 ? 'VAT' : 'Taxes'); var T =
+            (taxes || []); // if exactly one positive-rate tax, show its %; otherwise omit var
+            positive = T.filter(function(t){ return t && t.rate > 0; }); var pct = (positive.length
+            === 1) ? Math.round(positive[0].rate * 100) : null; return label + (pct ? (' (' + pct +
+            '%)') : ''); })() }}
+          </span>
+          <span class="snipcart-cart-summary-fees__amount">
+            {{ ( (taxes && taxes.length) ? taxes.reduce(function(a,t){ return a + (t && t.amount ||
+            0); }, 0) : 0 ) | money(cart.currency) }}
+          </span>
+        </div>
 
         <!-- Total -->
         <div
