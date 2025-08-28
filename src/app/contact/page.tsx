@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
+
+import Script from 'next/script';
 
 import emailjs from '@emailjs/browser';
 import { Mail, MapPin } from 'lucide-react';
-// eslint-disable-next-line import/no-named-as-default
-import ReCAPTCHA from 'react-google-recaptcha';
 import { useForm, SubmitHandler } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,50 @@ interface ContactFormData {
   name: string;
   email: string;
   message: string;
-  [key: string]: string;
+  [key: string]: string; // EmailJS compat
+}
+
+interface VerifyResponse {
+  success: boolean;
+  score?: number;
+  reasons?: string[];
+  action?: string;
+  hostname?: string;
+}
+
+const SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY as string;
+const ACTION = 'CONTACT_FORM';
+
+function grecaptchaReady(): Promise<void> {
+  return new Promise<void>((resolve) => {
+    const check = () => {
+      if (typeof window !== 'undefined' && window.grecaptcha?.enterprise) {
+        resolve();
+      } else {
+        setTimeout(check, 50);
+      }
+    };
+    check();
+  });
+}
+
+async function getEnterpriseToken(): Promise<string> {
+  if (!window.grecaptcha?.enterprise) {
+    throw new Error('reCAPTCHA not ready');
+  }
+  const token = await window.grecaptcha.enterprise.execute(SITE_KEY, { action: ACTION });
+  if (!token) throw new Error('Could not obtain reCAPTCHA token');
+  return token;
+}
+
+async function verifyTokenOnServer(token: string): Promise<{ ok: boolean; data: VerifyResponse }> {
+  const res = await fetch('/.netlify/functions/verify-recaptcha-enterprise', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, siteKey: SITE_KEY, expectedAction: ACTION }),
+  });
+  const data = (await res.json()) as VerifyResponse;
+  return { ok: res.ok, data };
 }
 
 export default function Contact() {
@@ -28,37 +71,58 @@ export default function Contact() {
     register,
     formState: { errors },
   } = useForm<ContactFormData>();
-  const [captchaValue, setCaptchaValue] = useState<string | null>(null);
-  const [status, setStatus] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const captchaRef = useRef<ReCAPTCHA>(null);
 
-  const onSubmit: SubmitHandler<ContactFormData> = (data) => {
-    if (!captchaValue) {
-      alert('Please complete the CAPTCHA verification.');
-      return;
+  const [status, setStatus] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  const onSubmit: SubmitHandler<ContactFormData> = async (formData) => {
+    try {
+      setStatus('');
+      setIsSubmitting(true);
+
+      if (!SITE_KEY) throw new Error('Missing NEXT_PUBLIC_RECAPTCHA_SITE_KEY');
+
+      // 1) Obtener token (Enterprise, invisible)
+      await grecaptchaReady();
+      const token = await getEnterpriseToken();
+
+      // 2) Verificar token en Netlify (Assessments)
+      const { ok, data } = await verifyTokenOnServer(token);
+      if (!ok || !data?.success) throw new Error('Captcha verification failed.');
+
+      // 3) Enviar email (EmailJS - cliente)
+      const payload: ContactFormData = {
+        ...formData,
+        time: new Date().toISOString(), // si tu template lo usa
+      };
+
+      await emailjs.send(
+        'service_cybppme', // SERVICE ID
+        'template_gvnlb36', // TEMPLATE ID
+        payload,
+        'Rbqf0P3F5FR_B-ndQ', // PUBLIC KEY (user key)
+      );
+
+      setStatus(
+        `Message sent successfully!${typeof data.score === 'number' ? ` (reCAPTCHA score: ${data.score.toFixed(2)})` : ''}`,
+      );
+      reset();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to send message. Please try again.';
+      setStatus(msg);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    data.time = new Date().toISOString(); // Add time to match template
-
-    setIsSubmitting(true);
-    emailjs
-      .send('service_cybppme', 'template_gvnlb36', data, 'Rbqf0P3F5FR_B-ndQ')
-      .then(() => {
-        setStatus('Message sent successfully!');
-        reset();
-        captchaRef.current?.reset();
-      })
-      .catch(() => {
-        setStatus('Failed to send message. Please try again.');
-      })
-      .finally(() => {
-        setIsSubmitting(false);
-      });
   };
 
   return (
     <section className="section-padding container space-y-10.5">
+      {/* Script de reCAPTCHA Enterprise */}
+      <Script
+        src="https://www.google.com/recaptcha/enterprise.js?render=explicit"
+        strategy="afterInteractive"
+      />
+
       <h2 className="text-center text-3xl font-bold text-black dark:text-white">Contact Us</h2>
       <div className="mx-auto max-w-3xl space-y-6 text-lg">
         <p className="text-center font-semibold text-gray-600 dark:text-gray-300">
@@ -127,7 +191,7 @@ export default function Contact() {
             <div className="grayscale filter">
               <iframe
                 title="FilmRaid Office Map"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2992.9999999999995!2d2.1800000000000004!3d41.390000000000004!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12a4a2f0f0f0f0f%3A0xf0f0f0f0f0f0f0f!2sCarrer%20del%20Valles%2C%2055%2C%2008030%20Barcelona!5e0!3m2!1sen!2ses!4v1721730000000!5m2!1sen!2ses"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2992.9999999999995!2d2.1800000000000004!3d41.390000000000004!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12a4a2f0f0f0f0f%3A0xf0f0f0f0f0f0f!2sCarrer%20del%20Valles%2C%2055%2C%2008030%20Barcelona!5e0!3m2!1sen!2ses!4v1721730000000!5m2!1sen!2ses"
                 width="100%"
                 height="300"
                 style={{ border: 0 }}
@@ -182,15 +246,8 @@ export default function Contact() {
               />
               {errors.message && <p className="text-sm text-red-500">{errors.message.message}</p>}
             </div>
-            <div className="space-y-2">
-              <Label className="dark:text-white">CAPTCHA Verification</Label>
-              <ReCAPTCHA
-                ref={captchaRef}
-                sitekey="6LexUYkrAAAAAKVDlNKttonFcHI_i3wBXQh0PnoV"
-                onChange={setCaptchaValue}
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={!captchaValue || isSubmitting}>
+
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? 'Sending...' : 'Send Message'}
             </Button>
             {status && (

@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import Image from 'next/image';
+import Script from 'next/script';
 
-import emailjs from 'emailjs-com';
-import GoogleReCAPTCHA from 'react-google-recaptcha';
+import emailjs from '@emailjs/browser';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -36,8 +36,14 @@ interface OrderFormData {
   vat: string;
   address: string;
   email: string;
-  raid: string;
-  [key: string]: string;
+  raid?: string;
+  model?: string;
+  capacity?: string;
+  raid0?: string;
+  raid5?: string;
+  price?: string;
+  quantity?: string;
+  [key: string]: string | undefined;
 }
 
 interface ProductClientProps {
@@ -57,6 +63,44 @@ interface ProductClientProps {
   availableRaids: string[];
 }
 
+interface VerifyResponse {
+  success: boolean;
+  score?: number;
+  reasons?: string[];
+  action?: string;
+  hostname?: string;
+}
+
+const SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY as string;
+const ACTION = 'QUOTE_FORM';
+
+function grecaptchaReady(): Promise<void> {
+  return new Promise<void>((resolve) => {
+    const check = () => {
+      if (typeof window !== 'undefined' && window.grecaptcha?.enterprise) resolve();
+      else setTimeout(check, 50);
+    };
+    check();
+  });
+}
+
+async function getEnterpriseToken(): Promise<string> {
+  if (!window.grecaptcha?.enterprise) throw new Error('reCAPTCHA not ready');
+  const token = await window.grecaptcha.enterprise.execute(SITE_KEY, { action: ACTION });
+  if (!token) throw new Error('Could not obtain reCAPTCHA token');
+  return token;
+}
+
+async function verifyTokenOnServer(token: string): Promise<{ ok: boolean; data: VerifyResponse }> {
+  const res = await fetch('/.netlify/functions/verify-recaptcha-enterprise', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, siteKey: SITE_KEY, expectedAction: ACTION }),
+  });
+  const data = (await res.json()) as VerifyResponse;
+  return { ok: res.ok, data };
+}
+
 const ProductClient = ({
   currentModel,
   tb,
@@ -71,6 +115,7 @@ const ProductClient = ({
   const [quantity, setQuantity] = useState<number>(1);
   const [totalPrice, setTotalPrice] = useState(price);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     handleSubmit,
@@ -78,9 +123,6 @@ const ProductClient = ({
     register,
     formState: { errors },
   } = useForm<OrderFormData>();
-
-  const [captchaValue, setCaptchaValue] = useState<string | null>(null);
-  const captchaRef = useRef<GoogleReCAPTCHA>(null);
 
   useEffect(() => {
     setTotalPrice(price * quantity);
@@ -91,33 +133,59 @@ const ProductClient = ({
   const productUrl = `https://www.filmraid.pro/products/${productId}`;
   const productName = `${currentModel.name} ${raid0}TB`;
 
-  const onSubmit: SubmitHandler<OrderFormData> = (data) => {
-    if (!captchaValue) {
-      alert('Please complete the CAPTCHA verification.');
-      return;
-    }
-    data.model = currentModel.name;
-    data.capacity = `${raid0}TB`;
-    data.raid0 = `${raid0}TB`;
-    data.raid5 = `${raid5}TB`;
-    data.raid = selectedRaid;
-    data.price = `€${totalPrice}`;
-    data.quantity = quantity.toString();
+  const onSubmit: SubmitHandler<OrderFormData> = async (data) => {
+    try {
+      if (!selectedRaid) {
+        toast('Select RAID Level', {
+          description: 'Please select a RAID configuration to proceed.',
+          style: { background: '#ff4d4f', color: '#fff' },
+        });
+        return;
+      }
 
-    emailjs
-      .send('service_e70jt19', 'template_bic87oh', data, 'Rbqf0P3F5FR_B-ndQ')
-      .then(() => {
-        alert('Wire transfer request sent successfully! We will send you the bank details soon.');
-        reset();
-        setIsDialogOpen(false);
-        setSelectedRaid('');
-        setQuantity(1);
-        setTotalPrice(price);
-        if (captchaRef.current) captchaRef.current.reset();
-      })
-      .catch((error: Error) => {
-        alert(`Failed to send wire transfer request: ${error.message}. Please try again.`);
+      if (!SITE_KEY) throw new Error('Missing NEXT_PUBLIC_RECAPTCHA_SITE_KEY');
+
+      setIsSubmitting(true);
+
+      // 1) reCAPTCHA Enterprise (invisible)
+      await grecaptchaReady();
+      const token = await getEnterpriseToken();
+      const { ok, data: verify } = await verifyTokenOnServer(token);
+      if (!ok || !verify?.success) throw new Error('Captcha verification failed');
+
+      // 2) Build payload + send via EmailJS
+      data.model = currentModel.name;
+      data.capacity = `${raid0}TB`;
+      data.raid0 = `${raid0}TB`;
+      data.raid5 = `${raid5}TB`;
+      data.raid = selectedRaid;
+      data.price = `€${totalPrice}`;
+      data.quantity = quantity.toString();
+      data.time = new Date().toISOString();
+
+      await emailjs.send(
+        'service_e70jt19', // SERVICE ID
+        'template_bic87oh', // TEMPLATE ID
+        data,
+        'Rbqf0P3F5FR_B-ndQ', // PUBLIC KEY (user key)
+      );
+
+      toast('Wire transfer request sent!', {
+        description: `We’ll email you bank details shortly. reCAPTCHA score: ${typeof verify.score === 'number' ? verify.score.toFixed(2) : 'n/a'}`,
+        style: { background: '#16a34a', color: '#fff' },
       });
+
+      reset();
+      setIsDialogOpen(false);
+      setSelectedRaid('');
+      setQuantity(1);
+      setTotalPrice(price);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Failed to send wire transfer request.';
+      toast('Error', { description: msg, style: { background: '#ff4d4f', color: '#fff' } });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const technicalSpecs = [
@@ -211,6 +279,12 @@ const ProductClient = ({
 
   return (
     <section className="py-12 md:py-16 lg:py-20">
+      {/* reCAPTCHA Enterprise script */}
+      <Script
+        src="https://www.google.com/recaptcha/enterprise.js?render=explicit"
+        strategy="afterInteractive"
+      />
+
       <div className="container grid grid-cols-1 gap-8 md:grid-cols-2">
         <div className="order-1">
           <div className="relative">
@@ -272,7 +346,7 @@ const ProductClient = ({
           <div className="mt-4 space-y-2">
             <Label htmlFor="quantity">Quantity</Label>
             <Select
-              onValueChange={(value) => setQuantity(parseInt(value))}
+              onValueChange={(value) => setQuantity(parseInt(value, 10))}
               value={quantity.toString()}
               defaultValue="1"
             >
@@ -339,17 +413,11 @@ const ProductClient = ({
                     />
                     {errors.email && <p className="text-sm text-red-500">Required</p>}
                   </div>
-                  <div className="space-y-2">
-                    <Label>CAPTCHA Verification</Label>
-                    <GoogleReCAPTCHA
-                      ref={captchaRef}
-                      sitekey="6LexUYkrAAAAAKVDlNKttonFcHI_i3wBXQh0PnoV"
-                      onChange={setCaptchaValue}
-                    />
-                  </div>
+
+                  {/* No visible CAPTCHA; Enterprise se ejecuta en submit */}
                   <DialogFooter>
-                    <Button type="submit" disabled={!captchaValue}>
-                      Send Request
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? 'Sending…' : 'Send Request'}
                     </Button>
                   </DialogFooter>
                 </form>
