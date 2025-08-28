@@ -338,7 +338,34 @@ async function getFedexRates(dest, parcels, declared, currency) {
       },
       totalDeclaredValue: { amount: declared.amount, currency },
 
-      // ✅ Back to SENDER; keep full payor party
+      // ✅ Required for international rating (DAP)
+      customsClearanceDetail: {
+        dutiesPayment: {
+          paymentType: 'RECIPIENT', // DAP → recipient pays duties/taxes
+        },
+        termsOfSale: 'DAP',
+        customsValue: { amount: declared.amount, currency },
+        commodities: [
+          {
+            numberOfPieces: requestedPackageLineItems.length,
+            description: 'Data storage equipment (RAID enclosure with HDDs)',
+            countryOfManufacture: 'DE', // supplier in Germany
+            weight: {
+              units: 'KG',
+              value:
+                requestedPackageLineItems
+                  .map((p) => Number(p.weight?.value || 0))
+                  .reduce((a, b) => a + b, 0) || 1,
+            },
+            customsValue: { amount: declared.amount, currency },
+            quantity: 1,
+            quantityUnits: 'EA',
+            harmonizedCode: '847170', // HS6 for disk storage units
+          },
+        ],
+      },
+
+      // 🚨 NOW close requestedShipment here (don’t close earlier!)
       shippingChargesPayment: {
         paymentType: 'SENDER',
         payor: {
@@ -358,8 +385,8 @@ async function getFedexRates(dest, parcels, declared, currency) {
           },
         },
       },
-    },
-  };
+    }, // <-- closes requestedShipment
+  }; // <-- closes body
 
   // ===== FDX DEBUG: what we are sending (accounts, origin/dest, packages) =====
   log('FDX DEBUG accounts:', {
