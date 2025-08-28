@@ -292,9 +292,11 @@ async function getFedexRates(dest, parcels, declared, currency) {
   }));
 
   const body = {
-    // ❌ removed: accountNumber at root
+    // ✅ put it back — your billing account
+    accountNumber: { value: FEDEX_ACCOUNT_NUMBER },
+
     requestedShipment: {
-      // ❌ removed: shipper.accountNumber
+      // (keep shipper WITHOUT accountNumber)
       shipper: {
         address: {
           countryCode: ORIGIN.countryCode,
@@ -335,7 +337,6 @@ async function getFedexRates(dest, parcels, declared, currency) {
       },
       totalDeclaredValue: { amount: declared.amount, currency },
 
-      // ✅ keep SENDER payor with full address/contact on your ES account
       shippingChargesPayment: {
         paymentType: 'SENDER',
         payor: {
@@ -360,8 +361,8 @@ async function getFedexRates(dest, parcels, declared, currency) {
 
   // ===== FDX DEBUG: what we are sending (accounts, origin/dest, packages) =====
   log('FDX DEBUG accounts:', {
-    rootAccount: undefined, // no root value now
-    shipperAccount: undefined, // removed from shipper
+    rootAccount: body?.accountNumber?.value,
+    shipperAccount: undefined, // we intentionally omit this now
     payorAccount:
       body?.requestedShipment?.shippingChargesPayment?.payor?.responsibleParty?.accountNumber
         ?.value,
