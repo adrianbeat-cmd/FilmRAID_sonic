@@ -371,24 +371,13 @@ async function getFedexRates(dest, parcels, declared, currency) {
         payor: {
           responsibleParty: {
             accountNumber: { value: FEDEX_ACCOUNT_NUMBER },
-            address: {
-              countryCode: ORIGIN.countryCode,
-              postalCode: ORIGIN.postalCode,
-              city: ORIGIN.city,
-              addressLine1: ORIGIN.addressLine,
-            },
-            contact: {
-              companyName: ORIGIN.company,
-              personName: ORIGIN.company,
-              phoneNumber: ORIGIN.phone,
-            },
           },
         },
       },
     }, // <-- closes requestedShipment
   }; // <-- closes body
 
-  // ===== FDX DEBUG: what we are sending (accounts, origin/dest, packages) =====
+  // ===== FDX DEBUG before request =====
   log('FDX DEBUG accounts:', {
     rootAccount: body?.accountNumber?.value,
     shipperAccount: body?.requestedShipment?.shipper?.accountNumber?.value,
@@ -396,6 +385,11 @@ async function getFedexRates(dest, parcels, declared, currency) {
       body?.requestedShipment?.shippingChargesPayment?.payor?.responsibleParty?.accountNumber
         ?.value,
   });
+
+  log(
+    'FDX DEBUG shippingChargesPayment:',
+    JSON.stringify(body?.requestedShipment?.shippingChargesPayment, null, 2),
+  );
 
   log('FDX DEBUG origin/dest:', {
     origin: {
@@ -416,16 +410,11 @@ async function getFedexRates(dest, parcels, declared, currency) {
     (body?.requestedShipment?.requestedPackageLineItems || []).map((p) => ({
       weight: p?.weight?.value,
       units: p?.weight?.units,
-      dims: [
-        p?.dimensions?.length,
-        p?.dimensions?.width,
-        p?.dimensions?.height,
-        p?.dimensions?.units,
-      ],
+      dims: [p?.dimensions?.length, p?.dimensions?.width, p?.dimensions?.height],
     })),
   );
-  // ===== END FDX DEBUG (pre-request) =====
 
+  // ---- FedEx Rates call ----
   const res = await fetch('https://apis.fedex.com/rate/v1/rates/quotes', {
     method: 'POST',
     headers: {
