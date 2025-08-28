@@ -310,7 +310,7 @@ async function getFedexRates(dest, parcels, declared, currency) {
           countryCode: dest.countryCode,
           postalCode: dest.postalCode,
           city: dest.city,
-          stateOrProvinceCode: dest.stateOrProvinceCode || '', // ✅ add state (e.g., CA)
+          stateOrProvinceCode: dest.stateOrProvinceCode || '',
           residential: false,
         },
         contact: {
@@ -318,6 +318,7 @@ async function getFedexRates(dest, parcels, declared, currency) {
           phoneNumber: dest.phoneNumber || '000',
         },
       },
+
       pickupType: 'DROPOFF_AT_FEDEX_LOCATION',
       packagingType: 'YOUR_PACKAGING',
       preferredCurrency: currency,
@@ -328,16 +329,23 @@ async function getFedexRates(dest, parcels, declared, currency) {
         signatureOptionDetail: { optionType: 'DIRECT' },
       },
       totalDeclaredValue: { amount: declared.amount, currency },
+
+      // ✅ Payor address added to match shipper/origin
       shippingChargesPayment: {
         paymentType: 'SENDER',
         payor: {
           responsibleParty: {
-            accountNumber: { value: FEDEX_ACCOUNT_NUMBER }, // payor = same account
+            accountNumber: { value: FEDEX_ACCOUNT_NUMBER },
+            address: {
+              countryCode: ORIGIN.countryCode, // 'ES'
+              postalCode: ORIGIN.postalCode, // '08030'
+            },
           },
         },
       },
     },
   };
+
   // ===== FDX DEBUG: what we are sending (accounts, origin/dest, packages) =====
   log('FDX DEBUG accounts:', {
     rootAccount: body?.accountNumber?.value,
