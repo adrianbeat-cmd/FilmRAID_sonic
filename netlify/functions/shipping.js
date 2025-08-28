@@ -302,15 +302,20 @@ async function getFedexRates(dest, parcels, declared, currency) {
           city: ORIGIN.city,
           addressLine1: ORIGIN.addressLine,
         },
-        // (optional but nice) you can add a contact block if you want:
-        // contact: { personName: ORIGIN.company, phoneNumber: ORIGIN.phone }
+        contact: { personName: ORIGIN.company, phoneNumber: ORIGIN.phone },
       },
+
       recipient: {
         address: {
           countryCode: dest.countryCode,
           postalCode: dest.postalCode,
           city: dest.city,
+          stateOrProvinceCode: dest.stateOrProvinceCode || '', // ✅ add state (e.g., CA)
           residential: false,
+        },
+        contact: {
+          personName: dest.personName || 'Recipient',
+          phoneNumber: dest.phoneNumber || '000',
         },
       },
       pickupType: 'DROPOFF_AT_FEDEX_LOCATION',
@@ -344,15 +349,27 @@ async function getFedexRates(dest, parcels, declared, currency) {
     body: JSON.stringify(body),
   });
 
+  // ---- TEMP DEBUG LOGGING ----
+  const rawText = await res.text();
+
   if (!res.ok) {
-    const t = await res.text();
-    log('FedEx rate error:', res.status, t);
-    // Return no rates; Snipcart will display "No shipping methods"
+    log('FedEx rate error:', res.status, rawText);
     return [];
   }
 
-  const out = await res.json();
-  const details = (out && out.output && out.output.rateReplyDetails) || [];
+  let out;
+  try {
+    out = JSON.parse(rawText);
+  } catch (e) {
+    log('FedEx parse error:', e, rawText);
+    return [];
+  }
+
+  // Optional: see which services came back
+  const serviceTypes = (out?.output?.rateReplyDetails || []).map((d) => d.serviceType);
+  log('FedEx OK:', serviceTypes);
+
+  const details = out?.output?.rateReplyDetails || [];
 
   // Find the two services we want
   const pick = (svcType) => details.find((d) => (d.serviceType || '').includes(svcType));
