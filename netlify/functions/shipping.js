@@ -338,7 +338,8 @@ async function getFedexRates(dest, parcels, declared, currency) {
       totalDeclaredValue: { amount: declared.amount, currency },
 
       shippingChargesPayment: {
-        paymentType: 'SENDER',
+        // was: "SENDER"
+        paymentType: 'THIRD_PARTY',
         payor: {
           responsibleParty: {
             accountNumber: { value: FEDEX_ACCOUNT_NUMBER },
