@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 
 import Script from 'next/script';
 
-import emailjs from '@emailjs/browser';
 import { Mail, MapPin } from 'lucide-react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 
@@ -18,15 +17,7 @@ interface ContactFormData {
   name: string;
   email: string;
   message: string;
-  [key: string]: string; // EmailJS compat
-}
-
-interface VerifyResponse {
-  success: boolean;
-  score?: number;
-  reasons?: string[];
-  action?: string;
-  hostname?: string;
+  [key: string]: string; // compat plantillas
 }
 
 const SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY as string;
@@ -35,32 +26,21 @@ const ACTION = 'CONTACT_FORM';
 function grecaptchaReady(): Promise<void> {
   return new Promise<void>((resolve) => {
     const check = () => {
-      if (typeof window !== 'undefined' && window.grecaptcha?.enterprise) {
-        resolve();
-      } else {
-        setTimeout(check, 50);
-      }
+      if (typeof window !== 'undefined' && window.grecaptcha?.enterprise) resolve();
+      else setTimeout(check, 50);
     };
     check();
   });
 }
 
 async function getEnterpriseToken(action: string): Promise<string> {
-  if (!window.grecaptcha?.enterprise) throw new Error('reCAPTCHA not ready');
-  // Como cargamos con ?render=SITE_KEY, llamamos sin pasar la key:
-  const token = await window.grecaptcha.enterprise.execute({ action });
+  const w = window as unknown as {
+    grecaptcha?: { enterprise?: { execute: (opts: { action: string }) => Promise<string> } };
+  };
+  if (!w.grecaptcha?.enterprise) throw new Error('reCAPTCHA not ready');
+  const token = await w.grecaptcha.enterprise.execute({ action });
   if (!token) throw new Error('Could not obtain reCAPTCHA token');
   return token;
-}
-
-async function verifyTokenOnServer(token: string): Promise<{ ok: boolean; data: VerifyResponse }> {
-  const res = await fetch('/.netlify/functions/verify-recaptcha-enterprise', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token, siteKey: SITE_KEY, expectedAction: ACTION }),
-  });
-  const data = (await res.json()) as VerifyResponse;
-  return { ok: res.ok, data };
 }
 
 export default function Contact() {
@@ -81,32 +61,36 @@ export default function Contact() {
 
       if (!SITE_KEY) throw new Error('Missing NEXT_PUBLIC_RECAPTCHA_SITE_KEY');
 
-      // 1) Obtener token (Enterprise, invisible)
+      // 1) Token Enterprise (invisible)
       await grecaptchaReady();
-      const token = await getEnterpriseToken('CONTACT_FORM'); // o 'QUOTE_FORM'
+      const token = await getEnterpriseToken(ACTION);
 
-      // 2) Verificar token en Netlify (Assessments)
-      const { ok, data } = await verifyTokenOnServer(token);
-      if (!ok || !data?.success) throw new Error('Captcha verification failed.');
+      // 2) Verificar + enviar email desde la función unificada
+      const res = await fetch('/.netlify/functions/submit-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token,
+          siteKey: SITE_KEY,
+          expectedAction: ACTION,
+          templateId: 'template_gvnlb36', // plantilla de Contact
+          templateParams: {
+            ...formData,
+            time: new Date().toISOString(),
+          },
+        }),
+      });
 
-      // 3) Enviar email (EmailJS - cliente)
-      const payload: ContactFormData = {
-        ...formData,
-        time: new Date().toISOString(), // si tu template lo usa
-      };
-
-      await emailjs.send(
-        'service_cybppme', // SERVICE ID
-        'template_gvnlb36', // TEMPLATE ID
-        payload,
-        'Rbqf0P3F5FR_B-ndQ', // PUBLIC KEY (user key)
-      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Send failed');
 
       setStatus(
-        `Message sent successfully!${typeof data.score === 'number' ? ` (reCAPTCHA score: ${data.score.toFixed(2)})` : ''}`,
+        `Message sent successfully!${
+          typeof data.score === 'number' ? ` (reCAPTCHA score: ${data.score.toFixed(2)})` : ''
+        }`,
       );
       reset();
-    } catch (err: unknown) {
+    } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to send message. Please try again.';
       setStatus(msg);
     } finally {
@@ -199,7 +183,7 @@ export default function Contact() {
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 className="rounded-lg shadow-md"
-              ></iframe>
+              />
             </div>
           </div>
         </div>
@@ -221,6 +205,7 @@ export default function Contact() {
               />
               {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="email" className="dark:text-white">
                 Your Email
@@ -234,6 +219,7 @@ export default function Contact() {
               />
               {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="message" className="dark:text-white">
                 Your Message
@@ -251,6 +237,7 @@ export default function Contact() {
               {isSubmitting ? 'Sending...' : 'Send Message'}
             </Button>
 
+            {/* Aviso legal reCAPTCHA */}
             <p className="text-muted-foreground mt-2 text-xs leading-snug">
               This site is protected by reCAPTCHA and the Google{' '}
               <a
