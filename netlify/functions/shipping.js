@@ -292,7 +292,7 @@ async function getFedexRates(dest, parcels, declared, currency) {
   }));
 
   const body = {
-    accountNumber: { value: FEDEX_ACCOUNT_NUMBER },
+    accountNumber: { value: FEDEX_ACCOUNT_NUMBER }, // keep for now
     requestedShipment: {
       shipper: {
         accountNumber: { value: FEDEX_ACCOUNT_NUMBER },
@@ -302,7 +302,11 @@ async function getFedexRates(dest, parcels, declared, currency) {
           city: ORIGIN.city,
           addressLine1: ORIGIN.addressLine,
         },
-        contact: { personName: ORIGIN.company, phoneNumber: ORIGIN.phone },
+        contact: {
+          companyName: ORIGIN.company, // ✅ add
+          personName: ORIGIN.company, // ok to repeat if no specific person
+          phoneNumber: ORIGIN.phone,
+        },
       },
 
       recipient: {
@@ -314,6 +318,7 @@ async function getFedexRates(dest, parcels, declared, currency) {
           residential: false,
         },
         contact: {
+          companyName: dest.companyName || 'Customer', // ✅ add
           personName: dest.personName || 'Recipient',
           phoneNumber: dest.phoneNumber || '000',
         },
@@ -330,15 +335,22 @@ async function getFedexRates(dest, parcels, declared, currency) {
       },
       totalDeclaredValue: { amount: declared.amount, currency },
 
-      // ✅ Payor address added to match shipper/origin
       shippingChargesPayment: {
         paymentType: 'SENDER',
         payor: {
           responsibleParty: {
             accountNumber: { value: FEDEX_ACCOUNT_NUMBER },
             address: {
-              countryCode: ORIGIN.countryCode, // 'ES'
-              postalCode: ORIGIN.postalCode, // '08030'
+              countryCode: ORIGIN.countryCode,
+              postalCode: ORIGIN.postalCode,
+              city: ORIGIN.city, // ✅ add
+              addressLine1: ORIGIN.addressLine, // ✅ add
+            },
+            contact: {
+              // ✅ add
+              companyName: ORIGIN.company,
+              personName: ORIGIN.company,
+              phoneNumber: ORIGIN.phone,
             },
           },
         },
