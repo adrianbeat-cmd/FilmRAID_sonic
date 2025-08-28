@@ -292,10 +292,10 @@ async function getFedexRates(dest, parcels, declared, currency) {
   }));
 
   const body = {
-    accountNumber: { value: FEDEX_ACCOUNT_NUMBER }, // keep for now
+    // ❌ removed: accountNumber at root
     requestedShipment: {
+      // ❌ removed: shipper.accountNumber
       shipper: {
-        accountNumber: { value: FEDEX_ACCOUNT_NUMBER },
         address: {
           countryCode: ORIGIN.countryCode,
           postalCode: ORIGIN.postalCode,
@@ -303,8 +303,8 @@ async function getFedexRates(dest, parcels, declared, currency) {
           addressLine1: ORIGIN.addressLine,
         },
         contact: {
-          companyName: ORIGIN.company, // ✅ add
-          personName: ORIGIN.company, // ok to repeat if no specific person
+          companyName: ORIGIN.company,
+          personName: ORIGIN.company,
           phoneNumber: ORIGIN.phone,
         },
       },
@@ -318,7 +318,7 @@ async function getFedexRates(dest, parcels, declared, currency) {
           residential: false,
         },
         contact: {
-          companyName: dest.companyName || 'Customer', // ✅ add
+          companyName: dest.companyName || 'Customer',
           personName: dest.personName || 'Recipient',
           phoneNumber: dest.phoneNumber || '000',
         },
@@ -335,6 +335,7 @@ async function getFedexRates(dest, parcels, declared, currency) {
       },
       totalDeclaredValue: { amount: declared.amount, currency },
 
+      // ✅ keep SENDER payor with full address/contact on your ES account
       shippingChargesPayment: {
         paymentType: 'SENDER',
         payor: {
@@ -343,11 +344,10 @@ async function getFedexRates(dest, parcels, declared, currency) {
             address: {
               countryCode: ORIGIN.countryCode,
               postalCode: ORIGIN.postalCode,
-              city: ORIGIN.city, // ✅ add
-              addressLine1: ORIGIN.addressLine, // ✅ add
+              city: ORIGIN.city,
+              addressLine1: ORIGIN.addressLine,
             },
             contact: {
-              // ✅ add
               companyName: ORIGIN.company,
               personName: ORIGIN.company,
               phoneNumber: ORIGIN.phone,
@@ -360,8 +360,8 @@ async function getFedexRates(dest, parcels, declared, currency) {
 
   // ===== FDX DEBUG: what we are sending (accounts, origin/dest, packages) =====
   log('FDX DEBUG accounts:', {
-    rootAccount: body?.accountNumber?.value,
-    shipperAccount: body?.requestedShipment?.shipper?.accountNumber?.value,
+    rootAccount: undefined, // no root value now
+    shipperAccount: undefined, // removed from shipper
     payorAccount:
       body?.requestedShipment?.shippingChargesPayment?.payor?.responsibleParty?.accountNumber
         ?.value,
