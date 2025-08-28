@@ -338,6 +338,43 @@ async function getFedexRates(dest, parcels, declared, currency) {
       },
     },
   };
+  // ===== FDX DEBUG: what we are sending (accounts, origin/dest, packages) =====
+  log('FDX DEBUG accounts:', {
+    rootAccount: body?.accountNumber?.value,
+    shipperAccount: body?.requestedShipment?.shipper?.accountNumber?.value,
+    payorAccount:
+      body?.requestedShipment?.shippingChargesPayment?.payor?.responsibleParty?.accountNumber
+        ?.value,
+  });
+
+  log('FDX DEBUG origin/dest:', {
+    origin: {
+      countryCode: ORIGIN.countryCode,
+      postalCode: ORIGIN.postalCode,
+      city: ORIGIN.city,
+    },
+    dest: {
+      countryCode: body?.requestedShipment?.recipient?.address?.countryCode,
+      postalCode: body?.requestedShipment?.recipient?.address?.postalCode,
+      state: body?.requestedShipment?.recipient?.address?.stateOrProvinceCode,
+      city: body?.requestedShipment?.recipient?.address?.city,
+    },
+  });
+
+  log(
+    'FDX DEBUG packages:',
+    (body?.requestedShipment?.requestedPackageLineItems || []).map((p) => ({
+      weight: p?.weight?.value,
+      units: p?.weight?.units,
+      dims: [
+        p?.dimensions?.length,
+        p?.dimensions?.width,
+        p?.dimensions?.height,
+        p?.dimensions?.units,
+      ],
+    })),
+  );
+  // ===== END FDX DEBUG (pre-request) =====
 
   const res = await fetch('https://apis.fedex.com/rate/v1/rates/quotes', {
     method: 'POST',
