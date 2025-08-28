@@ -1,34 +1,61 @@
-// @ts-nocheck
-const emailjs = require('emailjs-com');
+// netlify/functions/send-invoice.js
+const json = (status, body) => ({
+  statusCode: status,
+  headers: {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  },
+  body: JSON.stringify(body),
+});
 
 exports.handler = async (event) => {
-  const data = JSON.parse(event.body);
-  const order = data.content; // Snipcart order data
+  if (event.httpMethod === 'OPTIONS') return json(200, { ok: true });
+  if (event.httpMethod !== 'POST') return json(405, { error: 'Method not allowed' });
 
-  console.log('Order completed webhook called for:', order.invoiceNumber);
+  try {
+    const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID;
+    const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
+    const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY; // recomendado
+    const EMAILJS_USER_ID = process.env.EMAILJS_USER_ID; // fallback
+    const EMAILJS_TO_EMAIL = process.env.EMAILJS_TO_EMAIL || 'orders@filmraid.pro';
 
-  // Generate custom invoice logic (e.g., PDF via lib like pdfkit - install via package.json if needed, but fallback to text)
-  const invoiceDetails = `
-    Invoice: ${order.invoiceNumber}
-    Total: €${order.total}
-    Items: ${order.items.map((i) => `${i.name} x${i.quantity}`).join(', ')}
-    Shipping: ${order.shippingInformation.address1}, ${order.shippingInformation.country}
-    From: The DIT World Company S.L.U., ESB10680478, Carrer del Valles 55, 1-2, 08030 Barcelona, Spain
-  `;
+    if (!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) {
+      return json(500, { error: 'Missing EMAILJS service/template envs' });
+    }
 
-  // Send delayed email (manual trigger when picked up, or automate via cron if needed)
-  // For now, this sends on webhook - modify to queue/delay if using external service
-  await emailjs.send(
-    process.env.EMAILJS_SERVICE_ID,
-    process.env.EMAILJS_TEMPLATE_ID,
-    {
-      to_email: order.email,
-      message: invoiceDetails,
-      from_name: 'FilmRAID',
-      reply_to: 'orders@filmraid.pro',
-    },
-    process.env.EMAILJS_USER_ID,
-  );
+    const { payload } = JSON.parse(event.body || '{}'); // adapta a tu forma de enviar datos
+    if (!payload) return json(400, { error: 'Missing payload' });
 
-  return { statusCode: 200 };
+    const emailPayload = {
+      service_id: EMAILJS_SERVICE_ID,
+      template_id: EMAILJS_TEMPLATE_ID,
+      user_id: EMAILJS_PRIVATE_KEY ? '' : EMAILJS_USER_ID || '', // si no hay private, usa public key
+      template_params: {
+        ...payload,
+        to_email: EMAILJS_TO_EMAIL,
+      },
+    };
+
+    const headers = { 'Content-Type': 'application/json' };
+    if (EMAILJS_PRIVATE_KEY) {
+      headers.Authorization = `Bearer ${EMAILJS_PRIVATE_KEY}`;
+    }
+
+    const resp = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(emailPayload),
+    });
+
+    if (!resp.ok) {
+      const errText = await resp.text().catch(() => '');
+      return json(502, { error: 'Email send failed', details: errText });
+    }
+
+    return json(200, { ok: true });
+  } catch (e) {
+    return json(500, { error: e?.message || String(e) });
+  }
 };

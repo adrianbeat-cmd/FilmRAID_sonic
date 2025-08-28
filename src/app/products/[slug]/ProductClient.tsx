@@ -5,7 +5,6 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Script from 'next/script';
 
-import emailjs from '@emailjs/browser';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -63,14 +62,6 @@ interface ProductClientProps {
   availableRaids: string[];
 }
 
-interface VerifyResponse {
-  success: boolean;
-  score?: number;
-  reasons?: string[];
-  action?: string;
-  hostname?: string;
-}
-
 const SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY as string;
 const ACTION = 'QUOTE_FORM';
 
@@ -85,21 +76,13 @@ function grecaptchaReady(): Promise<void> {
 }
 
 async function getEnterpriseToken(action: string): Promise<string> {
-  if (!window.grecaptcha?.enterprise) throw new Error('reCAPTCHA not ready');
-  // Como cargamos con ?render=SITE_KEY, llamamos sin pasar la key:
-  const token = await window.grecaptcha.enterprise.execute({ action });
+  const w = window as unknown as {
+    grecaptcha?: { enterprise?: { execute: (opts: { action: string }) => Promise<string> } };
+  };
+  if (!w.grecaptcha?.enterprise) throw new Error('reCAPTCHA not ready');
+  const token = await w.grecaptcha.enterprise.execute({ action });
   if (!token) throw new Error('Could not obtain reCAPTCHA token');
   return token;
-}
-
-async function verifyTokenOnServer(token: string): Promise<{ ok: boolean; data: VerifyResponse }> {
-  const res = await fetch('/.netlify/functions/verify-recaptcha-enterprise', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token, siteKey: SITE_KEY, expectedAction: ACTION }),
-  });
-  const data = (await res.json()) as VerifyResponse;
-  return { ok: res.ok, data };
 }
 
 const ProductClient = ({
@@ -143,36 +126,47 @@ const ProductClient = ({
         });
         return;
       }
-
       if (!SITE_KEY) throw new Error('Missing NEXT_PUBLIC_RECAPTCHA_SITE_KEY');
 
       setIsSubmitting(true);
 
-      // 1) reCAPTCHA Enterprise (invisible)
+      // 1) Token Enterprise (invisible)
       await grecaptchaReady();
-      const token = await getEnterpriseToken('CONTACT_FORM'); // o 'QUOTE_FORM'
-      const { ok, data: verify } = await verifyTokenOnServer(token);
-      if (!ok || !verify?.success) throw new Error('Captcha verification failed');
+      const token = await getEnterpriseToken(ACTION);
 
-      // 2) Build payload + send via EmailJS
-      data.model = currentModel.name;
-      data.capacity = `${raid0}TB`;
-      data.raid0 = `${raid0}TB`;
-      data.raid5 = `${raid5}TB`;
-      data.raid = selectedRaid;
-      data.price = `€${totalPrice}`;
-      data.quantity = quantity.toString();
-      data.time = new Date().toISOString();
+      // 2) Parámetros para la plantilla de EmailJS
+      const templateParams = {
+        ...data,
+        model: currentModel.name,
+        capacity: `${raid0}TB`,
+        raid0: `${raid0}TB`,
+        raid5: `${raid5}TB`,
+        raid: selectedRaid,
+        price: `€${totalPrice}`,
+        quantity: quantity.toString(),
+        time: new Date().toISOString(),
+      };
 
-      await emailjs.send(
-        'service_e70jt19', // SERVICE ID
-        'template_bic87oh', // TEMPLATE ID
-        data,
-        'Rbqf0P3F5FR_B-ndQ', // PUBLIC KEY (user key)
-      );
+      // 3) Verificar + enviar email desde la función unificada
+      const res = await fetch('/.netlify/functions/submit-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token,
+          siteKey: SITE_KEY,
+          expectedAction: ACTION,
+          templateId: 'template_bic87oh', // plantilla de Wire Transfer
+          templateParams,
+        }),
+      });
+
+      const dataResp = await res.json();
+      if (!res.ok) throw new Error(dataResp?.error || 'Send failed');
 
       toast('Wire transfer request sent!', {
-        description: `We’ll email you bank details shortly. reCAPTCHA score: ${typeof verify.score === 'number' ? verify.score.toFixed(2) : 'n/a'}`,
+        description: `We’ll email you bank details shortly. reCAPTCHA score: ${
+          typeof dataResp.score === 'number' ? dataResp.score.toFixed(2) : 'n/a'
+        }`,
         style: { background: '#16a34a', color: '#fff' },
       });
 
@@ -302,9 +296,7 @@ const ProductClient = ({
                 <button
                   key={idx}
                   onClick={() => setSelectedImage(idx)}
-                  className={`rounded border p-1 ${
-                    selectedImage === idx ? 'border-primary' : 'border-transparent'
-                  }`}
+                  className={`rounded border p-1 ${selectedImage === idx ? 'border-primary' : 'border-transparent'}`}
                 >
                   <Image src={img} alt={`Thumbnail ${idx + 1}`} width={80} height={60} />
                 </button>
@@ -382,6 +374,7 @@ const ProductClient = ({
                   <DialogTitle>Request Wire Transfer</DialogTitle>
                   <DialogDescription>{configSummary}</DialogDescription>
                 </DialogHeader>
+
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="company">Name/Company</Label>
@@ -392,10 +385,12 @@ const ProductClient = ({
                     />
                     {errors.company && <p className="text-sm text-red-500">Required</p>}
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="vat">EU VAT Number (Optional for B2C)</Label>
                     <Input id="vat" {...register('vat')} placeholder="e.g., ESB12345678" />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="address">Shipping Address</Label>
                     <Textarea
@@ -405,6 +400,7 @@ const ProductClient = ({
                     />
                     {errors.address && <p className="text-sm text-red-500">Required</p>}
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -415,6 +411,7 @@ const ProductClient = ({
                     />
                     {errors.email && <p className="text-sm text-red-500">Required</p>}
                   </div>
+
                   {/* Aviso legal reCAPTCHA */}
                   <p className="text-muted-foreground mt-2 text-xs leading-snug">
                     This site is protected by reCAPTCHA and the Google{' '}
@@ -437,7 +434,7 @@ const ProductClient = ({
                     </a>{' '}
                     apply.
                   </p>
-                  {/* No visible CAPTCHA; Enterprise se ejecuta en submit */}
+
                   <DialogFooter>
                     <Button type="submit" disabled={isSubmitting}>
                       {isSubmitting ? 'Sending…' : 'Send Request'}
