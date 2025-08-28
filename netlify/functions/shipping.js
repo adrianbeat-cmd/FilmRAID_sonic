@@ -295,39 +295,39 @@ async function getFedexRates(dest, parcels, declared, currency) {
     accountNumber: { value: FEDEX_ACCOUNT_NUMBER },
     requestedShipment: {
       shipper: {
+        accountNumber: { value: FEDEX_ACCOUNT_NUMBER },
         address: {
           countryCode: ORIGIN.countryCode,
           postalCode: ORIGIN.postalCode,
           city: ORIGIN.city,
           addressLine1: ORIGIN.addressLine,
         },
+        // (optional but nice) you can add a contact block if you want:
+        // contact: { personName: ORIGIN.company, phoneNumber: ORIGIN.phone }
       },
       recipient: {
         address: {
           countryCode: dest.countryCode,
           postalCode: dest.postalCode,
           city: dest.city,
-          // Hint to FedEx: business addresses may be cheaper; set false if you know it's residential
           residential: false,
         },
       },
-      pickupType: 'DROPOFF_AT_FEDEX_LOCATION', // safe default
+      pickupType: 'DROPOFF_AT_FEDEX_LOCATION',
       packagingType: 'YOUR_PACKAGING',
       preferredCurrency: currency,
-      // Ask FedEx to return all feasible services; we'll filter the two we want
       rateRequestType: ['LIST', 'ACCOUNT'],
       requestedPackageLineItems,
       shipmentSpecialServices: {
         specialServiceTypes: ['SIGNATURE_OPTION'],
-        signatureOptionDetail: { optionType: 'DIRECT' }, // require a delivery signature
+        signatureOptionDetail: { optionType: 'DIRECT' },
       },
-      // Declared value at shipment-level
       totalDeclaredValue: { amount: declared.amount, currency },
       shippingChargesPayment: {
         paymentType: 'SENDER',
         payor: {
           responsibleParty: {
-            accountNumber: { value: FEDEX_ACCOUNT_NUMBER },
+            accountNumber: { value: FEDEX_ACCOUNT_NUMBER }, // payor = same account
           },
         },
       },
