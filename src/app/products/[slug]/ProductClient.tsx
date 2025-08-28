@@ -84,9 +84,10 @@ function grecaptchaReady(): Promise<void> {
   });
 }
 
-async function getEnterpriseToken(): Promise<string> {
+async function getEnterpriseToken(action: string): Promise<string> {
   if (!window.grecaptcha?.enterprise) throw new Error('reCAPTCHA not ready');
-  const token = await window.grecaptcha.enterprise.execute(SITE_KEY, { action: ACTION });
+  // Como cargamos con ?render=SITE_KEY, llamamos sin pasar la key:
+  const token = await window.grecaptcha.enterprise.execute({ action });
   if (!token) throw new Error('Could not obtain reCAPTCHA token');
   return token;
 }
@@ -149,7 +150,7 @@ const ProductClient = ({
 
       // 1) reCAPTCHA Enterprise (invisible)
       await grecaptchaReady();
-      const token = await getEnterpriseToken();
+      const token = await getEnterpriseToken('CONTACT_FORM'); // o 'QUOTE_FORM'
       const { ok, data: verify } = await verifyTokenOnServer(token);
       if (!ok || !verify?.success) throw new Error('Captcha verification failed');
 
@@ -281,7 +282,8 @@ const ProductClient = ({
     <section className="py-12 md:py-16 lg:py-20">
       {/* reCAPTCHA Enterprise script */}
       <Script
-        src="https://www.google.com/recaptcha/enterprise.js?render=explicit"
+        id="recaptcha-enterprise"
+        src={`https://www.google.com/recaptcha/enterprise.js?render=${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}`}
         strategy="afterInteractive"
       />
 
@@ -413,7 +415,28 @@ const ProductClient = ({
                     />
                     {errors.email && <p className="text-sm text-red-500">Required</p>}
                   </div>
-
+                  {/* Aviso legal reCAPTCHA */}
+                  <p className="text-muted-foreground mt-2 text-xs leading-snug">
+                    This site is protected by reCAPTCHA and the Google{' '}
+                    <a
+                      href="https://policies.google.com/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline"
+                    >
+                      Privacy Policy
+                    </a>{' '}
+                    and{' '}
+                    <a
+                      href="https://policies.google.com/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline"
+                    >
+                      Terms of Service
+                    </a>{' '}
+                    apply.
+                  </p>
                   {/* No visible CAPTCHA; Enterprise se ejecuta en submit */}
                   <DialogFooter>
                     <Button type="submit" disabled={isSubmitting}>

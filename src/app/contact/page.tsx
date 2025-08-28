@@ -45,11 +45,10 @@ function grecaptchaReady(): Promise<void> {
   });
 }
 
-async function getEnterpriseToken(): Promise<string> {
-  if (!window.grecaptcha?.enterprise) {
-    throw new Error('reCAPTCHA not ready');
-  }
-  const token = await window.grecaptcha.enterprise.execute(SITE_KEY, { action: ACTION });
+async function getEnterpriseToken(action: string): Promise<string> {
+  if (!window.grecaptcha?.enterprise) throw new Error('reCAPTCHA not ready');
+  // Como cargamos con ?render=SITE_KEY, llamamos sin pasar la key:
+  const token = await window.grecaptcha.enterprise.execute({ action });
   if (!token) throw new Error('Could not obtain reCAPTCHA token');
   return token;
 }
@@ -84,7 +83,7 @@ export default function Contact() {
 
       // 1) Obtener token (Enterprise, invisible)
       await grecaptchaReady();
-      const token = await getEnterpriseToken();
+      const token = await getEnterpriseToken('CONTACT_FORM'); // o 'QUOTE_FORM'
 
       // 2) Verificar token en Netlify (Assessments)
       const { ok, data } = await verifyTokenOnServer(token);
@@ -119,7 +118,8 @@ export default function Contact() {
     <section className="section-padding container space-y-10.5">
       {/* Script de reCAPTCHA Enterprise */}
       <Script
-        src="https://www.google.com/recaptcha/enterprise.js?render=explicit"
+        id="recaptcha-enterprise"
+        src={`https://www.google.com/recaptcha/enterprise.js?render=${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}`}
         strategy="afterInteractive"
       />
 
@@ -250,6 +250,29 @@ export default function Contact() {
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? 'Sending...' : 'Send Message'}
             </Button>
+
+            <p className="text-muted-foreground mt-2 text-xs leading-snug">
+              This site is protected by reCAPTCHA and the Google{' '}
+              <a
+                href="https://policies.google.com/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                Privacy Policy
+              </a>{' '}
+              and{' '}
+              <a
+                href="https://policies.google.com/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                Terms of Service
+              </a>{' '}
+              apply.
+            </p>
+
             {status && (
               <p className="text-center text-sm text-gray-600 dark:text-gray-300">{status}</p>
             )}
