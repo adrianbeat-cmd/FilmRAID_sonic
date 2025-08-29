@@ -42,7 +42,7 @@ exports.handler = async (event) => {
     }
 
     const body = JSON.parse(event.body || '{}');
-    const { token, siteKey, expectedAction, templateId, templateParams } = body;
+    const { token, siteKey, expectedAction, templateId, templateParams, dryRun } = body;
 
     if (!token || !siteKey) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Missing token or siteKey' }) };
@@ -60,9 +60,6 @@ exports.handler = async (event) => {
     if (!PROJECT_ID || !RECAPTCHA_API_KEY) {
       return { statusCode: 500, body: JSON.stringify({ error: 'Missing reCAPTCHA env vars' }) };
     }
-    if (!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PRIVATE_KEY) {
-      return { statusCode: 500, body: JSON.stringify({ error: 'Missing EmailJS env vars' }) };
-    }
 
     // 1) Verify reCAPTCHA (Enterprise Assessments)
     const assessUrl = `https://recaptchaenterprise.googleapis.com/v1/projects/${PROJECT_ID}/assessments?key=${RECAPTCHA_API_KEY}`;
@@ -76,6 +73,10 @@ exports.handler = async (event) => {
 
     const assess = await postJson(assessUrl, assessPayload);
     if (assess.status < 200 || assess.status >= 300) {
+      // Log para Netlify
+      try {
+        console.error('recaptcha_assessment_failed', assess.status, assess.bodyText);
+      } catch {}
       return {
         statusCode: 400,
         body: JSON.stringify({
@@ -83,6 +84,7 @@ exports.handler = async (event) => {
           httpStatus: assess.status,
           details: assess.bodyJson || assess.bodyText,
         }),
+        headers: JSON_HEADERS,
       };
     }
 
@@ -104,6 +106,25 @@ exports.handler = async (event) => {
           actionReceived: action,
           actionExpected: expectedAction || null,
         }),
+        headers: JSON_HEADERS,
+      };
+    }
+
+    // ✅ DRY RUN: salir antes de enviar email para aislar el problema
+    if (dryRun === true) {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ ok: true, score, reasons, email: 'skipped' }),
+        headers: JSON_HEADERS,
+      };
+    }
+
+    // Comprueba env de EmailJS solo si vamos a enviar
+    if (!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PRIVATE_KEY) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Missing EmailJS env vars' }),
+        headers: JSON_HEADERS,
       };
     }
 
@@ -118,6 +139,10 @@ exports.handler = async (event) => {
 
     const email = await postJson('https://api.emailjs.com/api/v1.0/email/send', emailPayload);
     if (email.status < 200 || email.status >= 300) {
+      // Log para Netlify
+      try {
+        console.error('emailjs_send_failed', email.status, email.bodyText);
+      } catch {}
       return {
         statusCode: 502,
         body: JSON.stringify({
@@ -125,6 +150,7 @@ exports.handler = async (event) => {
           httpStatus: email.status,
           details: email.bodyJson || email.bodyText,
         }),
+        headers: JSON_HEADERS,
       };
     }
 
@@ -134,6 +160,9 @@ exports.handler = async (event) => {
       headers: JSON_HEADERS,
     };
   } catch (err) {
+    try {
+      console.error('server_error', err && err.message ? err.message : String(err));
+    } catch {}
     return {
       statusCode: 500,
       body: JSON.stringify({
