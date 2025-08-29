@@ -294,6 +294,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
 
       <body className={`${sfProDisplay.variable} antialiased`}>
+        {/* reCAPTCHA Enterprise (global) */}
+        <Script
+          id="recaptcha-enterprise"
+          src={`https://www.google.com/recaptcha/enterprise.js?render=${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}`}
+          strategy="afterInteractive"
+        />
+
         {/* Snipcart container */}
         <div
           hidden
