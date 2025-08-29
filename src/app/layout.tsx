@@ -10,6 +10,7 @@ import './globals.css';
 import Footer from '@/components/layout/footer';
 import Navbar from '@/components/layout/navbar';
 import { NavigationProvider } from '@/components/navigation-provider';
+import RecaptchaBoot from '@/components/RecaptchaBoot';
 import CTA from '@/components/sections/cta';
 import SnipcartConfig from '@/components/SnipcartConfig';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -154,31 +155,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           `}
         </Script>
         {/* ✅ reCAPTCHA stash: guarda enterprise apenas exista (sin handlers) */}
-        <Script id="recaptcha-stash" strategy="beforeInteractive">
-          {`
-      (function(){
-        var started = Date.now();
-        (function check(){
-          if (window.grecaptcha && window.grecaptcha.enterprise) {
-            window.__grecaptchaEnterprise__ = window.grecaptcha.enterprise;
-            return;
-          }
-          if (Date.now() - started > 30000) return; // 30s de margen silencioso
-          setTimeout(check, 50);
-        })();
-      })();
-    `}
-        </Script>
 
         {/* ✅ Carga global de reCAPTCHA Enterprise (antes de snipcart.js) */}
-        <Script
-          id="recaptcha-enterprise"
-          src={
-            'https://www.google.com/recaptcha/enterprise.js?render=' +
-            (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? '')
-          }
-          strategy="afterInteractive"
-        />
+
         {/* Snipcart core */}
         <Script
           src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
@@ -319,6 +298,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
 
       <body className={`${sfProDisplay.variable} antialiased`}>
+        <RecaptchaBoot />
+
         {/* Snipcart container */}
         <div
           hidden
