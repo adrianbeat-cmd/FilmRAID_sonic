@@ -11,16 +11,25 @@ type GrecaptchaGlobal = {
   enterprise?: GrecaptchaEnterprise;
 };
 
-function getGreCaptcha(): GrecaptchaGlobal | undefined {
-  return (globalThis as unknown as { grecaptcha?: GrecaptchaGlobal }).grecaptcha;
+type WindowGre = {
+  grecaptcha?: GrecaptchaGlobal;
+  __grecaptchaEnterprise__?: GrecaptchaEnterprise;
+};
+
+function getEnterprise(): GrecaptchaEnterprise | undefined {
+  const w = globalThis as unknown as WindowGre;
+  // 1) Usa la copia guardada (antes de que Snipcart pise grecaptcha)
+  if (w.__grecaptchaEnterprise__) return w.__grecaptchaEnterprise__;
+  // 2) O usa la referencia “viva”
+  return w.grecaptcha?.enterprise;
 }
 
-/** Espera a que grecaptcha.enterprise.execute exista, con timeout para no colgar el UI */
+/** Espera a que enterprise.execute exista, con timeout para no colgar UI */
 export function grecaptchaReady(timeoutMs = 8000): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     const start = Date.now();
     const check = () => {
-      const ent = getGreCaptcha()?.enterprise;
+      const ent = getEnterprise();
       if (ent && typeof ent.execute === 'function') {
         resolve();
         return;
@@ -37,14 +46,13 @@ export function grecaptchaReady(timeoutMs = 8000): Promise<void> {
 
 /** Obtiene token. Primero execute({action}); si falla, fallback execute(SITE_KEY, {action}) */
 export async function getEnterpriseToken(action: string): Promise<string> {
-  const ent = getGreCaptcha()?.enterprise;
+  const ent = getEnterprise();
   if (!ent || typeof ent.execute !== 'function') throw new Error('reCAPTCHA not ready');
 
   // Narrow de overloads
   const execWithOpts = ent.execute as ExecWithOpts;
   const execWithKey = ent.execute as ExecWithKey;
 
-  // Camino normal: script cargado con ?render=SITE_KEY
   try {
     const t = await execWithOpts({ action });
     if (t) return t;

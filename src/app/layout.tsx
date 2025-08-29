@@ -298,7 +298,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Script
           id="recaptcha-enterprise"
           src={`https://www.google.com/recaptcha/enterprise.js?render=${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}`}
-          strategy="afterInteractive"
+          strategy="beforeInteractive"
+          onLoad={() => {
+            // Tipado sin 'any' para contentar TS/ESLint
+            const w = window as unknown as {
+              grecaptcha?: { enterprise?: unknown };
+              __grecaptchaEnterprise__?: unknown;
+            };
+            if (w.grecaptcha?.enterprise) {
+              w.__grecaptchaEnterprise__ = w.grecaptcha.enterprise;
+            }
+          }}
         />
 
         {/* Snipcart container */}
