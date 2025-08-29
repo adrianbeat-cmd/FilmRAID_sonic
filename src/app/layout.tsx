@@ -153,7 +153,32 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   })();
           `}
         </Script>
+        {/* ✅ reCAPTCHA stash: guarda enterprise apenas exista (sin handlers) */}
+        <Script id="recaptcha-stash" strategy="beforeInteractive">
+          {`
+      (function(){
+        var started = Date.now();
+        (function check(){
+          if (window.grecaptcha && window.grecaptcha.enterprise) {
+            window.__grecaptchaEnterprise__ = window.grecaptcha.enterprise;
+            return;
+          }
+          if (Date.now() - started > 30000) return; // 30s de margen silencioso
+          setTimeout(check, 50);
+        })();
+      })();
+    `}
+        </Script>
 
+        {/* ✅ Carga global de reCAPTCHA Enterprise (antes de snipcart.js) */}
+        <Script
+          id="recaptcha-enterprise"
+          src={
+            'https://www.google.com/recaptcha/enterprise.js?render=' +
+            (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? '')
+          }
+          strategy="afterInteractive"
+        />
         {/* Snipcart core */}
         <Script
           src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
@@ -294,29 +319,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
 
       <body className={`${sfProDisplay.variable} antialiased`}>
-        {/* reCAPTCHA Enterprise (global) */}
-        <Script
-          id="recaptcha-enterprise"
-          src={`https://www.google.com/recaptcha/enterprise.js?render=${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}`}
-          strategy="beforeInteractive"
-        />
-        {/* Stash: guarda enterprise antes de que otros scripts lo sobrescriban (sin onLoad) */}
-        <Script id="recaptcha-stash" strategy="beforeInteractive">
-          {`
-      (function(){
-        var started = Date.now();
-        (function check(){
-          if (window.grecaptcha && window.grecaptcha.enterprise) {
-            window.__grecaptchaEnterprise__ = window.grecaptcha.enterprise;
-            return;
-          }
-          if (Date.now() - started > 15000) return; // 15s timeout silencioso
-          setTimeout(check, 50);
-        })();
-      })();
-    `}
-        </Script>
-
         {/* Snipcart container */}
         <div
           hidden
