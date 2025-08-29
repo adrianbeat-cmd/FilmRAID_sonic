@@ -1,4 +1,3 @@
-// netlify/functions/submit-email.js
 const json = (status, body) => ({
   statusCode: status,
   headers: {
@@ -19,10 +18,10 @@ exports.handler = async (event) => {
       RECAPTCHA_ENTERPRISE_API_KEY,
       GCP_PROJECT_ID,
       EMAILJS_SERVICE_ID,
-      EMAILJS_TEMPLATE_ID, // fallback
-      EMAILJS_PRIVATE_KEY, // recomendado
-      EMAILJS_USER_ID, // fallback si no hay PRIVATE_KEY
-      EMAILJS_TO_EMAIL, // opcional
+      EMAILJS_TEMPLATE_ID,
+      EMAILJS_PRIVATE_KEY,
+      EMAILJS_USER_ID,
+      EMAILJS_TO_EMAIL,
     } = process.env;
 
     if (!RECAPTCHA_ENTERPRISE_API_KEY || !GCP_PROJECT_ID) {
@@ -34,16 +33,13 @@ exports.handler = async (event) => {
 
     const body = JSON.parse(event.body || '{}');
     const { token, siteKey, expectedAction, templateId, templateParams } = body;
-
     if (!token || !siteKey || !expectedAction || !templateParams) {
       return json(400, { error: 'Missing token/siteKey/expectedAction/templateParams' });
     }
 
-    // 1) reCAPTCHA Enterprise Assessment
+    // 1) reCAPTCHA Enterprise
     const assessUrl = `https://recaptchaenterprise.googleapis.com/v1/projects/${GCP_PROJECT_ID}/assessments?key=${RECAPTCHA_ENTERPRISE_API_KEY}`;
-    const assessPayload = {
-      event: { token, siteKey, expectedAction },
-    };
+    const assessPayload = { event: { token, siteKey, expectedAction } };
 
     const assessRes = await fetch(assessUrl, {
       method: 'POST',
@@ -51,37 +47,29 @@ exports.handler = async (event) => {
       body: JSON.stringify(assessPayload),
     });
     const assessJson = await assessRes.json();
-
-    if (!assessRes.ok) {
-      return json(400, { error: 'Assessment API error', details: assessJson });
-    }
+    if (!assessRes.ok) return json(400, { error: 'Assessment API error', details: assessJson });
 
     const tokenProps = assessJson?.tokenProperties;
     const risk = assessJson?.riskAnalysis;
-
-    if (!tokenProps?.valid) {
-      return json(400, { error: 'Invalid token', details: tokenProps });
-    }
+    if (!tokenProps?.valid) return json(400, { error: 'Invalid token', details: tokenProps });
     if (tokenProps?.action && tokenProps.action !== expectedAction) {
       return json(400, { error: 'Action mismatch', details: tokenProps });
     }
 
     const score = typeof risk?.score === 'number' ? risk.score : 0;
-    const THRESHOLD = 0.3; // ajusta si quieres ser más o menos estricto
+    const THRESHOLD = 0.3; // ajusta si quieres
     if (score < THRESHOLD) {
       return json(403, { error: 'Low score', score, reasons: risk?.reasons || [] });
     }
 
-    // 2) Enviar Email vía EmailJS REST
+    // 2) EmailJS REST
     const finalTemplateId = templateId || EMAILJS_TEMPLATE_ID;
-    if (!finalTemplateId) {
-      return json(500, { error: 'Missing templateId (none in request or env)' });
-    }
+    if (!finalTemplateId) return json(500, { error: 'Missing templateId' });
 
     const payload = {
       service_id: EMAILJS_SERVICE_ID,
       template_id: finalTemplateId,
-      user_id: EMAILJS_PRIVATE_KEY ? '' : EMAILJS_USER_ID || '', // solo si no hay PRIVATE KEY
+      user_id: EMAILJS_PRIVATE_KEY ? '' : EMAILJS_USER_ID || '',
       template_params: {
         to_email: EMAILJS_TO_EMAIL || 'orders@filmraid.pro',
         ...templateParams,

@@ -2,8 +2,6 @@
 
 import React, { useState } from 'react';
 
-import Script from 'next/script';
-
 import { Mail, MapPin } from 'lucide-react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 
@@ -12,36 +10,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { SITE_KEY, grecaptchaReady, getEnterpriseToken } from '@/lib/recaptcha';
 
 interface ContactFormData {
   name: string;
   email: string;
   message: string;
-  [key: string]: string; // compat plantillas
+  [key: string]: string;
 }
 
-const SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY as string;
 const ACTION = 'CONTACT_FORM';
-
-function grecaptchaReady(): Promise<void> {
-  return new Promise<void>((resolve) => {
-    const check = () => {
-      if (typeof window !== 'undefined' && window.grecaptcha?.enterprise) resolve();
-      else setTimeout(check, 50);
-    };
-    check();
-  });
-}
-
-async function getEnterpriseToken(action: string): Promise<string> {
-  const w = window as unknown as {
-    grecaptcha?: { enterprise?: { execute: (opts: { action: string }) => Promise<string> } };
-  };
-  if (!w.grecaptcha?.enterprise) throw new Error('reCAPTCHA not ready');
-  const token = await w.grecaptcha.enterprise.execute({ action });
-  if (!token) throw new Error('Could not obtain reCAPTCHA token');
-  return token;
-}
 
 export default function Contact() {
   const {
@@ -61,11 +39,9 @@ export default function Contact() {
 
       if (!SITE_KEY) throw new Error('Missing NEXT_PUBLIC_RECAPTCHA_SITE_KEY');
 
-      // 1) Token Enterprise (invisible)
       await grecaptchaReady();
       const token = await getEnterpriseToken(ACTION);
 
-      // 2) Verificar + enviar email desde la función unificada
       const res = await fetch('/.netlify/functions/submit-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -73,7 +49,7 @@ export default function Contact() {
           token,
           siteKey: SITE_KEY,
           expectedAction: ACTION,
-          templateId: 'template_gvnlb36', // plantilla de Contact
+          templateId: 'template_gvnlb36',
           templateParams: {
             ...formData,
             time: new Date().toISOString(),
@@ -100,13 +76,6 @@ export default function Contact() {
 
   return (
     <section className="section-padding container space-y-10.5">
-      {/* Script de reCAPTCHA Enterprise */}
-      <Script
-        id="recaptcha-enterprise"
-        src={`https://www.google.com/recaptcha/enterprise.js?render=${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}`}
-        strategy="afterInteractive"
-      />
-
       <h2 className="text-center text-3xl font-bold text-black dark:text-white">Contact Us</h2>
       <div className="mx-auto max-w-3xl space-y-6 text-lg">
         <p className="text-center font-semibold text-gray-600 dark:text-gray-300">
@@ -237,7 +206,6 @@ export default function Contact() {
               {isSubmitting ? 'Sending...' : 'Send Message'}
             </Button>
 
-            {/* Aviso legal reCAPTCHA */}
             <p className="text-muted-foreground mt-2 text-xs leading-snug">
               This site is protected by reCAPTCHA and the Google{' '}
               <a

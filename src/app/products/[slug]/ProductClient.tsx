@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 
 import Image from 'next/image';
-import Script from 'next/script';
 
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -29,6 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { SITE_KEY, grecaptchaReady, getEnterpriseToken } from '@/lib/recaptcha';
 
 interface OrderFormData {
   company: string;
@@ -62,28 +62,7 @@ interface ProductClientProps {
   availableRaids: string[];
 }
 
-const SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY as string;
 const ACTION = 'QUOTE_FORM';
-
-function grecaptchaReady(): Promise<void> {
-  return new Promise<void>((resolve) => {
-    const check = () => {
-      if (typeof window !== 'undefined' && window.grecaptcha?.enterprise) resolve();
-      else setTimeout(check, 50);
-    };
-    check();
-  });
-}
-
-async function getEnterpriseToken(action: string): Promise<string> {
-  const w = window as unknown as {
-    grecaptcha?: { enterprise?: { execute: (opts: { action: string }) => Promise<string> } };
-  };
-  if (!w.grecaptcha?.enterprise) throw new Error('reCAPTCHA not ready');
-  const token = await w.grecaptcha.enterprise.execute({ action });
-  if (!token) throw new Error('Could not obtain reCAPTCHA token');
-  return token;
-}
 
 const ProductClient = ({
   currentModel,
@@ -130,11 +109,9 @@ const ProductClient = ({
 
       setIsSubmitting(true);
 
-      // 1) Token Enterprise (invisible)
       await grecaptchaReady();
       const token = await getEnterpriseToken(ACTION);
 
-      // 2) Parámetros para la plantilla de EmailJS
       const templateParams = {
         ...data,
         model: currentModel.name,
@@ -147,7 +124,6 @@ const ProductClient = ({
         time: new Date().toISOString(),
       };
 
-      // 3) Verificar + enviar email desde la función unificada
       const res = await fetch('/.netlify/functions/submit-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -155,7 +131,7 @@ const ProductClient = ({
           token,
           siteKey: SITE_KEY,
           expectedAction: ACTION,
-          templateId: 'template_bic87oh', // plantilla de Wire Transfer
+          templateId: 'template_bic87oh',
           templateParams,
         }),
       });
@@ -274,13 +250,6 @@ const ProductClient = ({
 
   return (
     <section className="py-12 md:py-16 lg:py-20">
-      {/* reCAPTCHA Enterprise script */}
-      <Script
-        id="recaptcha-enterprise"
-        src={`https://www.google.com/recaptcha/enterprise.js?render=${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}`}
-        strategy="afterInteractive"
-      />
-
       <div className="container grid grid-cols-1 gap-8 md:grid-cols-2">
         <div className="order-1">
           <div className="relative">
@@ -412,7 +381,6 @@ const ProductClient = ({
                     {errors.email && <p className="text-sm text-red-500">Required</p>}
                   </div>
 
-                  {/* Aviso legal reCAPTCHA */}
                   <p className="text-muted-foreground mt-2 text-xs leading-snug">
                     This site is protected by reCAPTCHA and the Google{' '}
                     <a
