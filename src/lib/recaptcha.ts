@@ -1,11 +1,10 @@
 export const SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY as string;
 
+type ExecWithOpts = (opts: { action: string }) => Promise<string>;
+type ExecWithKey = (siteKey: string, opts: { action: string }) => Promise<string>;
+
 type GrecaptchaEnterprise = {
-  ready: (cb: () => void) => void;
-  // Overloaded execute: either execute({ action }) or execute(siteKey, { action })
-  execute:
-    | ((opts: { action: string }) => Promise<string>)
-    | ((siteKey: string, opts: { action: string }) => Promise<string>);
+  execute: ExecWithOpts & ExecWithKey;
 };
 
 type GrecaptchaGlobal = {
@@ -16,15 +15,14 @@ function getGreCaptcha(): GrecaptchaGlobal | undefined {
   return (globalThis as unknown as { grecaptcha?: GrecaptchaGlobal }).grecaptcha;
 }
 
-/** Waits until grecaptcha.enterprise is fully ready, with a timeout to avoid hanging UI */
+/** Espera a que grecaptcha.enterprise.execute exista, con timeout para no colgar el UI */
 export function grecaptchaReady(timeoutMs = 8000): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     const start = Date.now();
     const check = () => {
-      const g = getGreCaptcha();
-      const ent = g?.enterprise;
-      if (ent?.ready) {
-        ent.ready(() => resolve());
+      const ent = getGreCaptcha()?.enterprise;
+      if (ent && typeof ent.execute === 'function') {
+        resolve();
         return;
       }
       if (Date.now() - start > timeoutMs) {
@@ -37,21 +35,21 @@ export function grecaptchaReady(timeoutMs = 8000): Promise<void> {
   });
 }
 
-/** Gets a token. Try execute({action}) first; if it fails, fallback to execute(SITE_KEY, {action}) */
+/** Obtiene token. Primero execute({action}); si falla, fallback execute(SITE_KEY, {action}) */
 export async function getEnterpriseToken(action: string): Promise<string> {
-  const g = getGreCaptcha();
-  const ent = g?.enterprise;
-  if (!ent?.execute) throw new Error('reCAPTCHA not ready');
+  const ent = getGreCaptcha()?.enterprise;
+  if (!ent || typeof ent.execute !== 'function') throw new Error('reCAPTCHA not ready');
 
-  // Narrow the overloads
-  const execWithOpts = ent.execute as (opts: { action: string }) => Promise<string>;
-  const execWithKey = ent.execute as (siteKey: string, opts: { action: string }) => Promise<string>;
+  // Narrow de overloads
+  const execWithOpts = ent.execute as ExecWithOpts;
+  const execWithKey = ent.execute as ExecWithKey;
 
+  // Camino normal: script cargado con ?render=SITE_KEY
   try {
     const t = await execWithOpts({ action });
     if (t) return t;
   } catch {
-    /* fall through to fallback */
+    /* sigue al fallback */
   }
 
   if (!SITE_KEY) throw new Error('Missing NEXT_PUBLIC_RECAPTCHA_SITE_KEY');
