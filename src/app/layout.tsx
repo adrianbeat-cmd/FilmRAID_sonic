@@ -299,17 +299,23 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           id="recaptcha-enterprise"
           src={`https://www.google.com/recaptcha/enterprise.js?render=${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}`}
           strategy="beforeInteractive"
-          onLoad={() => {
-            // Tipado sin 'any' para contentar TS/ESLint
-            const w = window as unknown as {
-              grecaptcha?: { enterprise?: unknown };
-              __grecaptchaEnterprise__?: unknown;
-            };
-            if (w.grecaptcha?.enterprise) {
-              w.__grecaptchaEnterprise__ = w.grecaptcha.enterprise;
-            }
-          }}
         />
+        {/* Stash: guarda enterprise antes de que otros scripts lo sobrescriban (sin onLoad) */}
+        <Script id="recaptcha-stash" strategy="beforeInteractive">
+          {`
+      (function(){
+        var started = Date.now();
+        (function check(){
+          if (window.grecaptcha && window.grecaptcha.enterprise) {
+            window.__grecaptchaEnterprise__ = window.grecaptcha.enterprise;
+            return;
+          }
+          if (Date.now() - started > 15000) return; // 15s timeout silencioso
+          setTimeout(check, 50);
+        })();
+      })();
+    `}
+        </Script>
 
         {/* Snipcart container */}
         <div
