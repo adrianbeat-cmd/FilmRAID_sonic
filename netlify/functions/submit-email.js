@@ -23,7 +23,7 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || '{}');
     const { token, siteKey, expectedAction, templateId, templateParams, dryRun } = body;
 
-    // --- RECAPTCHA ---
+    // --- reCAPTCHA Enterprise ---
     const { RECAPTCHA_ENTERPRISE_API_KEY, GCP_PROJECT_ID } = process.env;
     if (!RECAPTCHA_ENTERPRISE_API_KEY || !GCP_PROJECT_ID) {
       return {
@@ -62,7 +62,6 @@ exports.handler = async (event) => {
     const reasons = assessJson?.riskAnalysis?.reasons || [];
     const tp = assessJson?.tokenProperties || {};
 
-    // 1) Token must be valid (not expired/missing/duplicate/etc.)
     if (!tp.valid) {
       return {
         statusCode: 400,
@@ -78,7 +77,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // 2) If token contains an action, it must match what you expect
     if (tp.action && expectedAction && tp.action !== expectedAction) {
       return {
         statusCode: 400,
@@ -90,7 +88,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // 3) Minimal score gate (0.5 default)
     if (typeof score === 'number' && score < 0.5) {
       return {
         statusCode: 403,
@@ -107,7 +104,7 @@ exports.handler = async (event) => {
       };
     }
 
-    // --- EMAILJS ---
+    // --- EMAILJS (debug detallado) ---
     const {
       EMAILJS_SERVICE_ID,
       EMAILJS_PUBLIC_KEY,
@@ -115,6 +112,15 @@ exports.handler = async (event) => {
       EMAILJS_USER_ID, // fallback
     } = process.env;
     const PUBLIC_KEY = EMAILJS_PUBLIC_KEY || EMAILJS_USER_ID;
+
+    // Log no sensible
+    console.log('[EMAILJS ENV]', {
+      SERVICE: !!EMAILJS_SERVICE_ID,
+      PUBLIC_KEY: !!PUBLIC_KEY,
+      PRIVATE_KEY: !!EMAILJS_PRIVATE_KEY,
+      TEMPLATE_FROM_CLIENT: !!templateId,
+      PARAM_KEYS: Object.keys(templateParams || {}),
+    });
 
     if (!EMAILJS_SERVICE_ID || !PUBLIC_KEY || !EMAILJS_PRIVATE_KEY) {
       return {
@@ -132,23 +138,44 @@ exports.handler = async (event) => {
       };
     }
 
-    const resp = await emailjs.send(EMAILJS_SERVICE_ID, templateId, templateParams || {}, {
-      publicKey: PUBLIC_KEY,
-      privateKey: EMAILJS_PRIVATE_KEY,
-    });
+    try {
+      const resp = await emailjs.send(EMAILJS_SERVICE_ID, templateId, templateParams || {}, {
+        publicKey: PUBLIC_KEY,
+        privateKey: EMAILJS_PRIVATE_KEY,
+      });
 
-    return {
-      statusCode: 200,
-      headers: cors,
-      body: JSON.stringify({
-        ok: true,
-        score,
-        reasons,
-        email: 'sent',
-        emailjs: { status: resp?.status },
-      }),
-    };
+      return {
+        statusCode: 200,
+        headers: cors,
+        body: JSON.stringify({
+          ok: true,
+          score,
+          reasons,
+          email: 'sent',
+          emailjs: { status: resp?.status },
+        }),
+      };
+    } catch (e) {
+      console.error('[EMAILJS SEND ERROR]', {
+        status: e?.status,
+        text: e?.text,
+        message: e?.message,
+      });
+      return {
+        statusCode: 502,
+        headers: cors,
+        body: JSON.stringify({
+          error: 'emailjs_send_failed',
+          details: {
+            status: e?.status,
+            text: e?.text,
+            message: e?.message,
+          },
+        }),
+      };
+    }
   } catch (err) {
+    console.error('[SERVER ERROR]', err);
     return {
       statusCode: 500,
       headers: cors,
