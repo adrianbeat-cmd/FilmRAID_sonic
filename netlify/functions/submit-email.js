@@ -1,79 +1,90 @@
-/* eslint-disable */
+// netlify/functions/submit-email.js
 const emailjs = require('@emailjs/nodejs');
+const fetch = require('node-fetch');
 
-const {
-  RECAPTCHA_ENTERPRISE_API_KEY,
-  GCP_PROJECT_ID,
-  EMAILJS_SERVICE_ID,
-  EMAILJS_PUBLIC_KEY,
-  EMAILJS_PRIVATE_KEY,
-} = process.env;
-
-const MIN_SCORE = 0.3; // umbral (ajustable)
+const cors = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
 
 exports.handler = async (event) => {
-  const cors = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-  };
-
   if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers: cors, body: '' };
+    return { statusCode: 200, headers: cors, body: 'ok' };
+  }
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers: cors,
+      body: JSON.stringify({ error: 'method_not_allowed' }),
+    };
   }
 
   try {
+    const body = JSON.parse(event.body || '{}');
+    const { token, siteKey, expectedAction, templateId, templateParams, dryRun } = body;
+
+    // --- RECAPTCHA ---
+    const { RECAPTCHA_ENTERPRISE_API_KEY, GCP_PROJECT_ID } = process.env;
     if (!RECAPTCHA_ENTERPRISE_API_KEY || !GCP_PROJECT_ID) {
       return {
         statusCode: 500,
         headers: cors,
-        body: JSON.stringify({ error: 'recaptcha_env_missing' }),
+        body: JSON.stringify({
+          error: 'recaptcha_env_missing',
+          missing: {
+            RECAPTCHA_ENTERPRISE_API_KEY: !!RECAPTCHA_ENTERPRISE_API_KEY,
+            GCP_PROJECT_ID: !!GCP_PROJECT_ID,
+          },
+        }),
       };
     }
-    if (!EMAILJS_SERVICE_ID || !EMAILJS_PUBLIC_KEY || !EMAILJS_PRIVATE_KEY) {
-      return {
-        statusCode: 500,
-        headers: cors,
-        body: JSON.stringify({ error: 'emailjs_env_missing' }),
-      };
-    }
-
-    const body = JSON.parse(event.body || '{}');
-    const { token, siteKey, expectedAction, templateId, templateParams, dryRun } = body;
-
-    if (!token || !siteKey || !expectedAction || !templateId) {
+    if (!token || !siteKey || !expectedAction) {
       return { statusCode: 400, headers: cors, body: JSON.stringify({ error: 'bad_request' }) };
     }
 
-    // 1) Verificar reCAPTCHA Enterprise
     const assessUrl = `https://recaptchaenterprise.googleapis.com/v1/projects/${GCP_PROJECT_ID}/assessments?key=${RECAPTCHA_ENTERPRISE_API_KEY}`;
     const assessRes = await fetch(assessUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        event: { token, expectedAction, siteKey },
+        event: { token, siteKey, expectedAction },
       }),
     });
-    const assess = await assessRes.json();
+    const assessJson = await assessRes.json();
 
     if (!assessRes.ok) {
       return {
         statusCode: 400,
         headers: cors,
-        body: JSON.stringify({ error: 'recaptcha_assessment_failed', details: assess }),
+        body: JSON.stringify({ error: 'recaptcha_assessment_failed', details: assessJson }),
       };
     }
 
-    const score = assess.riskAnalysis?.score ?? 0;
-    const reasons = assess.riskAnalysis?.reasons || [];
-    if (score < MIN_SCORE) {
+    const score = assessJson?.riskAnalysis?.score ?? null;
+    const reasons = assessJson?.riskAnalysis?.reasons || [];
+    const action = assessJson?.event?.expectedAction || expectedAction;
+    const validAction = !assessJson?.tokenProperties?.invalidReason && action === expectedAction;
+
+    if (!validAction) {
+      return {
+        statusCode: 400,
+        headers: cors,
+        body: JSON.stringify({
+          error: 'recaptcha_invalid_action',
+          details: assessJson?.tokenProperties,
+        }),
+      };
+    }
+    if (typeof score === 'number' && score < 0.5) {
       return {
         statusCode: 403,
         headers: cors,
-        body: JSON.stringify({ error: 'low_score', score, reasons }),
+        body: JSON.stringify({ ok: false, score, reasons }),
       };
     }
 
-    // 2) Si es dryRun, no enviamos email (modo diagnóstico)
+    // Si sólo queremos probar reCAPTCHA sin email:
     if (dryRun) {
       return {
         statusCode: 200,
@@ -82,9 +93,35 @@ exports.handler = async (event) => {
       };
     }
 
-    // 3) Enviar email con EmailJS (Node SDK) usando privateKey
+    // --- EMAILJS ---
+    const {
+      EMAILJS_SERVICE_ID,
+      EMAILJS_PUBLIC_KEY,
+      EMAILJS_PRIVATE_KEY,
+      EMAILJS_USER_ID, // fallback
+    } = process.env;
+    const PUBLIC_KEY = EMAILJS_PUBLIC_KEY || EMAILJS_USER_ID;
+
+    if (!EMAILJS_SERVICE_ID || !PUBLIC_KEY || !EMAILJS_PRIVATE_KEY) {
+      return {
+        statusCode: 500,
+        headers: cors,
+        body: JSON.stringify({
+          error: 'emailjs_env_missing',
+          // Indicamos exactamente cuál falta (true = presente, false = ausente)
+          present: {
+            EMAILJS_SERVICE_ID: !!EMAILJS_SERVICE_ID,
+            EMAILJS_PUBLIC_KEY: !!EMAILJS_PUBLIC_KEY,
+            EMAILJS_USER_ID: !!EMAILJS_USER_ID,
+            EMAILJS_PRIVATE_KEY: !!EMAILJS_PRIVATE_KEY,
+          },
+        }),
+      };
+    }
+
+    // Envío real
     const resp = await emailjs.send(EMAILJS_SERVICE_ID, templateId, templateParams || {}, {
-      publicKey: EMAILJS_PUBLIC_KEY,
+      publicKey: PUBLIC_KEY,
       privateKey: EMAILJS_PRIVATE_KEY,
     });
 
@@ -96,14 +133,14 @@ exports.handler = async (event) => {
         score,
         reasons,
         email: 'sent',
-        emailjs: { status: resp.status, text: resp.text },
+        emailjs: { status: resp?.status },
       }),
     };
   } catch (err) {
     return {
-      statusCode: 502,
+      statusCode: 500,
       headers: cors,
-      body: JSON.stringify({ error: 'server_error', message: String(err) }),
+      body: JSON.stringify({ error: 'server_error', message: err?.message || String(err) }),
     };
   }
 };
