@@ -1,6 +1,5 @@
 // netlify/functions/submit-email.js
 const emailjs = require('@emailjs/nodejs');
-const fetch = require('node-fetch');
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -43,13 +42,12 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers: cors, body: JSON.stringify({ error: 'bad_request' }) };
     }
 
+    // fetch nativo (Node 18+)
     const assessUrl = `https://recaptchaenterprise.googleapis.com/v1/projects/${GCP_PROJECT_ID}/assessments?key=${RECAPTCHA_ENTERPRISE_API_KEY}`;
     const assessRes = await fetch(assessUrl, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        event: { token, siteKey, expectedAction },
-      }),
+      body: JSON.stringify({ event: { token, siteKey, expectedAction } }),
     });
     const assessJson = await assessRes.json();
 
@@ -84,7 +82,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // Si sólo queremos probar reCAPTCHA sin email:
     if (dryRun) {
       return {
         statusCode: 200,
@@ -98,7 +95,7 @@ exports.handler = async (event) => {
       EMAILJS_SERVICE_ID,
       EMAILJS_PUBLIC_KEY,
       EMAILJS_PRIVATE_KEY,
-      EMAILJS_USER_ID, // fallback
+      EMAILJS_USER_ID, // fallback por si prefieres este
     } = process.env;
     const PUBLIC_KEY = EMAILJS_PUBLIC_KEY || EMAILJS_USER_ID;
 
@@ -108,7 +105,6 @@ exports.handler = async (event) => {
         headers: cors,
         body: JSON.stringify({
           error: 'emailjs_env_missing',
-          // Indicamos exactamente cuál falta (true = presente, false = ausente)
           present: {
             EMAILJS_SERVICE_ID: !!EMAILJS_SERVICE_ID,
             EMAILJS_PUBLIC_KEY: !!EMAILJS_PUBLIC_KEY,
@@ -119,7 +115,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // Envío real
     const resp = await emailjs.send(EMAILJS_SERVICE_ID, templateId, templateParams || {}, {
       publicKey: PUBLIC_KEY,
       privateKey: EMAILJS_PRIVATE_KEY,
