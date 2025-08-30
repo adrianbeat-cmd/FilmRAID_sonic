@@ -42,7 +42,6 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers: cors, body: JSON.stringify({ error: 'bad_request' }) };
     }
 
-    // fetch nativo (Node 18+)
     const assessUrl = `https://recaptchaenterprise.googleapis.com/v1/projects/${GCP_PROJECT_ID}/assessments?key=${RECAPTCHA_ENTERPRISE_API_KEY}`;
     const assessRes = await fetch(assessUrl, {
       method: 'POST',
@@ -61,19 +60,37 @@ exports.handler = async (event) => {
 
     const score = assessJson?.riskAnalysis?.score ?? null;
     const reasons = assessJson?.riskAnalysis?.reasons || [];
-    const action = assessJson?.event?.expectedAction || expectedAction;
-    const validAction = !assessJson?.tokenProperties?.invalidReason && action === expectedAction;
+    const tp = assessJson?.tokenProperties || {};
 
-    if (!validAction) {
+    // 1) Token must be valid (not expired/missing/duplicate/etc.)
+    if (!tp.valid) {
+      return {
+        statusCode: 400,
+        headers: cors,
+        body: JSON.stringify({
+          error: 'recaptcha_token_invalid',
+          details: {
+            invalidReason: tp.invalidReason || 'UNKNOWN',
+            hostname: tp.hostname,
+            actionFromToken: tp.action,
+          },
+        }),
+      };
+    }
+
+    // 2) If token contains an action, it must match what you expect
+    if (tp.action && expectedAction && tp.action !== expectedAction) {
       return {
         statusCode: 400,
         headers: cors,
         body: JSON.stringify({
           error: 'recaptcha_invalid_action',
-          details: assessJson?.tokenProperties,
+          details: { expectedAction, actionFromToken: tp.action },
         }),
       };
     }
+
+    // 3) Minimal score gate (0.5 default)
     if (typeof score === 'number' && score < 0.5) {
       return {
         statusCode: 403,
@@ -95,7 +112,7 @@ exports.handler = async (event) => {
       EMAILJS_SERVICE_ID,
       EMAILJS_PUBLIC_KEY,
       EMAILJS_PRIVATE_KEY,
-      EMAILJS_USER_ID, // fallback por si prefieres este
+      EMAILJS_USER_ID, // fallback
     } = process.env;
     const PUBLIC_KEY = EMAILJS_PUBLIC_KEY || EMAILJS_USER_ID;
 
