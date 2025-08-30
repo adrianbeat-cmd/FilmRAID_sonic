@@ -29,12 +29,15 @@ export default function Contact() {
     formState: { errors },
   } = useForm<ContactFormData>();
 
-  const [status, setStatus] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notice, setNotice] = useState<{ type: '' | 'success' | 'error'; msg: string }>({
+    type: '',
+    msg: '',
+  });
 
   const onSubmit: SubmitHandler<ContactFormData> = async (formData) => {
     try {
-      setStatus('');
+      setNotice({ type: '', msg: '' });
       setIsSubmitting(true);
 
       if (!SITE_KEY) throw new Error('Missing NEXT_PUBLIC_RECAPTCHA_SITE_KEY');
@@ -60,15 +63,16 @@ export default function Contact() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Send failed');
 
-      setStatus(
-        `Message sent successfully!${
+      setNotice({
+        type: 'success',
+        msg: `Message sent successfully!${
           typeof data.score === 'number' ? ` (reCAPTCHA score: ${data.score.toFixed(2)})` : ''
         }`,
-      );
+      });
       reset();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to send message. Please try again.';
-      setStatus(msg);
+      setNotice({ type: 'error', msg });
     } finally {
       setIsSubmitting(false);
     }
@@ -77,6 +81,7 @@ export default function Contact() {
   return (
     <section className="section-padding container space-y-10.5">
       <h2 className="text-center text-3xl font-bold text-black dark:text-white">Contact Us</h2>
+
       <div className="mx-auto max-w-3xl space-y-6 text-lg">
         <p className="text-center font-semibold text-gray-600 dark:text-gray-300">
           We're here to assist with your film storage needs.
@@ -159,8 +164,23 @@ export default function Contact() {
       </div>
 
       <h3 className="text-center text-2xl font-bold text-black dark:text-white">Send a Message</h3>
+
       <Card className="mx-auto max-w-md dark:bg-gray-800">
         <CardContent className="space-y-6 p-6">
+          {/* inline success/error notice */}
+          {notice.msg && (
+            <div
+              className={`rounded-md border p-3 text-sm ${
+                notice.type === 'success'
+                  ? 'border-green-200 bg-green-50 text-green-700'
+                  : 'border-red-200 bg-red-50 text-red-700'
+              }`}
+              role={notice.type === 'success' ? 'status' : 'alert'}
+            >
+              {notice.msg}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="name" className="dark:text-white">
@@ -227,10 +247,6 @@ export default function Contact() {
               </a>{' '}
               apply.
             </p>
-
-            {status && (
-              <p className="text-center text-sm text-gray-600 dark:text-gray-300">{status}</p>
-            )}
           </form>
         </CardContent>
       </Card>

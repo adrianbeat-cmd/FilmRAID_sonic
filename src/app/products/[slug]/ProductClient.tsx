@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -79,6 +79,9 @@ const ProductClient = ({
   const [totalPrice, setTotalPrice] = useState(price);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitNotice, setSubmitNotice] = useState<{ type: '' | 'success' | 'error'; msg: string }>(
+    { type: '', msg: '' },
+  );
 
   const {
     handleSubmit,
@@ -140,10 +143,15 @@ const ProductClient = ({
       if (!res.ok) throw new Error(dataResp?.error || 'Send failed');
 
       toast('Wire transfer request sent!', {
-        description: `We’ll email you bank details shortly. reCAPTCHA score: ${
-          typeof dataResp.score === 'number' ? dataResp.score.toFixed(2) : 'n/a'
+        description: `We’ll email you bank details shortly.${
+          typeof dataResp.score === 'number' ? ` reCAPTCHA score: ${dataResp.score.toFixed(2)}` : ''
         }`,
         style: { background: '#16a34a', color: '#fff' },
+      });
+
+      setSubmitNotice({
+        type: 'success',
+        msg: 'Request sent! Please check your inbox for bank details (and Spam folder just in case).',
       });
 
       reset();
@@ -154,6 +162,7 @@ const ProductClient = ({
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Failed to send wire transfer request.';
       toast('Error', { description: msg, style: { background: '#ff4d4f', color: '#fff' } });
+      setSubmitNotice({ type: 'error', msg });
     } finally {
       setIsSubmitting(false);
     }
@@ -265,7 +274,9 @@ const ProductClient = ({
                 <button
                   key={idx}
                   onClick={() => setSelectedImage(idx)}
-                  className={`rounded border p-1 ${selectedImage === idx ? 'border-primary' : 'border-transparent'}`}
+                  className={`rounded border p-1 ${
+                    selectedImage === idx ? 'border-primary' : 'border-transparent'
+                  }`}
                 >
                   <Image src={img} alt={`Thumbnail ${idx + 1}`} width={80} height={60} />
                 </button>
@@ -286,7 +297,21 @@ const ProductClient = ({
             </p>
           </div>
 
-          <p className="mb-4 text-xl">Total: €{totalPrice}</p>
+          <p className="mb-2 text-xl">Total: €{totalPrice}</p>
+
+          {/* inline success/error after dialog closes */}
+          {submitNotice.msg && (
+            <div
+              className={`mb-2 rounded-md border p-3 text-sm ${
+                submitNotice.type === 'success'
+                  ? 'border-green-200 bg-green-50 text-green-700'
+                  : 'border-red-200 bg-red-50 text-red-700'
+              }`}
+              role={submitNotice.type === 'success' ? 'status' : 'alert'}
+            >
+              {submitNotice.msg}
+            </div>
+          )}
 
           <div className="mb-4 space-y-2">
             <Label htmlFor="raid">RAID Level</Label>
@@ -343,7 +368,6 @@ const ProductClient = ({
                   <DialogTitle>Request Wire Transfer</DialogTitle>
                   <DialogDescription>{configSummary}</DialogDescription>
                 </DialogHeader>
-
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="company">Name/Company</Label>
@@ -354,12 +378,10 @@ const ProductClient = ({
                     />
                     {errors.company && <p className="text-sm text-red-500">Required</p>}
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="vat">EU VAT Number (Optional for B2C)</Label>
                     <Input id="vat" {...register('vat')} placeholder="e.g., ESB12345678" />
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="address">Shipping Address</Label>
                     <Textarea
@@ -369,7 +391,6 @@ const ProductClient = ({
                     />
                     {errors.address && <p className="text-sm text-red-500">Required</p>}
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
