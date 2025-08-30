@@ -1,185 +1,176 @@
 // netlify/functions/submit-email.js
-const emailjs = require('@emailjs/nodejs');
+// Serverless: reCAPTCHA Enterprise gate + EmailJS (@emailjs/nodejs)
 
-const cors = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-};
+import emailjs from '@emailjs/nodejs';
 
-exports.handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers: cors, body: 'ok' };
-  }
+const {
+  // reCAPTCHA
+  GCP_PROJECT_ID,
+  RECAPTCHA_ENTERPRISE_API_KEY,
+  RECAPTCHA_MIN_SCORE,
+
+  // EmailJS
+  EMAILJS_PUBLIC_KEY,
+  EMAILJS_PRIVATE_KEY,
+  EMAILJS_SERVICE_ID, // Default (orders@)
+  EMAILJS_SERVICE_ID_2, // Optional (hello@) — si no existe, se usa el default
+} = process.env;
+
+// Umbral mínimo de score; por defecto 0.4
+const MIN_SCORE = Number.isFinite(Number(RECAPTCHA_MIN_SCORE)) ? Number(RECAPTCHA_MIN_SCORE) : 0.4;
+
+export async function handler(event) {
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
-      headers: cors,
       body: JSON.stringify({ error: 'method_not_allowed' }),
     };
   }
 
   try {
-    const body = JSON.parse(event.body || '{}');
-    const { token, siteKey, expectedAction, templateId, templateParams, dryRun } = body;
-
-    // --- reCAPTCHA Enterprise ---
-    const { RECAPTCHA_ENTERPRISE_API_KEY, GCP_PROJECT_ID } = process.env;
-    if (!RECAPTCHA_ENTERPRISE_API_KEY || !GCP_PROJECT_ID) {
+    // Validación de envs
+    if (!GCP_PROJECT_ID || !RECAPTCHA_ENTERPRISE_API_KEY) {
       return {
         statusCode: 500,
-        headers: cors,
-        body: JSON.stringify({
-          error: 'recaptcha_env_missing',
-          missing: {
-            RECAPTCHA_ENTERPRISE_API_KEY: !!RECAPTCHA_ENTERPRISE_API_KEY,
-            GCP_PROJECT_ID: !!GCP_PROJECT_ID,
-          },
-        }),
+        body: JSON.stringify({ error: 'recaptcha_env_missing' }),
       };
     }
-    if (!token || !siteKey || !expectedAction) {
-      return { statusCode: 400, headers: cors, body: JSON.stringify({ error: 'bad_request' }) };
+    if (!EMAILJS_PUBLIC_KEY || !EMAILJS_PRIVATE_KEY || !EMAILJS_SERVICE_ID) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'emailjs_env_missing' }),
+      };
     }
 
-    const assessUrl = `https://recaptchaenterprise.googleapis.com/v1/projects/${GCP_PROJECT_ID}/assessments?key=${RECAPTCHA_ENTERPRISE_API_KEY}`;
-    const assessRes = await fetch(assessUrl, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ event: { token, siteKey, expectedAction } }),
-    });
-    const assessJson = await assessRes.json();
+    const {
+      token,
+      siteKey,
+      expectedAction,
+      templateId,
+      templateParams,
+      // opcional: permitir forzar serviceId desde el front
+      serviceId: serviceIdOverride,
+      // opcional: modo diagnóstico (no envía email)
+      dryRun,
+    } = JSON.parse(event.body || '{}');
+
+    if (!token || !siteKey || !expectedAction || !templateId) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'missing_params' }),
+      };
+    }
+
+    // 1) Evaluar reCAPTCHA Enterprise
+    const assessRes = await fetch(
+      `https://recaptchaenterprise.googleapis.com/v1/projects/${encodeURIComponent(
+        GCP_PROJECT_ID,
+      )}/assessments?key=${encodeURIComponent(RECAPTCHA_ENTERPRISE_API_KEY)}`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          event: { token, siteKey, expectedAction },
+        }),
+      },
+    );
+
+    const assess = await assessRes.json();
 
     if (!assessRes.ok) {
       return {
         statusCode: 400,
-        headers: cors,
-        body: JSON.stringify({ error: 'recaptcha_assessment_failed', details: assessJson }),
-      };
-    }
-
-    const score = assessJson?.riskAnalysis?.score ?? null;
-    const reasons = assessJson?.riskAnalysis?.reasons || [];
-    const tp = assessJson?.tokenProperties || {};
-
-    if (!tp.valid) {
-      return {
-        statusCode: 400,
-        headers: cors,
         body: JSON.stringify({
-          error: 'recaptcha_token_invalid',
-          details: {
-            invalidReason: tp.invalidReason || 'UNKNOWN',
-            hostname: tp.hostname,
-            actionFromToken: tp.action,
-          },
+          error: 'recaptcha_assessment_failed',
+          details: assess,
         }),
       };
     }
 
-    if (tp.action && expectedAction && tp.action !== expectedAction) {
+    const tokenProps = assess.tokenProperties || {};
+    if (!tokenProps.valid) {
       return {
         statusCode: 400,
-        headers: cors,
+        body: JSON.stringify({
+          error: 'recaptcha_invalid',
+          details: tokenProps,
+        }),
+      };
+    }
+    if (tokenProps.action !== expectedAction) {
+      return {
+        statusCode: 400,
         body: JSON.stringify({
           error: 'recaptcha_invalid_action',
-          details: { expectedAction, actionFromToken: tp.action },
+          details: tokenProps,
         }),
       };
     }
 
-    if (typeof score === 'number' && score < 0.5) {
+    const score =
+      (assess.riskAnalysis && assess.riskAnalysis.score) != null ? assess.riskAnalysis.score : 0;
+    const reasons = (assess.riskAnalysis && assess.riskAnalysis.reasons) || [];
+
+    if (score < MIN_SCORE) {
       return {
         statusCode: 403,
-        headers: cors,
-        body: JSON.stringify({ ok: false, score, reasons }),
+        body: JSON.stringify({ error: 'low_score', score, reasons }),
       };
     }
 
+    // Si pediste dryRun → no enviamos correo
     if (dryRun) {
       return {
         statusCode: 200,
-        headers: cors,
         body: JSON.stringify({ ok: true, score, reasons, email: 'skipped' }),
       };
     }
 
-    // --- EMAILJS (debug detallado) ---
-    const {
-      EMAILJS_SERVICE_ID,
-      EMAILJS_PUBLIC_KEY,
-      EMAILJS_PRIVATE_KEY,
-      EMAILJS_USER_ID, // fallback
-    } = process.env;
-    const PUBLIC_KEY = EMAILJS_PUBLIC_KEY || EMAILJS_USER_ID;
+    // 2) Preparar EmailJS
+    // Mapea service por plantilla (si no pones EMAILJS_SERVICE_ID_2, usa el default)
+    const serviceByTemplate = {
+      template_gvnlb36: EMAILJS_SERVICE_ID_2 || EMAILJS_SERVICE_ID, // Contact → hello@
+      template_bic87oh: EMAILJS_SERVICE_ID, // Quote/Order → orders@
+    };
 
-    // Log no sensible
-    console.log('[EMAILJS ENV]', {
-      SERVICE: !!EMAILJS_SERVICE_ID,
-      PUBLIC_KEY: !!PUBLIC_KEY,
-      PRIVATE_KEY: !!EMAILJS_PRIVATE_KEY,
-      TEMPLATE_FROM_CLIENT: !!templateId,
-      PARAM_KEYS: Object.keys(templateParams || {}),
+    // Permite override desde el body
+    let serviceId = serviceByTemplate[templateId] || EMAILJS_SERVICE_ID;
+    if (serviceIdOverride) serviceId = String(serviceIdOverride);
+
+    // Fallbacks de destinatario por plantilla (por si la plantilla no define To)
+    const defaultToByTemplate = {
+      template_gvnlb36: { to_email: 'hello@filmraid.pro', to_name: 'FilmRAID Contact' },
+      template_bic87oh: { to_email: 'orders@filmraid.pro', to_name: 'FilmRAID Orders' },
+    };
+    const defaultTo = defaultToByTemplate[templateId] || {
+      to_email: 'orders@filmraid.pro',
+      to_name: 'FilmRAID',
+    };
+
+    // Payload final para la plantilla
+    const payload = { ...(templateParams || {}), ...defaultTo };
+
+    // 3) Enviar
+    const resp = await emailjs.send(serviceId, templateId, payload, {
+      publicKey: EMAILJS_PUBLIC_KEY,
+      privateKey: EMAILJS_PRIVATE_KEY,
     });
 
-    if (!EMAILJS_SERVICE_ID || !PUBLIC_KEY || !EMAILJS_PRIVATE_KEY) {
-      return {
-        statusCode: 500,
-        headers: cors,
-        body: JSON.stringify({
-          error: 'emailjs_env_missing',
-          present: {
-            EMAILJS_SERVICE_ID: !!EMAILJS_SERVICE_ID,
-            EMAILJS_PUBLIC_KEY: !!EMAILJS_PUBLIC_KEY,
-            EMAILJS_USER_ID: !!EMAILJS_USER_ID,
-            EMAILJS_PRIVATE_KEY: !!EMAILJS_PRIVATE_KEY,
-          },
-        }),
-      };
-    }
-
-    try {
-      const resp = await emailjs.send(EMAILJS_SERVICE_ID, templateId, templateParams || {}, {
-        publicKey: PUBLIC_KEY,
-        privateKey: EMAILJS_PRIVATE_KEY,
-      });
-
-      return {
-        statusCode: 200,
-        headers: cors,
-        body: JSON.stringify({
-          ok: true,
-          score,
-          reasons,
-          email: 'sent',
-          emailjs: { status: resp?.status },
-        }),
-      };
-    } catch (e) {
-      console.error('[EMAILJS SEND ERROR]', {
-        status: e?.status,
-        text: e?.text,
-        message: e?.message,
-      });
-      return {
-        statusCode: 502,
-        headers: cors,
-        body: JSON.stringify({
-          error: 'emailjs_send_failed',
-          details: {
-            status: e?.status,
-            text: e?.text,
-            message: e?.message,
-          },
-        }),
-      };
-    }
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        ok: true,
+        score,
+        reasons,
+        email: 'sent',
+        emailjs: { status: resp.status, text: resp.text },
+      }),
+    };
   } catch (err) {
-    console.error('[SERVER ERROR]', err);
+    const message = err && typeof err === 'object' && 'message' in err ? err.message : String(err);
     return {
       statusCode: 500,
-      headers: cors,
-      body: JSON.stringify({ error: 'server_error', message: err?.message || String(err) }),
+      body: JSON.stringify({ error: 'server_error', message }),
     };
   }
-};
+}
