@@ -295,135 +295,76 @@ async function getFedexRates(dest, parcels, declared, currency) {
     // keep root account (your billing account)
     accountNumber: { value: FEDEX_ACCOUNT_NUMBER },
 
-    requestedShipment: {
-      // ✅ ADD shipper.accountNumber back so it matches payor
-      shipper: {
-        accountNumber: { value: FEDEX_ACCOUNT_NUMBER },
-        address: {
-          countryCode: ORIGIN.countryCode,
-          postalCode: ORIGIN.postalCode,
-          city: ORIGIN.city,
-          addressLine1: ORIGIN.addressLine,
-        },
-        contact: {
-          companyName: ORIGIN.company,
-          personName: ORIGIN.company,
-          phoneNumber: ORIGIN.phone,
-        },
+    // keep what you already have above (shipper, recipient, packages, etc.)
+shipmentSpecialServices: {
+  specialServiceTypes: ['SIGNATURE_OPTION'],
+  signatureOptionDetail: { optionType: 'DIRECT' },
+},
+totalDeclaredValue: { amount: declared.amount, currency },
+
+// DAP (recipient pays duties/taxes) + minimal customs for international rating
+customsClearanceDetail: {
+  dutiesPayment: { paymentType: 'RECIPIENT' }, // DAP
+  termsOfSale: 'DAP',
+  customsValue: { amount: declared.amount, currency },
+  commodities: [
+    {
+      numberOfPieces: requestedPackageLineItems.length,
+      description: 'Data storage equipment (RAID enclosure with HDDs)',
+      countryOfManufacture: 'DE',
+      weight: {
+        units: 'KG',
+        value:
+          requestedPackageLineItems
+            .map((p) => Number(p.weight?.value || 0))
+            .reduce((a, b) => a + b, 0) || 1,
       },
-
-      recipient: {
-        address: {
-          countryCode: dest.countryCode,
-          postalCode: dest.postalCode,
-          city: dest.city,
-          stateOrProvinceCode: dest.stateOrProvinceCode || '',
-          residential: false,
-        },
-        contact: {
-          companyName: dest.companyName || 'Customer',
-          personName: dest.personName || 'Recipient',
-          phoneNumber: dest.phoneNumber || '000',
-        },
-      },
-
-      pickupType: 'DROPOFF_AT_FEDEX_LOCATION',
-      packagingType: 'YOUR_PACKAGING',
-      preferredCurrency: currency,
-      rateRequestType: ['LIST', 'ACCOUNT'],
-      requestedPackageLineItems,
-      shipmentSpecialServices: {
-        specialServiceTypes: ['SIGNATURE_OPTION'],
-        signatureOptionDetail: { optionType: 'DIRECT' },
-      },
-      totalDeclaredValue: { amount: declared.amount, currency },
-
-      // ✅ Required for international rating (DAP)
-      customsClearanceDetail: {
-        dutiesPayment: {
-          paymentType: 'RECIPIENT', // DAP → recipient pays duties/taxes
-        },
-        termsOfSale: 'DAP',
-        customsValue: { amount: declared.amount, currency },
-        commodities: [
-          {
-            numberOfPieces: requestedPackageLineItems.length,
-            description: 'Data storage equipment (RAID enclosure with HDDs)',
-            countryOfManufacture: 'DE', // supplier in Germany
-            weight: {
-              units: 'KG',
-              value:
-                requestedPackageLineItems
-                  .map((p) => Number(p.weight?.value || 0))
-                  .reduce((a, b) => a + b, 0) || 1,
-            },
-            customsValue: { amount: declared.amount, currency },
-            quantity: 1,
-            quantityUnits: 'EA',
-            harmonizedCode: '847170', // HS6 for disk storage units
-          },
-        ],
-      },
-
-      // 🚨 NOW close requestedShipment here (don’t close earlier!)
-      shippingChargesPayment: {
-        paymentType: 'SENDER',
-        payor: {
-          responsibleParty: {
-            accountNumber: { value: FEDEX_ACCOUNT_NUMBER },
-          },
-        },
-      },
-    }, // <-- closes requestedShipment
-  }; // <-- closes body
-
-  // ===== FDX DEBUG before request =====
-  log('FDX DEBUG accounts:', {
-    rootAccount: body?.accountNumber?.value,
-    shipperAccount: body?.requestedShipment?.shipper?.accountNumber?.value,
-    payorAccount:
-      body?.requestedShipment?.shippingChargesPayment?.payor?.responsibleParty?.accountNumber
-        ?.value,
-  });
-
-  log(
-    'FDX DEBUG shippingChargesPayment:',
-    JSON.stringify(body?.requestedShipment?.shippingChargesPayment, null, 2),
-  );
-
-  log('FDX DEBUG origin/dest:', {
-    origin: {
-      countryCode: ORIGIN.countryCode,
-      postalCode: ORIGIN.postalCode,
-      city: ORIGIN.city,
+      customsValue: { amount: declared.amount, currency },
+      quantity: 1,
+      quantityUnits: 'EA',
+      harmonizedCode: '847170',
     },
-    dest: {
-      countryCode: body?.requestedShipment?.recipient?.address?.countryCode,
-      postalCode: body?.requestedShipment?.recipient?.address?.postalCode,
-      state: body?.requestedShipment?.recipient?.address?.stateOrProvinceCode,
-      city: body?.requestedShipment?.recipient?.address?.city,
-    },
-  });
+  ],
+},
+}, // <-- closes requestedShipment
+}; // <-- closes body
 
-  log(
-    'FDX DEBUG packages:',
-    (body?.requestedShipment?.requestedPackageLineItems || []).map((p) => ({
-      weight: p?.weight?.value,
-      units: p?.weight?.units,
-      dims: [p?.dimensions?.length, p?.dimensions?.width, p?.dimensions?.height],
-    })),
-  );
+// ===== FDX DEBUG before request =====
+log('FDX DEBUG accounts:', {
+  rootAccount: body?.accountNumber?.value,
+  shipperAccount: body?.requestedShipment?.shipper?.accountNumber?.value,
+  // payorAccount intentionally omitted for quotes
+});
 
-  // ---- FedEx Rates call ----
-  const res = await fetch('https://apis.fedex.com/rate/v1/rates/quotes', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      'X-locale': 'en_US',
-    },
-    body: JSON.stringify(body),
-  });
+log('FDX DEBUG origin/dest:', {
+  origin: { countryCode: ORIGIN.countryCode, postalCode: ORIGIN.postalCode, city: ORIGIN.city },
+  dest: {
+    countryCode: body?.requestedShipment?.recipient?.address?.countryCode,
+    postalCode: body?.requestedShipment?.recipient?.address?.postalCode,
+    state: body?.requestedShipment?.recipient?.address?.stateOrProvinceCode,
+    city: body?.requestedShipment?.recipient?.address?.city,
+  },
+});
+
+log(
+  'FDX DEBUG packages:',
+  (body?.requestedShipment?.requestedPackageLineItems || []).map((p) => ({
+    weight: p?.weight?.value,
+    units: p?.weight?.units,
+    dims: [p?.dimensions?.length, p?.dimensions?.width, p?.dimensions?.height],
+  }))
+);
+
+// ---- FedEx Rates call ----
+const res = await fetch('https://apis.fedex.com/rate/v1/rates/quotes', {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    'X-locale': 'en_US',
+  },
+  body: JSON.stringify(body),
+});
 
   // ---- TEMP DEBUG LOGGING ----
   const rawText = await res.text();
