@@ -149,73 +149,72 @@
       </div>
     </div>
   </cart-summary-fees>
-
-  <!-- Tiny helper: move the Phone field right after Email on the Billing step -->
-  <script>
-    (function () {
-      function movePhoneAfterEmail() {
-        var phone = document.getElementById('fr-phone-field');
-        if (!phone) return;
-
-        var emailInput =
-          document.querySelector('input[type="email"]') ||
-          (function () {
-            var host = document.querySelector('snipcart-input[name="email"]');
-            return host && host.shadowRoot
-              ? host.shadowRoot.querySelector('input[type="email"]')
-              : null;
-          })();
-
-        if (!emailInput) return;
-
-        var emailField =
-          emailInput.closest('.snipcart-form__field') ||
-          emailInput.closest('snipcart-field') ||
-          emailInput.parentElement;
-
-        if (!emailField || phone.__frMoved) return;
-
-        try {
-          emailField.parentNode.insertBefore(phone, emailField.nextSibling);
-          phone.__frMoved = true;
-        } catch (_) {}
-      }
-
-      function arm() {
-        movePhoneAfterEmail();
-        if (
-          window.Snipcart &&
-          window.Snipcart.events &&
-          typeof window.Snipcart.events.on === 'function'
-        ) {
-          window.Snipcart.events.on('theme.routechanged', function () {
-            setTimeout(movePhoneAfterEmail, 120);
-          });
-        }
-        var mo = new MutationObserver(function () {
-          movePhoneAfterEmail();
-        });
-        mo.observe(document.body, { subtree: true, childList: true });
-      }
-
-      if (document.readyState !== 'loading') arm();
-      else document.addEventListener('DOMContentLoaded', arm);
-      document.addEventListener('snipcart.ready', arm);
-    })();
-  </script>
-  <script>
-    (function () {
-      const origFetch = window.fetch;
-      window.fetch = function (url, opts) {
-        try {
-          const u = typeof url === 'string' ? url : url && url.url;
-          if (u && u.includes('/account/easypost/addresses')) {
-            console.warn('[FR] Blocking EasyPost address call');
-            return Promise.resolve(new Response('{}', { status: 204 }));
-          }
-        } catch (_) {}
-        return origFetch.apply(this, arguments);
-      };
-    })();
-  </script>
 </div>
+<!-- Tiny helper: move the Phone field right after Email on the Billing step -->
+<script>
+  (function () {
+    function movePhoneAfterEmail() {
+      var phone = document.getElementById('fr-phone-field');
+      if (!phone) return;
+
+      var emailInput =
+        document.querySelector('input[type="email"]') ||
+        (function () {
+          var host = document.querySelector('snipcart-input[name="email"]');
+          return host && host.shadowRoot
+            ? host.shadowRoot.querySelector('input[type="email"]')
+            : null;
+        })();
+
+      if (!emailInput) return;
+
+      var emailField =
+        emailInput.closest('.snipcart-form__field') ||
+        emailInput.closest('snipcart-field') ||
+        emailInput.parentElement;
+
+      if (!emailField || phone.__frMoved) return;
+
+      try {
+        emailField.parentNode.insertBefore(phone, emailField.nextSibling);
+        phone.__frMoved = true;
+      } catch (_) {}
+    }
+
+    function arm() {
+      movePhoneAfterEmail();
+      if (
+        window.Snipcart &&
+        window.Snipcart.events &&
+        typeof window.Snipcart.events.on === 'function'
+      ) {
+        window.Snipcart.events.on('theme.routechanged', function () {
+          setTimeout(movePhoneAfterEmail, 120);
+        });
+      }
+      var mo = new MutationObserver(function () {
+        movePhoneAfterEmail();
+      });
+      mo.observe(document.body, { subtree: true, childList: true });
+    }
+
+    if (document.readyState !== 'loading') arm();
+    else document.addEventListener('DOMContentLoaded', arm);
+    document.addEventListener('snipcart.ready', arm);
+  })();
+</script>
+<script>
+  (function () {
+    const origFetch = window.fetch;
+    window.fetch = function (url, opts) {
+      try {
+        const u = typeof url === 'string' ? url : url && url.url;
+        if (u && u.includes('/account/easypost/addresses')) {
+          console.warn('[FR] Blocking EasyPost address call');
+          return Promise.resolve(new Response('{}', { status: 204 }));
+        }
+      } catch (_) {}
+      return origFetch.apply(this, arguments);
+    };
+  })();
+</script>
