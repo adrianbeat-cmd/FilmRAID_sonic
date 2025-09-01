@@ -291,53 +291,102 @@ async function getFedexRates(dest, parcels, declared, currency) {
     insuredValue: { amount: perPkgValue, currency },
   }));
 
-  const body = {
-    // keep root account (your billing account)
-    accountNumber: { value: FEDEX_ACCOUNT_NUMBER },
-
-    // keep what you already have above (shipper, recipient, packages, etc.)
-shipmentSpecialServices: {
-  specialServiceTypes: ['SIGNATURE_OPTION'],
-  signatureOptionDetail: { optionType: 'DIRECT' },
-},
-totalDeclaredValue: { amount: declared.amount, currency },
-
-// DAP (recipient pays duties/taxes) + minimal customs for international rating
-customsClearanceDetail: {
-  dutiesPayment: { paymentType: 'RECIPIENT' }, // DAP
-  termsOfSale: 'DAP',
-  customsValue: { amount: declared.amount, currency },
-  commodities: [
-    {
-      numberOfPieces: requestedPackageLineItems.length,
-      description: 'Data storage equipment (RAID enclosure with HDDs)',
-      countryOfManufacture: 'DE',
-      weight: {
-        units: 'KG',
-        value:
-          requestedPackageLineItems
-            .map((p) => Number(p.weight?.value || 0))
-            .reduce((a, b) => a + b, 0) || 1,
+// ---- FedEx request body (balanced) ----
+const body = {
+  accountNumber: { value: FEDEX_ACCOUNT_NUMBER },
+  requestedShipment: {
+    shipper: {
+      accountNumber: { value: FEDEX_ACCOUNT_NUMBER },
+      address: {
+        countryCode: ORIGIN.countryCode,
+        postalCode: ORIGIN.postalCode,
+        city: ORIGIN.city,
+        addressLine1: ORIGIN.addressLine,
       },
-      customsValue: { amount: declared.amount, currency },
-      quantity: 1,
-      quantityUnits: 'EA',
-      harmonizedCode: '847170',
+      contact: {
+        companyName: ORIGIN.company,
+        personName: ORIGIN.company,
+        phoneNumber: ORIGIN.phone,
+      },
     },
-  ],
-},
-}, // <-- closes requestedShipment
+    recipient: {
+      address: {
+        countryCode: dest.countryCode,
+        postalCode: dest.postalCode,
+        city: dest.city,
+        stateOrProvinceCode: dest.stateOrProvinceCode || "",
+        residential: false,
+      },
+      contact: {
+        companyName: dest.companyName || "Customer",
+        personName: dest.personName || "Recipient",
+        phoneNumber: dest.phoneNumber || "000",
+      },
+    },
+
+    pickupType: "DROPOFF_AT_FEDEX_LOCATION",
+    packagingType: "YOUR_PACKAGING",
+    preferredCurrency: currency,
+    rateRequestType: ["LIST", "ACCOUNT"],
+
+    requestedPackageLineItems,
+    shipmentSpecialServices: {
+      specialServiceTypes: ["SIGNATURE_OPTION"],
+      signatureOptionDetail: { optionType: "DIRECT" },
+    },
+    totalDeclaredValue: { amount: declared.amount, currency },
+
+    // DAP (recipient pays duties/taxes) + minimal customs for international rating
+    customsClearanceDetail: {
+      dutiesPayment: { paymentType: "RECIPIENT" },
+      termsOfSale: "DAP",
+      customsValue: { amount: declared.amount, currency },
+      commodities: [
+        {
+          numberOfPieces: requestedPackageLineItems.length,
+          description: "Data storage equipment (RAID enclosure with HDDs)",
+          countryOfManufacture: "DE",
+          weight: {
+            units: "KG",
+            value:
+              requestedPackageLineItems
+                .map((p) => Number(p?.weight?.value || 0))
+                .reduce((a, b) => a + b, 0) || 1,
+          },
+          customsValue: { amount: declared.amount, currency },
+          quantity: 1,
+          quantityUnits: "EA",
+          harmonizedCode: "847170",
+        },
+      ],
+    },
+
+    // Must remain INSIDE requestedShipment
+    shippingChargesPayment: {
+      paymentType: "SENDER",
+      payor: {
+        responsibleParty: {
+          accountNumber: { value: FEDEX_ACCOUNT_NUMBER },
+        },
+      },
+    },
+  }, // <-- closes requestedShipment
 }; // <-- closes body
 
 // ===== FDX DEBUG before request =====
-log('FDX DEBUG accounts:', {
+log("FDX DEBUG accounts:", {
   rootAccount: body?.accountNumber?.value,
   shipperAccount: body?.requestedShipment?.shipper?.accountNumber?.value,
-  // payorAccount intentionally omitted for quotes
+  payorAccount:
+    body?.requestedShipment?.shippingChargesPayment?.payor?.responsibleParty?.accountNumber?.value,
 });
 
-log('FDX DEBUG origin/dest:', {
-  origin: { countryCode: ORIGIN.countryCode, postalCode: ORIGIN.postalCode, city: ORIGIN.city },
+log("FDX DEBUG origin/dest:", {
+  origin: {
+    countryCode: body?.requestedShipment?.shipper?.address?.countryCode,
+    postalCode: body?.requestedShipment?.shipper?.address?.postalCode,
+    city: body?.requestedShipment?.shipper?.address?.city,
+  },
   dest: {
     countryCode: body?.requestedShipment?.recipient?.address?.countryCode,
     postalCode: body?.requestedShipment?.recipient?.address?.postalCode,
@@ -347,7 +396,7 @@ log('FDX DEBUG origin/dest:', {
 });
 
 log(
-  'FDX DEBUG packages:',
+  "FDX DEBUG packages:",
   (body?.requestedShipment?.requestedPackageLineItems || []).map((p) => ({
     weight: p?.weight?.value,
     units: p?.weight?.units,
@@ -355,98 +404,95 @@ log(
   }))
 );
 
-// ---- FedEx Rates call ----
-const res = await fetch('https://apis.fedex.com/rate/v1/rates/quotes', {
-  method: 'POST',
+// ===== FedEx Rates call =====
+const res = await fetch("https://apis.fedex.com/rate/v1/rates/quotes", {
+  method: "POST",
   headers: {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-    'X-locale': 'en_US',
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${fedexToken}`,
+    "x-locale": "en_US",
   },
   body: JSON.stringify(body),
 });
 
-  // ---- TEMP DEBUG LOGGING ----
-  const rawText = await res.text();
+// ---- TEMP DEBUG LOGGING ----
+const rawText = await res.text();
 
-  if (!res.ok) {
-    log('FedEx rate error:', res.status, rawText);
-    return [];
-  }
-
-  let out;
-  try {
-    out = JSON.parse(rawText);
-  } catch (e) {
-    log('FedEx parse error:', e, rawText);
-    return [];
-  }
-
-  // Optional: see which services came back
-  const serviceTypes = (out?.output?.rateReplyDetails || []).map((d) => d.serviceType);
-  log('FedEx OK:', serviceTypes);
-
-  const details = out?.output?.rateReplyDetails || [];
-
-  // Find the two services we want
-  const pick = (svcType) => details.find((d) => (d.serviceType || '').includes(svcType));
-
-  const econ = pick('INTERNATIONAL_ECONOMY');
-  const pri = pick('INTERNATIONAL_PRIORITY');
-
-  const toCents = (amt) => Math.max(0, Math.round(Number(amt || 0) * 100));
-
-  const rates = [];
-
-  if (econ) {
-    const amount = resolveNetChargeAmount(econ, currency);
-    rates.push({
-      description: SERVICE_LABELS.FEDEX_INTL_ECONOMY,
-      cost: toCents(amount),
-      guaranteed_days_to_delivery: parseTransitDays(econ),
-    });
-  }
-
-  if (pri) {
-    const amount = resolveNetChargeAmount(pri, currency);
-    rates.push({
-      description: SERVICE_LABELS.FEDEX_INTL_PRIORITY,
-      cost: toCents(amount),
-      guaranteed_days_to_delivery: parseTransitDays(pri),
-    });
-  }
-
-  // If neither found but FedEx returned something, pick the cheapest 1–2
-  if (!rates.length && Array.isArray(details) && details.length) {
-    const byCost = details
-      .map((d) => ({
-        d,
-        amount: resolveNetChargeAmount(d, currency),
-      }))
-      .filter((x) => isFinite(x.amount))
-      .sort((a, b) => a.amount - b.amount)
-      .slice(0, 2);
-
-    for (const x of byCost) {
-      rates.push({
-        description: `FedEx ${beautifyServiceName(x.d.serviceType)} — DAP (duties not included) — Signature required`,
-        cost: toCents(x.amount),
-        guaranteed_days_to_delivery: parseTransitDays(x.d),
-      });
-    }
-  }
-
-  return rates;
+if (!res.ok) {
+  log("FedEx rate error:", res.status, rawText);
+  return [];
 }
 
+let out;
+try {
+  out = JSON.parse(rawText);
+} catch (e) {
+  log("FedEx parse error:", e, rawText);
+  return [];
+}
+
+// Optional: see which services came back
+const details = out?.output?.rateReplyDetails || [];
+const serviceTypes = details.map((d) => d.serviceType);
+log("FedEx OK:", serviceTypes);
+
+// Find the two services we want
+const pick = (svcType) =>
+  details.find((d) => (d.serviceType || "").includes(svcType));
+
+const econ = pick("INTERNATIONAL_ECONOMY");
+const pri = pick("INTERNATIONAL_PRIORITY");
+
+const toCents = (amt) => Math.max(0, Math.round(Number(amt || 0) * 100));
+
+const rates = [];
+
+if (econ) {
+  const amount = resolveNetChargeAmount(econ, currency);
+  rates.push({
+    description: SERVICE_LABELS.FEDEX_INTL_ECONOMY,
+    cost: toCents(amount),
+    guaranteed_days_to_delivery: parseTransitDays(econ),
+  });
+}
+
+if (pri) {
+  const amount = resolveNetChargeAmount(pri, currency);
+  rates.push({
+    description: SERVICE_LABELS.FEDEX_INTL_PRIORITY,
+    cost: toCents(amount),
+    guaranteed_days_to_delivery: parseTransitDays(pri),
+  });
+}
+
+// If neither found but FedEx returned something, pick the cheapest 1–2
+if (!rates.length && Array.isArray(details) && details.length) {
+  const byCost = details
+    .map((d) => ({ d, amount: resolveNetChargeAmount(d, currency) }))
+    .filter((x) => isFinite(x.amount))
+    .sort((a, b) => a.amount - b.amount)
+  .slice(0, 2);
+
+  for (const x of byCost) {
+    rates.push({
+      description: `FedEx ${beautifyServiceName(
+        x.d.serviceType
+      )} — DAP (duties not included) — Signature required`,
+      cost: toCents(x.amount),
+      guaranteed_days_to_delivery: parseTransitDays(x.d),
+    });
+  }
+}
+
+return rates; // <— end of your FedEx function scope
+
+// ------------- helpers below -------------
 function resolveNetChargeAmount(detail, currency) {
-  // Prefer totalNetCharge if present, else totalBaseCharge
   const totals =
     (detail.ratedShipmentDetails &&
       detail.ratedShipmentDetails[0] &&
       detail.ratedShipmentDetails[0].amount) ||
     {};
-  // Newer responses might expose 'totalNetFedExCharge' or nested 'shipmentRateDetail'
   if (totals.totalNetCharge) return Number(totals.totalNetCharge);
   if (totals.totalNetFedExCharge) return Number(totals.totalNetFedExCharge);
 
@@ -455,47 +501,22 @@ function resolveNetChargeAmount(detail, currency) {
   if (srd.totalNetFedExCharge) return Number(srd.totalNetFedExCharge);
   if (srd.totalBaseCharge) return Number(srd.totalBaseCharge);
 
-  // Last resort: sum surcharges if provided (rare)
   return Number(srd.totalNetChargeWithDutiesAndTaxes || 0);
 }
 
 function parseTransitDays(detail) {
-  // FedEx often returns enumerations like "TWO_DAYS", "FOUR_DAYS"
-  const tt = (detail && detail.transitTime) || '';
+  const tt = (detail && detail.transitTime) || "";
   const m = tt.match(/(\d+)/);
   if (m) return Number(m[1]);
-  // If serviceType hints priority/economy, give typical windows
-  const svc = (detail && detail.serviceType) || '';
-  if (svc.includes('PRIORITY')) return 2;
-  if (svc.includes('ECONOMY')) return 4;
+  const svc = (detail && detail.serviceType) || "";
+  if (svc.includes("PRIORITY")) return 2;
+  if (svc.includes("ECONOMY")) return 4;
   return undefined;
 }
 
 function beautifyServiceName(s) {
-  return String(s || '')
+  return String(s || "")
     .toLowerCase()
-    .replace(/_/g, ' ')
+    .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-// ---------------- DHL Rates (stub until creds are added) ----------------
-
-async function getDhlRates(dest, parcels, declared, currency) {
-  if (!DHL_ENABLED) {
-    return []; // Will fall back to FedEx in handler if EU + no DHL
-  }
-
-  // TODO: Implement MyDHL API when DHL provides your production Client ID/Secret + Account.
-  // For now, return empty so handler can route to FedEx if you prefer a temporary global fallback.
-  // If you want to *block* EU until DHL is live, leave as [] and remove FedEx fallback in the handler.
-  return [];
-}
-
-// ---------------- HTTP helpers ----------------
-function ok(body) {
-  return {
-    statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  };
 }
