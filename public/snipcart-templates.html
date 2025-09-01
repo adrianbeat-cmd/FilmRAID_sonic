@@ -1,14 +1,14 @@
 <div id="snipcart-templates">
   <!-- Billing: Company + EU VAT + Phone -->
   <billing section="bottom">
-    <div class="fr-root">
-      <!-- single root wrapper -->
+    <div>
+      <!-- ✅ single root wrapper -->
       <fieldset class="snipcart-form__set">
         <!-- Company (optional) -->
         <div class="snipcart-form__field">
-          <snipcart-label class="snipcart__font--tiny" for="company"
-            >Company (optional)</snipcart-label
-          >
+          <snipcart-label class="snipcart__font--tiny" for="company">
+            Company (optional)
+          </snipcart-label>
           <snipcart-input
             id="company"
             name="company"
@@ -19,9 +19,9 @@
 
         <!-- EU VAT -->
         <snipcart-field name="vatNumber">
-          <snipcart-label class="snipcart__font--tiny" for="vatNumber"
-            >EU VAT Number (optional)</snipcart-label
-          >
+          <snipcart-label class="snipcart__font--tiny" for="vatNumber">
+            EU VAT Number (optional)
+          </snipcart-label>
           <snipcart-input
             id="vatNumber"
             name="vatNumber"
@@ -39,11 +39,11 @@
 
         <!-- Phone (required) -->
         <div id="fr-phone-field">
-          <!-- anchor the script can move -->
+          <!-- ✅ anchor the script can move -->
           <snipcart-field name="phone">
-            <snipcart-label class="snipcart__font--tiny" for="phone"
-              >Phone (required)</snipcart-label
-            >
+            <snipcart-label class="snipcart__font--tiny" for="phone">
+              Phone (required)
+            </snipcart-label>
             <snipcart-input
               id="phone"
               name="phone"
@@ -68,153 +68,155 @@
 
   <!-- Order summary: ALWAYS render one IVA/VAT/Taxes row -->
   <cart-summary-fees>
-    <div class="fr-root">
-      <!-- single root wrapper -->
+    <div>
+      <!-- ✅ single root wrapper -->
       <div class="snipcart-cart-summary-fees">
         <div
           class="snipcart-cart-summary-fees__notice snipcart__font--regular"
           v-if="!hasShippingAddress"
         >
-          <slot>{{ $localize('checkout.shipping_taxes_calculated_when_address_provided') }}</slot>
+          <slot> {{ $localize('checkout.shipping_taxes_calculated_when_address_provided') }} </slot>
         </div>
 
-        <!-- Discounts -->
-        <div
-          class="snipcart-cart-summary-fees__item snipcart-cart-summary-fees__discounts snipcart__font--slim"
-          v-if="discountsTotal"
-        >
-          <span class="snipcart-cart-summary-fees__title"
-            >{{ $localize('cart_summary.discount') }}</span
+        <div class="snipcart-cart-summary-fees">
+          <!-- Discounts -->
+          <div
+            class="snipcart-cart-summary-fees__item snipcart-cart-summary-fees__discounts snipcart__font--slim"
+            v-if="discountsTotal"
           >
-          <span class="snipcart-cart-summary-fees__amount"
-            >{{ discountsTotal | money(cart.currency) }}</span
-          >
-        </div>
+            <span class="snipcart-cart-summary-fees__title">
+              {{ $localize('cart_summary.discount') }}
+            </span>
+            <span class="snipcart-cart-summary-fees__amount">
+              {{ discountsTotal | money(cart.currency) }}
+            </span>
+          </div>
 
-        <!-- Subtotal -->
-        <div class="snipcart-cart-summary-fees__item snipcart__font--slim" v-if="subtotal">
-          <span class="snipcart-cart-summary-fees__title"
-            >{{ $localize('cart_summary.subtotal') }}</span
-          >
-          <span class="snipcart-cart-summary-fees__amount"
-            >{{ subtotal | money(cart.currency) }}</span
-          >
-        </div>
+          <!-- Subtotal -->
+          <div class="snipcart-cart-summary-fees__item snipcart__font--slim" v-if="subtotal">
+            <span class="snipcart-cart-summary-fees__title">
+              {{ $localize('cart_summary.subtotal') }}
+            </span>
+            <span class="snipcart-cart-summary-fees__amount">
+              {{ subtotal | money(cart.currency) }}
+            </span>
+          </div>
 
-        <!-- Shipping -->
-        <div
-          class="snipcart-cart-summary-fees__item snipcart__font--slim"
-          v-if="shipping.cost != null"
-        >
-          <span class="snipcart-cart-summary-fees__title"
-            >{{ $localize('cart_summary.shipping') }}</span
+          <!-- Shipping -->
+          <div
+            class="snipcart-cart-summary-fees__item snipcart__font--slim"
+            v-if="shipping.cost != null"
           >
-          <span class="snipcart-cart-summary-fees__amount"
-            >{{ shipping.cost | money(cart.currency) }}</span
-          >
-        </div>
+            <span class="snipcart-cart-summary-fees__title">
+              {{ $localize('cart_summary.shipping') }}
+            </span>
+            <span class="snipcart-cart-summary-fees__amount">
+              {{ shipping.cost | money(cart.currency) }}
+            </span>
+          </div>
 
-        <!-- Taxes/VAT/IVA: single, always-present row -->
-        <div class="snipcart-cart-summary-fees__item snipcart__font--slim">
-          <span class="snipcart-cart-summary-fees__title">
-            {{ (function () { var C = (cart && cart.shippingAddress && cart.shippingAddress.country)
-            || (cart && cart.billingAddress && cart.billingAddress.country) || ''; var EU =
-            ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'];
-            var label = (C === 'ES') ? 'IVA' : (EU.indexOf(C) !== -1 ? 'VAT' : 'Taxes'); var T =
-            (taxes || []); var positive = T.filter(function(t){ return t && t.rate > 0; }); var pct
-            = (positive.length === 1) ? Math.round(positive[0].rate * 100) : null; return label +
-            (pct ? (' (' + pct + '%)') : ''); })() }}
-          </span>
-          <span class="snipcart-cart-summary-fees__amount">
-            {{ ((taxes && taxes.length) ? taxes.reduce(function(a,t){ return a + (t && t.amount ||
-            0); }, 0) : 0) | money(cart.currency) }}
-          </span>
-        </div>
+          <!-- Taxes/VAT/IVA: single, always-present row -->
+          <div class="snipcart-cart-summary-fees__item snipcart__font--slim">
+            <span class="snipcart-cart-summary-fees__title">
+              {{ (function () { var C = (cart && cart.shippingAddress &&
+              cart.shippingAddress.country) || (cart && cart.billingAddress &&
+              cart.billingAddress.country) || ''; var EU = [
+              'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT',
+              'LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE' ]; var label = C === 'ES'
+              ? 'IVA' : EU.indexOf(C) !== -1 ? 'VAT' : 'Taxes'; var T = taxes || []; var positive =
+              T.filter(function (t) { return t && t.rate > 0; }); var pct = positive.length === 1 ?
+              Math.round(positive[0].rate * 100) : null; return label + (pct ? ' (' + pct + '%)' :
+              ''); })() }}
+            </span>
+            <span class="snipcart-cart-summary-fees__amount">
+              {{ ((taxes && taxes.length) ? taxes.reduce(function (a, t) { return a + (t && t.amount
+              || 0); }, 0) : 0) | money(cart.currency) }}
+            </span>
+          </div>
 
-        <!-- Total -->
-        <div
-          class="snipcart-cart-summary-fees__item snipcart-cart-summary-fees__total snipcart__font--bold snipcart__font--secondary"
-        >
-          <span
-            class="snipcart-cart-summary-fees__title snipcart-cart-summary-fees__title--highlight snipcart__font--large"
+          <!-- Total -->
+          <div
+            class="snipcart-cart-summary-fees__item snipcart-cart-summary-fees__total snipcart__font--bold snipcart__font--secondary"
           >
-            {{ $localize('cart_summary.total') }}
-          </span>
-          <span
-            class="snipcart-cart-summary-fees__amount snipcart-cart-summary-fees__amount--highlight snipcart__font--large"
-          >
-            {{ total | money(cart.currency) }}
-          </span>
+            <span
+              class="snipcart-cart-summary-fees__title snipcart-cart-summary-fees__title--highlight snipcart__font--large"
+            >
+              {{ $localize('cart_summary.total') }}
+            </span>
+            <span
+              class="snipcart-cart-summary-fees__amount snipcart-cart-summary-fees__amount--highlight snipcart__font--large"
+            >
+              {{ total | money(cart.currency) }}
+            </span>
+          </div>
         </div>
       </div>
     </div>
   </cart-summary-fees>
-</div>
-<!-- Tiny helper: move the Phone field right after Email on the Billing step -->
-<script>
-  (function () {
-    function movePhoneAfterEmail() {
-      var phone = document.getElementById('fr-phone-field');
-      if (!phone) return;
 
-      var emailInput =
-        document.querySelector('input[type="email"]') ||
-        (function () {
-          var host = document.querySelector('snipcart-input[name="email"]');
-          return host && host.shadowRoot
-            ? host.shadowRoot.querySelector('input[type="email"]')
-            : null;
-        })();
+  <!-- Tiny helper: move the Phone field right after Email on the Billing step -->
+  <script>
+    (function () {
+      function movePhoneAfterEmail() {
+        var phone = document.getElementById('fr-phone-field');
+        if (!phone) return;
 
-      if (!emailInput) return;
+        var emailInput =
+          document.querySelector('input[type="email"]') ||
+          (function () {
+            var host = document.querySelector('snipcart-input[name="email"]');
+            return host && host.shadowRoot
+              ? host.shadowRoot.querySelector('input[type="email"]')
+              : null;
+          })();
 
-      var emailField =
-        emailInput.closest('.snipcart-form__field') ||
-        emailInput.closest('snipcart-field') ||
-        emailInput.parentElement;
+        if (!emailInput) return;
+        var emailField =
+          emailInput.closest('.snipcart-form__field') ||
+          emailInput.closest('snipcart-field') ||
+          emailInput.parentElement;
 
-      if (!emailField || phone.__frMoved) return;
-
-      try {
-        emailField.parentNode.insertBefore(phone, emailField.nextSibling);
-        phone.__frMoved = true;
-      } catch (_) {}
-    }
-
-    function arm() {
-      movePhoneAfterEmail();
-      if (
-        window.Snipcart &&
-        window.Snipcart.events &&
-        typeof window.Snipcart.events.on === 'function'
-      ) {
-        window.Snipcart.events.on('theme.routechanged', function () {
-          setTimeout(movePhoneAfterEmail, 120);
-        });
+        if (!emailField || phone.__frMoved) return;
+        try {
+          emailField.parentNode.insertBefore(phone, emailField.nextSibling);
+          phone.__frMoved = true;
+        } catch (_) {}
       }
-      var mo = new MutationObserver(function () {
-        movePhoneAfterEmail();
-      });
-      mo.observe(document.body, { subtree: true, childList: true });
-    }
 
-    if (document.readyState !== 'loading') arm();
-    else document.addEventListener('DOMContentLoaded', arm);
-    document.addEventListener('snipcart.ready', arm);
-  })();
-</script>
-<script>
-  (function () {
-    const origFetch = window.fetch;
-    window.fetch = function (url, opts) {
-      try {
-        const u = typeof url === 'string' ? url : url && url.url;
-        if (u && u.includes('/account/easypost/addresses')) {
-          console.warn('[FR] Blocking EasyPost address call');
-          return Promise.resolve(new Response('{}', { status: 204 }));
+      function arm() {
+        movePhoneAfterEmail();
+        if (window.Snipcart?.events?.on) {
+          window.Snipcart.events.on('theme.routechanged', function () {
+            setTimeout(movePhoneAfterEmail, 120);
+          });
         }
-      } catch (_) {}
-      return origFetch.apply(this, arguments);
-    };
-  })();
-</script>
+        var mo = new MutationObserver(function () {
+          movePhoneAfterEmail();
+        });
+        mo.observe(document.body, { subtree: true, childList: true });
+      }
+
+      if (document.readyState !== 'loading') arm();
+      else document.addEventListener('DOMContentLoaded', arm);
+      document.addEventListener('snipcart.ready', arm);
+
+      // 🚫 Kill lingering EasyPost calls (defensive)
+      const _fetch = window.fetch;
+      window.fetch = new Proxy(_fetch, {
+        apply(target, thisArg, args) {
+          const url = typeof args[0] === 'string' ? args[0] : args[0]?.url;
+          if (url && url.includes('/account/easypost/addresses')) {
+            console.warn('Blocked EasyPost call:', url);
+            return Promise.resolve(
+              new Response(JSON.stringify({ address: { street1: '', city: '', country: '' } }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            );
+          }
+          return Reflect.apply(target, thisArg, args);
+        },
+      });
+    })();
+  </script>
+</div>
