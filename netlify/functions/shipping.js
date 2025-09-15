@@ -34,6 +34,7 @@ const EU_COUNTRIES = new Set([
   'SE',
 ]);
 
+const JSON_HEADERS = { 'Content-Type': 'application/json' };
 const env = (k, def) => process.env[k] ?? def;
 
 // Required
@@ -194,7 +195,7 @@ function buildRecipient(addr) {
 function buildCustomsIfNeeded(originCountry, destCountry, declaredAmount, totalWeightKg) {
   if (!isInternational(originCountry, destCountry)) return null;
   return {
-    dutiesPayment: { paymentType: 'SENDER' }, // Temporary DDP
+    dutiesPayment: { paymentType: 'SENDER' }, // Temporary DDP until FedEx enables DAP on your acct
     commercialInvoice: { termsOfSale: 'DDP', purpose: 'SOLD' },
     commodities: [
       {
@@ -394,7 +395,11 @@ function normalizeRates(rates, destCountry) {
 // ---------- Netlify ESM handler ----------
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'method_not_allowed' }) };
+    return {
+      statusCode: 405,
+      headers: JSON_HEADERS,
+      body: JSON.stringify({ error: 'method_not_allowed' }),
+    };
   }
 
   const hasId = !!process.env.FEDEX_CLIENT_ID;
@@ -406,6 +411,7 @@ export const handler = async (event) => {
     if (!hasId || !hasSec || !hasAcc) {
       return {
         statusCode: 200,
+        headers: JSON_HEADERS,
         body: JSON.stringify({
           rates: [],
           error: 'shipping_error',
@@ -430,6 +436,7 @@ export const handler = async (event) => {
     ) {
       return {
         statusCode: 200,
+        headers: JSON_HEADERS,
         body: JSON.stringify({
           rates: [],
           error: 'shipping_error',
@@ -448,6 +455,7 @@ export const handler = async (event) => {
       console.error(`FedEx OAuth error catch (${status}):`, JSON.stringify(data, null, 2));
       return {
         statusCode: 200,
+        headers: JSON_HEADERS,
         body: JSON.stringify({
           rates: [],
           error: 'shipping_error',
@@ -469,11 +477,13 @@ export const handler = async (event) => {
       if (ENABLE_FALLBACK) {
         return {
           statusCode: 200,
+          headers: JSON_HEADERS,
           body: JSON.stringify({
             rates: [
               {
                 id: 'FALLBACK_STANDARD',
                 name: 'Standard Shipping (fallback)',
+                description: 'Standard Shipping (fallback)',
                 cost: Number(FALLBACK_RATE),
               },
             ],
@@ -483,6 +493,7 @@ export const handler = async (event) => {
       }
       return {
         statusCode: 200,
+        headers: JSON_HEADERS,
         body: JSON.stringify({
           rates: [],
           error: 'shipping_error',
@@ -503,11 +514,13 @@ export const handler = async (event) => {
       if (ENABLE_FALLBACK) {
         return {
           statusCode: 200,
+          headers: JSON_HEADERS,
           body: JSON.stringify({
             rates: [
               {
                 id: 'FALLBACK_STANDARD',
                 name: 'Standard Shipping (fallback)',
+                description: 'Standard Shipping (fallback)',
                 cost: Number(FALLBACK_RATE),
               },
             ],
@@ -517,6 +530,7 @@ export const handler = async (event) => {
       }
       return {
         statusCode: 200,
+        headers: JSON_HEADERS,
         body: JSON.stringify({
           rates: [],
           error: 'shipping_error',
@@ -525,11 +539,19 @@ export const handler = async (event) => {
       };
     }
 
-    return { statusCode: 200, body: JSON.stringify({ rates: normalized }) };
+    // Success: include both name and description for Snipcart
+    const result = normalized.map((r) => ({
+      id: r.id,
+      name: r.name,
+      description: r.name,
+      cost: r.cost,
+    }));
+    return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ rates: result }) };
   } catch (err) {
     console.error('shipping_unexpected_error:', err && err.stack ? err.stack : err);
     return {
       statusCode: 200,
+      headers: JSON_HEADERS,
       body: JSON.stringify({ rates: [], error: 'shipping_error', message: 'Unexpected error' }),
     };
   }
