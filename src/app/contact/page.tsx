@@ -87,6 +87,12 @@ export default function Contact() {
           We're here to assist with your film storage needs.
         </p>
 
+        <img
+          src="/layout/map.jpg"
+          alt="FilmRaid Location Map"
+          className="mx-auto w-full max-w-3xl rounded-lg shadow-sm"
+        />
+
         <div className="rounded-lg bg-gray-100 p-4 text-center shadow-sm dark:bg-gray-800">
           <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">
             Reach out for <strong>custom configurations</strong>, <strong>support</strong>, or any{' '}
@@ -136,29 +142,22 @@ export default function Contact() {
                 <div>
                   <p className="font-semibold text-black dark:text-white">Address</p>
                   <p className="text-gray-600 dark:text-gray-300">
-                    Carrer del Valles 55
-                    <br />
-                    08030 Barcelona
-                    <br />
-                    Spain
+                    <a
+                      href="https://maps.app.goo.gl/m3s6Ue1cMdecFz82A"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      Carrer del Valles 55
+                      <br />
+                      08030 Barcelona
+                      <br />
+                      Spain
+                    </a>
                   </p>
                 </div>
               </CardContent>
             </Card>
-
-            <div className="grayscale filter">
-              <iframe
-                title="FilmRaid Office Map"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2992.9999999999995!2d2.1800000000000004!3d41.390000000000004!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12a4a2f0f0f0f0f%3A0xf0f0f0f0f0f0f!2sCarrer%20del%20Valles%2C%2055%2C%2008030%20Barcelona!5e0!3m2!1sen!2ses!4v1721730000000!5m2!1sen!2ses"
-                width="100%"
-                height="300"
-                style={{ border: 0 }}
-                allowFullScreen={false}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="rounded-lg shadow-md"
-              />
-            </div>
           </div>
         </div>
       </div>
