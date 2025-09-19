@@ -1,0 +1,245 @@
+⬥ Injecting environment variable values for all scopes
+⬥ Ignored general context env var: LANG (defined in process)
+⬥ Injected project settings env vars: AWS_LAMBDA_JS_RUNTIME, DHL_API_BASE, DHL_API_KEY, EMAILJS_PRIVATE_KEY, EMAILJS_PUBLIC_KEY, EMAILJS_SERVICE_ID, EMAILJS_SERVICE_ID_2, EMAILJS_TEMPLATE_ID, EMAILJS_USER_ID, FEDEX_ACCOUNT_NUMBER, FEDEX_API_BASE, FEDEX_CLIENT_ID, FEDEX_CLIENT_SECRET, FEDEX_PICKUP_TYPES, GCP_PROJECT_ID, NEXT_PUBLIC_RECAPTCHA_SITE_KEY, NEXT_PUBLIC_SNIPCART_API_KEY, NODE_VERSION, RECAPTCHA_ENTERPRISE_API_KEY, RECAPTCHA_MIN_SCORE, RECAPTCHA_MIN_SCORE_CONTACT, RECAPTCHA_MIN_SCORE_QUOTE
+⬥ Injected .env.local file env vars: NEXT_PUBLIC_EMAILJS_SERVICE_ID, NEXT_PUBLIC_EMAILJS_TEMPLATE_ID, NEXT_PUBLIC_EMAILJS_USER_ID
+⬥ Setting up local dev server
+
+⬥ Starting Next.js dev server
+⠋ Waiting for Next.js dev server to be ready on port 3000
+[1G
+> sonic@0.1.0 dev
+> next dev --turbopack
+
+⠙ Waiting for Next.js dev server to be ready on port 3000
+[1G   ▲ Next.js 15.3.0 (Turbopack)
+⠹ Waiting for Next.js dev server to be ready on port 3000
+[1G   - Local:        http://localhost:3000
+   - Network:      http://192.168.1.136:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+⠸ Waiting for Next.js dev server to be ready on port 3000
+✔ Next.js dev server ready on port 3000
+
+   ╭─────────────────────── ⬥  ────────────────────────╮
+   │                                                   │
+   │   Local dev server ready: http://localhost:8888   │
+   │                                                   │
+   ╰───────────────────────────────────────────────────╯
+
+▲ [WARNING] The CommonJS "exports" variable is treated as a global variable in an ECMAScript module and may not work as expected [commonjs-variable-in-esm]
+
+    netlify/functions/check-node.js:3:0:
+      3 │ exports.handler = async () => {
+        ╵ ~~~~~~~
+
+  This file is considered to be an ECMAScript module because the enclosing "package.json" file sets the type of this file to "module":
+
+    package.json:5:10:
+      5 │   "type": "module",
+        ╵           ~~~~~~~~
+
+  Node's package format requires that CommonJS files in a "type": "module" package use the ".cjs" file extension.
+
+▲ [WARNING] The CommonJS "exports" variable is treated as a global variable in an ECMAScript module and may not work as expected [commonjs-variable-in-esm]
+
+    netlify/functions/send-invoice.js:13:0:
+      13 │ exports.handler = async (event) => {
+         ╵ ~~~~~~~
+
+  This file is considered to be an ECMAScript module because the enclosing "package.json" file sets the type of this file to "module":
+
+    package.json:5:10:
+      5 │   "type": "module",
+        ╵           ~~~~~~~~
+
+  Node's package format requires that CommonJS files in a "type": "module" package use the ".cjs" file extension.
+
+▲ [WARNING] The CommonJS "exports" variable is treated as a global variable in an ECMAScript module and may not work as expected [commonjs-variable-in-esm]
+
+    netlify/functions/check-env.js:1:0:
+      1 │ exports.handler = async () => {
+        ╵ ~~~~~~~
+
+  This file is considered to be an ECMAScript module because the enclosing "package.json" file sets the type of this file to "module":
+
+    package.json:5:10:
+      5 │   "type": "module",
+        ╵           ~~~~~~~~
+
+  Node's package format requires that CommonJS files in a "type": "module" package use the ".cjs" file extension.
+
+▲ [WARNING] The CommonJS "exports" variable is treated as a global variable in an ECMAScript module and may not work as expected [commonjs-variable-in-esm]
+
+    netlify/functions/verify-recaptcha-enterprise.js:13:0:
+      13 │ exports.handler = async (event) => {
+         ╵ ~~~~~~~
+
+  This file is considered to be an ECMAScript module because the enclosing "package.json" file sets the type of this file to "module":
+
+    package.json:5:10:
+      5 │   "type": "module",
+        ╵           ~~~~~~~~
+
+  Node's package format requires that CommonJS files in a "type": "module" package use the ".cjs" file extension.
+
+▲ [WARNING] The CommonJS "exports" variable is treated as a global variable in an ECMAScript module and may not work as expected [commonjs-variable-in-esm]
+
+    netlify/functions/taxes.js:40:0:
+      40 │ exports.handler = async (event) => {
+         ╵ ~~~~~~~
+
+  This file is considered to be an ECMAScript module because the enclosing "package.json" file sets the type of this file to "module":
+
+    package.json:5:10:
+      5 │   "type": "module",
+        ╵           ~~~~~~~~
+
+  Node's package format requires that CommonJS files in a "type": "module" package use the ".cjs" file extension.
+
+▲ [WARNING] The CommonJS "exports" variable is treated as a global variable in an ECMAScript module and may not work as expected [commonjs-variable-in-esm]
+
+    netlify/functions/vat-verify.js:2:0:
+      2 │ exports.handler = async (event) => {
+        ╵ ~~~~~~~
+
+  This file is considered to be an ECMAScript module because the enclosing "package.json" file sets the type of this file to "module":
+
+    package.json:5:10:
+      5 │   "type": "module",
+        ╵           ~~~~~~~~
+
+  Node's package format requires that CommonJS files in a "type": "module" package use the ".cjs" file extension.
+
+⬥ Loaded function check-env in Lambda compatibility mode (https://ntl.fyi/lambda-compat)
+⬥ Loaded function verify-recaptcha-enterprise in Lambda compatibility mode (https://ntl.fyi/lambda-compat)
+⬥ Loaded function taxes in Lambda compatibility mode (https://ntl.fyi/lambda-compat)
+⬥ Loaded function check-node in Lambda compatibility mode (https://ntl.fyi/lambda-compat)
+⬥ Loaded function send-invoice in Lambda compatibility mode (https://ntl.fyi/lambda-compat)
+⬥ Loaded function shipping in Lambda compatibility mode (https://ntl.fyi/lambda-compat)
+⬥ Loaded function vat-verify in Lambda compatibility mode (https://ntl.fyi/lambda-compat)
+⬥ Loaded function submit-email in Lambda compatibility mode (https://ntl.fyi/lambda-compat)
+ ✓ Ready in 850ms
+(node:2297) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ○ Compiling / ...
+ ✓ Compiled / in 1624ms
+ GET / 200 in 1984ms
+Request from ::1: POST /.netlify/functions/shipping
+[shipping] origin=ES 08030 → dest=US 91702 | intraEU=false | pkgs=1 | declared=2000 EUR
+FedEx request payload: {
+  "accountNumber": {
+    "value": "209092471"
+  },
+  "requestedShipment": {
+    "shipper": {
+      "contact": {
+        "companyName": "The DIT World Company S.L.U.",
+        "personName": "The DIT World Company S.L.U.",
+        "phoneNumber": "+34 000 000 000"
+      },
+      "address": {
+        "streetLines": [
+          "Carrer del Vallès 55, 1-2"
+        ],
+        "city": "Barcelona",
+        "postalCode": "08030",
+        "countryCode": "ES"
+      }
+    },
+    "recipient": {
+      "contact": {
+        "companyName": "Customer",
+        "personName": "Recipient",
+        "phoneNumber": "000"
+      },
+      "address": {
+        "streetLines": [
+          "123 Main St"
+        ],
+        "city": "Azusa",
+        "postalCode": "91702",
+        "countryCode": "US",
+        "residential": true,
+        "stateOrProvinceCode": "CA"
+      }
+    },
+    "preferredCurrency": "EUR",
+    "rateRequestType": [
+      "ACCOUNT"
+    ],
+    "pickupType": "DROPOFF_AT_FEDEX_LOCATION",
+    "packagingType": "YOUR_PACKAGING",
+    "totalDeclaredValue": {
+      "amount": 2000,
+      "currency": "EUR"
+    },
+    "requestedPackageLineItems": [
+      {
+        "weight": {
+          "units": "KG",
+          "value": 12
+        },
+        "dimensions": {
+          "length": 40,
+          "width": 37,
+          "height": 36,
+          "units": "CM"
+        },
+        "insuredValue": {
+          "amount": 2000,
+          "currency": "EUR"
+        }
+      }
+    ],
+    "shipmentSpecialServices": {
+      "specialServiceTypes": [
+        "SIGNATURE_OPTION"
+      ],
+      "signatureOptionDetail": {
+        "optionType": "DIRECT"
+      }
+    },
+    "customsClearanceDetail": {
+      "dutiesPayment": {
+        "paymentType": "RECIPIENT"
+      },
+      "commercialInvoice": {
+        "termsOfSale": "DAP",
+        "purpose": "SOLD"
+      },
+      "commodities": [
+        {
+          "description": "RAID storage system",
+          "harmonizedCode": "847170",
+          "countryOfManufacture": "ES",
+          "quantity": 1,
+          "quantityUnits": "PCS",
+          "weight": {
+            "units": "KG",
+            "value": 12
+          },
+          "customsValue": {
+            "amount": 2000,
+            "currency": "EUR"
+          }
+        }
+      ]
+    },
+    "shippingChargesPayment": {
+      "paymentType": "SENDER",
+      "payor": {
+        "responsibleParty": {
+          "accountNumber": {
+            "value": "209092471"
+          }
+        }
+      }
+    }
+  }
+}
+FedEx rate error 400 {"transactionId":"3ba00870-7dae-47f0-b4d2-7eb85f6b3d90","errors":[{"code":"RATE.PAYMENTTYPE.NOTALLOWED","message":"Selected Payment Type is not allowed. Only allowed payment type is SENDER. Please update and try again."}]}
+FedEx error: FedEx rates error 400: {"transactionId":"3ba00870-7dae-47f0-b4d2-7eb85f6b3d90","errors":[{"code":"RATE.PAYMENTTYPE.NOTALLOWED","message":"Selected Payment Type is not allowed. Only allowed payment type is SENDER. Please update and try again."}]}
+DHL error after FedEx attempt: fetch failed
+No carrier returned rates; sending fallback flat rate 99.00
+Response with status 200 in 1301 ms.
