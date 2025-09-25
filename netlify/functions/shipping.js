@@ -439,40 +439,26 @@ export const handler = async (event) => {
   console.log('FEDEX env present?:', { id: hasId, secret: hasSec, account: hasAcc });
 
   try {
-    // AFTER — accept partial address; try to rate with country + postal
-    if (!destination?.country || !destination?.postalCode) {
-      // Not enough info yet: return empty list; Snipcart will re-call once user completes address
-      return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ rates: [] }) };
-    }
-
-    // Normalize minimal fields so FedEx is happy even if city/street are missing
-    destination.city = destination.city || '';
-    destination.address1 = destination.address1 || 'Address';
-
+    // Parse payload
     const payload = JSON.parse(event.body || '{}');
     const content = payload.content || {};
-    const destination = content.shippingAddress || {};
+    let destination = content.shippingAddress || {};
     const items = Array.isArray(content.items) ? content.items : [];
     const total =
       Number(content.total || 0) ||
       items.reduce((s, it) => s + (Number(it.price) || 0) * (Number(it.quantity) || 1), 0);
 
-    if (
-      !destination.country ||
-      !destination.postalCode ||
-      !destination.city ||
-      !destination.address1
-    ) {
-      return {
-        statusCode: 200,
-        headers: JSON_HEADERS,
-        body: JSON.stringify({
-          rates: [],
-          error: 'shipping_error',
-          message: 'Invalid destination address',
-        }),
-      };
+    // Address guard: accept partial address (country + postalCode minimum)
+    if (!destination?.country || !destination?.postalCode) {
+      return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ rates: [] }) };
     }
+
+    // Normalize minimal fields so FedEx is happy even if city/street are missing
+    destination = {
+      ...destination,
+      city: destination.city || '',
+      address1: destination.address1 || 'Address',
+    };
 
     // OAuth
     let token;
