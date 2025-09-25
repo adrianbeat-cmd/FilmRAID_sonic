@@ -60,7 +60,7 @@ const ENABLE_FALLBACK = String(env('ENABLE_FALLBACK_RATE', 'false')).toLowerCase
 const FALLBACK_RATE = Number(env('FALLBACK_RATE_EUR', '99'));
 
 // ---------- helpers ----------
-function pkg(weightKg, L, W, H) {
+function makePkg(weightKg, L, W, H) {
   return {
     weight: { units: 'KG', value: Number(weightKg) },
     dimensions: { length: Number(L), width: Number(W), height: Number(H), units: 'CM' },
@@ -73,26 +73,26 @@ function expandItemsToPackages(items = []) {
     const name = String(it.name || '').toUpperCase();
 
     if (name.includes('FILMRAID-4A')) {
-      packages.push(pkg(8, 40, 37, 36));
+      packages.push(makePkg(8, 40, 37, 36));
       continue;
     }
     if (name.includes('FILMRAID-6')) {
-      packages.push(pkg(12, 40, 37, 36));
+      packages.push(makePkg(12, 40, 37, 36));
       continue;
     }
     if (name.includes('FILMRAID-8')) {
-      packages.push(pkg(18, 40, 37, 41));
+      packages.push(makePkg(18, 40, 37, 41));
       continue;
     }
 
     if (name.includes('FILMRAID-12E')) {
-      packages.push(pkg(10, 53, 39, 43)); // Box A RAID
-      packages.push(pkg(12, 53, 39, 43)); // Box B HDDs
+      packages.push(makePkg(10, 53, 39, 43)); // Box A RAID
+      packages.push(makePkg(12, 53, 39, 43)); // Box B HDDs
       continue;
     }
 
     // default safe
-    packages.push(pkg(10, 40, 37, 36));
+    packages.push(makePkg(10, 40, 37, 36));
   }
   const totalWeightKg = packages.reduce((s, p) => s + Number(p.weight.value || 0), 0);
   return { packages, totalWeightKg };
@@ -195,7 +195,7 @@ function buildRecipient(addr) {
 function buildCustomsIfNeeded(originCountry, destCountry, declaredAmount, totalWeightKg) {
   if (!isInternational(originCountry, destCountry)) return null;
   return {
-    dutiesPayment: { paymentType: 'SENDER' }, // Temporary DDP until FedEx enables DAP on your acct
+    dutiesPayment: { paymentType: 'SENDER' }, // Temporal DDP hasta que FedEx habilite DAP en tu cuenta
     commercialInvoice: { termsOfSale: 'DDP', purpose: 'SOLD' },
     commodities: [
       {
@@ -211,10 +211,41 @@ function buildCustomsIfNeeded(originCountry, destCountry, declaredAmount, totalW
   };
 }
 
+// --- NEW: split declared value (insurance) across packages by weight ---
+function addDeclaredValueToPackages(packages, totalDeclaredValueAmount) {
+  const totalW = packages.reduce((s, p) => s + Number(p.weight?.value || 0), 0) || 1;
+  const totalAmount = Number(totalDeclaredValueAmount) || 0;
+
+  // If no declared amount, do nothing
+  if (!totalAmount) return packages;
+
+  // Distribute proportionally by weight; round cents; fix residual on last pkg
+  let allocated = 0;
+  const result = packages.map((p, idx) => {
+    const isLast = idx === packages.length - 1;
+    let amount;
+    if (isLast) {
+      amount = Math.max(0, Number((totalAmount - allocated).toFixed(2)));
+    } else {
+      const share = (Number(p.weight.value || 0) / totalW) * totalAmount;
+      amount = Math.max(0, Number(share.toFixed(2)));
+      allocated += amount;
+    }
+    return {
+      ...p,
+      insuredValue: { amount, currency: CURRENCY },
+    };
+  });
+  return result;
+}
+
 function buildRateBody({ destination, items, total }) {
   const shipper = buildShipper();
   const recipient = buildRecipient(destination);
   const { packages, totalWeightKg } = expandItemsToPackages(items);
+
+  // Always insure the full invoice amount across packages
+  const insuredPackages = addDeclaredValueToPackages(packages, total);
 
   const requestedShipment = {
     shipper,
@@ -224,7 +255,7 @@ function buildRateBody({ destination, items, total }) {
     pickupType: PICKUP_TYPE,
     packagingType: 'YOUR_PACKAGING',
     totalDeclaredValue: { amount: Number(total), currency: CURRENCY },
-    requestedPackageLineItems: packages,
+    requestedPackageLineItems: insuredPackages, // contains insuredValue per package
     shippingChargesPayment: {
       paymentType: 'SENDER',
       payor: { responsibleParty: { accountNumber: { value: FEDEX_ACCOUNT } } },
@@ -238,8 +269,6 @@ function buildRateBody({ destination, items, total }) {
     totalWeightKg,
   );
   if (customs) requestedShipment.customsClearanceDetail = customs;
-
-  // no "serviceType" nor SIGNATURE_OPTION
 
   return {
     accountNumber: { value: FEDEX_ACCOUNT },
@@ -370,8 +399,10 @@ function normalizeRates(rates, destCountry) {
 
   let allow = new Set();
   if (isDomesticES) {
+    // Mostrar servicios domésticos más razonables; si son caros, es tema de tarifas/entitlement
     allow = new Set(['FEDEX_FEDEX_PRIORITY', 'FEDEX_FEDEX_PRIORITY_EXPRESS']);
   } else {
+    // Internacional: dejar Economy/Priority
     allow = new Set([
       'FEDEX_FEDEX_INTERNATIONAL_CONNECT_PLUS',
       'FEDEX_FEDEX_INTERNATIONAL_PRIORITY',
@@ -408,17 +439,15 @@ export const handler = async (event) => {
   console.log('FEDEX env present?:', { id: hasId, secret: hasSec, account: hasAcc });
 
   try {
-    if (!hasId || !hasSec || !hasAcc) {
-      return {
-        statusCode: 200,
-        headers: JSON_HEADERS,
-        body: JSON.stringify({
-          rates: [],
-          error: 'shipping_error',
-          message: 'FedEx not configured (missing env)',
-        }),
-      };
+    // AFTER — accept partial address; try to rate with country + postal
+    if (!destination?.country || !destination?.postalCode) {
+      // Not enough info yet: return empty list; Snipcart will re-call once user completes address
+      return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ rates: [] }) };
     }
+
+    // Normalize minimal fields so FedEx is happy even if city/street are missing
+    destination.city = destination.city || '';
+    destination.address1 = destination.address1 || 'Address';
 
     const payload = JSON.parse(event.body || '{}');
     const content = payload.content || {};
