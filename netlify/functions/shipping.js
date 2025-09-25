@@ -1,444 +1,282 @@
 // netlify/functions/shipping.js
-// Snipcart -> FedEx REST Rates (Production) | ESM (package.json type: "module")
+// CommonJS style to keep Netlify Lambda compatibility even if package.json has "type": "module"
+const fetch = require('node-fetch'); // v2.x
+const JSON_HEADERS = {
+  'Content-Type': 'application/json; charset=utf-8',
+};
 
-const FEDEX_OAUTH_URL = 'https://apis.fedex.com/oauth/token';
-const FEDEX_RATE_URL = 'https://apis.fedex.com/rate/v1/rates/quotes';
+const FEDEX_BASE = process.env.FEDEX_API_BASE || 'https://apis.fedex.com';
+const FEDEX_CLIENT_ID = process.env.FEDEX_CLIENT_ID;
+const FEDEX_CLIENT_SECRET = process.env.FEDEX_CLIENT_SECRET;
+const FEDEX_ACCOUNT_NUMBER = process.env.FEDEX_ACCOUNT_NUMBER;
 
-const EU_COUNTRIES = new Set([
-  'AT',
-  'BE',
-  'BG',
-  'HR',
-  'CY',
-  'CZ',
-  'DK',
-  'EE',
-  'FI',
-  'FR',
-  'DE',
-  'GR',
-  'HU',
-  'IE',
-  'IT',
-  'LV',
-  'LT',
-  'LU',
-  'MT',
-  'NL',
-  'PL',
-  'PT',
-  'RO',
-  'SK',
-  'SI',
-  'ES',
-  'SE',
-]);
+// --- YOUR ORIGIN (Barcelona) ---
+const SHIPPER = {
+  contact: {
+    companyName: 'The DIT World Company S.L.U.',
+    personName: 'The DIT World Company S.L.U.',
+    phoneNumber: '+34999999999',
+  },
+  address: {
+    streetLines: ['Carrer del Vallès 55, 1-2'],
+    city: 'Barcelona',
+    postalCode: '08030',
+    countryCode: 'ES',
+    stateOrProvinceCode: 'B', // optional but helps FedEx routing in ES/Barcelona
+  },
+};
 
-const JSON_HEADERS = { 'Content-Type': 'application/json' };
-const env = (k, def) => process.env[k] ?? def;
+// --- PRODUCT → DIMENSIONS / WEIGHTS ---
+const PACK_MAP = {
+  // Single-box models
+  'FilmRaid-4A (72TB/80TB/88TB)': { boxes: [{ w: 8, l: 40, wdt: 37, h: 36, units: 'CM' }] },
+  'FilmRaid-6 (108TB/120TB/132TB)': { boxes: [{ w: 12, l: 40, wdt: 37, h: 36, units: 'CM' }] },
+  'FilmRaid-8 (144TB/160TB/176TB)': { boxes: [{ w: 18, l: 40, wdt: 37, h: 36, units: 'CM' }] },
 
-// Required
-const FEDEX_CLIENT_ID = env('FEDEX_CLIENT_ID');
-const FEDEX_CLIENT_SECRET = env('FEDEX_CLIENT_SECRET');
-const FEDEX_ACCOUNT = env('FEDEX_ACCOUNT_NUMBER');
+  // Two-box model (12E) → RAID + HDDs
+  'FilmRaid-12E (216TB/240TB/264TB)': {
+    boxes: [
+      { w: 10, l: 53, wdt: 39, h: 43, units: 'CM' }, // Box A (RAID)
+      { w: 12, l: 53, wdt: 39, h: 43, units: 'CM' }, // Box B (HDDs)
+    ],
+  },
+};
 
-// Shipper defaults (Barcelona)
-const SHIPPER_COMPANY = env('SHIPPER_COMPANY', 'The DIT World Company S.L.U.');
-const SHIPPER_PERSON = env('SHIPPER_PERSON', 'The DIT World Company S.L.U.');
-const SHIPPER_PHONE = env('SHIPPER_PHONE', '+34999999999');
-const SHIPPER_ADDR1 = env('SHIPPER_ADDRESS1', 'Carrer del Vallès 55, 1-2');
-const SHIPPER_CITY = env('SHIPPER_CITY', 'Barcelona');
-const SHIPPER_POSTAL = env('SHIPPER_POSTAL', '08030');
-const SHIPPER_STATE = env('SHIPPER_STATE', 'B'); // Barcelona
-const SHIPPER_COUNTRY = env('SHIPPER_COUNTRY', 'ES');
-
-const PICKUP_TYPE = env('PICKUP_TYPE', 'DROPOFF_AT_FEDEX_LOCATION'); // USE_SCHEDULED_PICKUP | CONTACT_FEDEX_TO_SCHEDULE
-const CURRENCY = env('CURRENCY', 'EUR');
-const COUNTRY_OF_MANUFACTURE = env('COUNTRY_OF_MANUFACTURE', 'DE');
-
-const ENABLE_FALLBACK = String(env('ENABLE_FALLBACK_RATE', 'false')).toLowerCase() === 'true';
-const FALLBACK_RATE = Number(env('FALLBACK_RATE_EUR', '99'));
-
-// ---------- helpers ----------
-function makePkg(weightKg, L, W, H) {
-  return {
-    weight: { units: 'KG', value: Number(weightKg) },
-    dimensions: { length: Number(L), width: Number(W), height: Number(H), units: 'CM' },
-  };
-}
-
-function expandItemsToPackages(items = []) {
-  const packages = [];
+// --- NAME NORMALIZATION ---
+function pickFirstKnownItemName(items) {
+  // We use first item to determine package mapping.
   for (const it of items) {
-    const name = String(it.name || '').toUpperCase();
-
-    if (name.includes('FILMRAID-4A')) {
-      packages.push(makePkg(8, 40, 37, 36));
-      continue;
-    }
-    if (name.includes('FILMRAID-6')) {
-      packages.push(makePkg(12, 40, 37, 36));
-      continue;
-    }
-    if (name.includes('FILMRAID-8')) {
-      packages.push(makePkg(18, 40, 37, 41));
-      continue;
-    }
-
-    if (name.includes('FILMRAID-12E')) {
-      packages.push(makePkg(10, 53, 39, 43)); // Box A RAID
-      packages.push(makePkg(12, 53, 39, 43)); // Box B HDDs
-      continue;
-    }
-
-    // default safe
-    packages.push(makePkg(10, 40, 37, 36));
+    if (PACK_MAP[it.name]) return it.name;
   }
-  const totalWeightKg = packages.reduce((s, p) => s + Number(p.weight.value || 0), 0);
-  return { packages, totalWeightKg };
+  // If unknown, default to 12kg medium box (safe fallback)
+  return 'FilmRaid-6 (108TB/120TB/132TB)';
 }
 
-function isInternational(originCountry, destCountry) {
-  if (originCountry === destCountry) return false;
-  if (EU_COUNTRIES.has(originCountry) && EU_COUNTRIES.has(destCountry)) return false;
-  return true;
-}
-
-// --- OAuth (ESM, Node 18 fetch) ---
+// --- FedEx OAuth ---
 async function getFedExToken() {
-  // attempt #1: client_id/secret in body
-  const body1 = new URLSearchParams();
-  body1.set('grant_type', 'client_credentials');
-  body1.set('client_id', process.env.FEDEX_CLIENT_ID);
-  body1.set('client_secret', process.env.FEDEX_CLIENT_SECRET);
+  const url = `${FEDEX_BASE}/oauth/token`;
+  const body = new URLSearchParams({
+    grant_type: 'client_credentials',
+    client_id: FEDEX_CLIENT_ID,
+    client_secret: FEDEX_CLIENT_SECRET,
+  });
 
-  let res = await fetch(FEDEX_OAUTH_URL, {
+  const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body1,
+    body,
   });
 
-  let data = await res.json().catch(() => ({}));
-  if (res.ok && data.access_token) return data.access_token;
-  console.error(
-    'FedEx OAuth attempt#1 (body creds) failed:',
-    JSON.stringify(data, null, 2),
-    'status=',
-    res.status,
-  );
-
-  // attempt #2: Authorization: Basic
-  const body2 = new URLSearchParams();
-  body2.set('grant_type', 'client_credentials');
-
-  res = await fetch(FEDEX_OAUTH_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization:
-        'Basic ' +
-        Buffer.from(`${process.env.FEDEX_CLIENT_ID}:${process.env.FEDEX_CLIENT_SECRET}`).toString(
-          'base64',
-        ),
-    },
-    body: body2,
-  });
-
-  data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.access_token) {
-    console.error(
-      'FedEx OAuth attempt#2 (basic auth) failed:',
-      JSON.stringify(data, null, 2),
-      'status=',
-      res.status,
-    );
-    throw Object.assign(new Error('fedex_oauth_error'), { status: res.status, data });
+  if (!res.ok) {
+    const data = await safeJson(res);
+    const err = new Error(`FedEx OAuth error ${res.status}`);
+    err.status = res.status;
+    err.data = data;
+    throw err;
   }
-  return data.access_token;
+  return res.json();
 }
 
-function buildShipper() {
-  return {
-    contact: {
-      companyName: SHIPPER_COMPANY,
-      personName: SHIPPER_PERSON,
-      phoneNumber: SHIPPER_PHONE,
-    },
-    address: {
-      streetLines: [SHIPPER_ADDR1],
-      city: SHIPPER_CITY,
-      postalCode: SHIPPER_POSTAL,
-      countryCode: SHIPPER_COUNTRY,
-      stateOrProvinceCode: SHIPPER_STATE,
-    },
-  };
-}
-
-function buildRecipient(addr) {
-  const phone = addr.phone || addr.phoneNumber || '+34999999999';
-  const contact = {
-    companyName: addr.company || 'Customer',
-    personName: addr.name || 'Recipient',
-    phoneNumber: phone,
-  };
-  const address = {
-    streetLines: [addr.address1].filter(Boolean),
-    city: addr.city,
-    postalCode: addr.postalCode,
-    countryCode: addr.country,
-    residential: true,
-  };
-  if (addr.state) address.stateOrProvinceCode = String(addr.state).toUpperCase();
-  return { contact, address };
-}
-
-function buildCustomsIfNeeded(originCountry, destCountry, declaredAmount, totalWeightKg) {
-  if (!isInternational(originCountry, destCountry)) return null;
-  return {
-    dutiesPayment: { paymentType: 'SENDER' }, // Temporal DDP hasta que FedEx habilite DAP en tu cuenta
-    commercialInvoice: { termsOfSale: 'DDP', purpose: 'SOLD' },
-    commodities: [
-      {
-        description: 'RAID storage system',
-        harmonizedCode: '847170',
-        countryOfManufacture: COUNTRY_OF_MANUFACTURE,
-        quantity: 1,
-        quantityUnits: 'PCS',
-        weight: { units: 'KG', value: Number(totalWeightKg) || 1 },
-        customsValue: { amount: Number(declaredAmount) || 1, currency: CURRENCY },
-      },
-    ],
-  };
-}
-
-// --- NEW: split declared value (insurance) across packages by weight ---
-function addDeclaredValueToPackages(packages, totalDeclaredValueAmount) {
-  const totalW = packages.reduce((s, p) => s + Number(p.weight?.value || 0), 0) || 1;
-  const totalAmount = Number(totalDeclaredValueAmount) || 0;
-
-  // If no declared amount, do nothing
-  if (!totalAmount) return packages;
-
-  // Distribute proportionally by weight; round cents; fix residual on last pkg
-  let allocated = 0;
-  const result = packages.map((p, idx) => {
-    const isLast = idx === packages.length - 1;
-    let amount;
-    if (isLast) {
-      amount = Math.max(0, Number((totalAmount - allocated).toFixed(2)));
-    } else {
-      const share = (Number(p.weight.value || 0) / totalW) * totalAmount;
-      amount = Math.max(0, Number(share.toFixed(2)));
-      allocated += amount;
-    }
-    return {
-      ...p,
-      insuredValue: { amount, currency: CURRENCY },
-    };
-  });
-  return result;
-}
-
+// --- Build FedEx Rate body ---
 function buildRateBody({ destination, items, total }) {
-  const shipper = buildShipper();
-  const recipient = buildRecipient(destination);
-  const { packages, totalWeightKg } = expandItemsToPackages(items);
+  const itemName = pickFirstKnownItemName(items);
+  const spec = PACK_MAP[itemName];
+  const boxes = spec?.boxes || PACK_MAP['FilmRaid-6 (108TB/120TB/132TB)'].boxes;
 
-  // Always insure the full invoice amount across packages
-  const insuredPackages = addDeclaredValueToPackages(packages, total);
+  const totalWeight = boxes.reduce((s, b) => s + Number(b.w || 0), 0) || 1;
+  const declaredTotal = Math.max(1, Number(total) || 1);
+
+  // Split insured value across boxes proportional to weight
+  const lineItems = boxes.map((b) => {
+    const share = Number(b.w || 0) / totalWeight || 0;
+    const insured = round2(declaredTotal * share);
+
+    const li = {
+      weight: { units: 'KG', value: Number(b.w) },
+      dimensions: { length: Number(b.l), width: Number(b.wdt), height: Number(b.h), units: 'CM' },
+    };
+    // Include insuredValue to carry declared value cost into quote
+    if (insured > 0) {
+      li.insuredValue = { amount: insured, currency: 'EUR' };
+    }
+    return li;
+  });
 
   const requestedShipment = {
-    shipper,
-    recipient,
-    preferredCurrency: CURRENCY,
-    rateRequestType: ['ACCOUNT'],
-    pickupType: PICKUP_TYPE,
-    packagingType: 'YOUR_PACKAGING',
-    totalDeclaredValue: { amount: Number(total), currency: CURRENCY },
-    requestedPackageLineItems: insuredPackages, // contains insuredValue per package
-    shippingChargesPayment: {
-      paymentType: 'SENDER',
-      payor: { responsibleParty: { accountNumber: { value: FEDEX_ACCOUNT } } },
+    shipper: SHIPPER,
+    recipient: {
+      contact: {
+        companyName: 'Customer',
+        personName: 'Recipient',
+        phoneNumber: destination.phone || '+00000000',
+      },
+      address: {
+        streetLines: [destination.address1 || 'Address'],
+        city: destination.city || '',
+        postalCode: destination.postalCode,
+        countryCode: destination.country,
+        residential: true,
+      },
     },
+    preferredCurrency: 'EUR',
+    rateRequestType: ['ACCOUNT'],
+    pickupType: 'DROPOFF_AT_FEDEX_LOCATION',
+    packagingType: 'YOUR_PACKAGING',
+
+    // Total declared value helps some lanes compute fuel/fees consistently
+    totalDeclaredValue: { amount: declaredTotal, currency: 'EUR' },
+
+    requestedPackageLineItems: lineItems,
+
+    // For now we keep DDP OFF here (customs block omitted) until Marta habilite DAP/DeclaredValue everywhere.
+    // When switching to DAP: add customsClearanceDetail with dutiesPayment RECIPIENT + termsOfSale DAP
   };
 
-  const customs = buildCustomsIfNeeded(
-    shipper.address.countryCode,
-    recipient.address.countryCode,
-    total,
-    totalWeightKg,
-  );
-  if (customs) requestedShipment.customsClearanceDetail = customs;
+  // US/CA require state/province code.
+  if ((destination.country === 'US' || destination.country === 'CA') && destination.state) {
+    requestedShipment.recipient.address.stateOrProvinceCode = destination.state;
+  }
 
   return {
-    accountNumber: { value: FEDEX_ACCOUNT },
+    accountNumber: { value: FEDEX_ACCOUNT_NUMBER },
     requestedShipment,
   };
 }
 
-async function fetchRates(body, token) {
-  console.log('FedEx request payload:', JSON.stringify(body, null, 2));
-  const res = await fetch(FEDEX_RATE_URL, {
+// --- Call FedEx /rates/quotes ---
+async function getFedExRates(token, rateBody) {
+  const url = `${FEDEX_BASE}/rate/v1/rates/quotes`;
+  const res = await fetch(url, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${token.access_token}`,
       'Content-Type': 'application/json',
-      Accept: 'application/json',
-      'x-locale': 'en_US',
+      'X-locale': 'en_US',
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(rateBody),
   });
-  const data = await res.json().catch(() => ({}));
+
   if (!res.ok) {
-    console.error(`FedEx rates error ${res.status}:`, JSON.stringify(data, null, 2));
-    const e = new Error('fedex_rate_error');
-    e.status = res.status;
-    e.data = data;
-    throw e;
+    const data = await safeJson(res);
+    const err = new Error(`FedEx rates error ${res.status}`);
+    err.status = res.status;
+    err.data = data;
+    throw err;
   }
-  return data;
+  return res.json();
 }
 
-function mapFedExToSnipcartRates(data) {
-  const out = data?.output || data || {};
-  const details =
-    out.rateReplyDetails || out.rateResponseDetails || out.rates || out.serviceOptions || [];
+// --- Filter/Map services to neat options ---
+function mapServicesToRates(destinationCountry, fedexOutput) {
+  if (!fedexOutput?.output?.rateReplyDetails?.length) return [];
 
-  const rates = [];
+  const isDomesticES = destinationCountry === 'ES';
+  const list = fedexOutput.output.rateReplyDetails;
 
-  for (const d of details) {
-    const serviceType =
-      d.serviceType ||
-      d.service ||
-      d?.transitDetail?.serviceType ||
-      d?.serviceDescription?.serviceType ||
-      'FEDEX_SERVICE';
-
-    const rsd = Array.isArray(d.ratedShipmentDetails)
-      ? d.ratedShipmentDetails
-      : d.ratedShipments || [];
-    let amount = null;
-    let currency = d.currency || CURRENCY;
-
-    for (const r of rsd) {
-      const srd =
-        r.shipmentRateDetail ||
-        r.shipmentRateDetails ||
-        r.packageRateDetail ||
-        r.packageRateDetails ||
-        {};
-      const candidates = [
-        srd.totalNetCharge,
-        srd.totalNetFedExCharge,
-        srd.totalBaseCharge,
-        r.totalNetCharge,
-        r.totalNetFedExCharge,
-        r.netCharge,
-      ];
-      for (const c of candidates) {
-        if (c == null) continue;
-        if (typeof c === 'number') {
-          amount = Number(c);
-          break;
-        }
-        if (typeof c === 'object' && c.amount != null) {
-          amount = Number(c.amount);
-          currency = c.currency || currency;
-          break;
-        }
-      }
-      if (!currency) {
-        currency =
-          srd.currency ||
-          d.currency ||
-          (srd.totalNetCharge && srd.totalNetCharge.currency) ||
-          (srd.totalNetFedExCharge && srd.totalNetFedExCharge.currency) ||
-          CURRENCY;
-      }
-      if (amount != null) break;
-    }
-
-    if (amount == null && d?.shipmentRateDetail?.totalNetCharge != null) {
-      const tnc = d.shipmentRateDetail.totalNetCharge;
-      if (typeof tnc === 'number') amount = Number(tnc);
-      else if (typeof tnc === 'object' && tnc.amount != null) {
-        amount = Number(tnc.amount);
-        currency = tnc.currency || currency || CURRENCY;
-      }
-    }
-
-    if (amount != null) {
-      rates.push({
-        id: `FEDEX_${serviceType}`,
-        name: `FedEx ${d.serviceName || serviceType}`,
-        cost: Number(amount),
-      });
-    }
-  }
-
-  rates.sort((a, b) => a.cost - b.cost);
-  return rates;
-}
-
-function normalizeRates(rates, destCountry) {
-  const isDomesticES = destCountry === 'ES';
-
-  const labelMap = new Map([
-    // International
-    ['FEDEX_FEDEX_INTERNATIONAL_CONNECT_PLUS', 'Economy (3–5 days)'],
-    ['FEDEX_FEDEX_INTERNATIONAL_PRIORITY', 'Express (1–3 days)'],
-    ['FEDEX_FEDEX_INTERNATIONAL_PRIORITY_EXPRESS', 'Express AM (1–2 days)'],
-    ['FEDEX_INTERNATIONAL_ECONOMY', 'Economy (4–7 days)'],
-    ['FEDEX_INTERNATIONAL_FIRST', 'Early delivery (expensive)'],
-
-    // Domestic ES
-    ['FEDEX_FEDEX_PRIORITY', 'Standard (24–48h)'],
-    ['FEDEX_FEDEX_PRIORITY_EXPRESS', 'Express (before 10/12h)'],
-    ['FEDEX_FEDEX_FIRST', 'Early delivery (expensive)'],
+  // Allow-list per lane
+  const ALLOW_INTL = new Set([
+    'FEDEX_INTERNATIONAL_CONNECT_PLUS',
+    'FEDEX_INTERNATIONAL_PRIORITY',
+    'INTERNATIONAL_ECONOMY', // FedEx sometimes returns this legacy key
+    'FEDEX_INTERNATIONAL_ECONOMY', // and/or this one in some regions
   ]);
 
-  let allow = new Set();
-  if (isDomesticES) {
-    // Mostrar servicios domésticos más razonables; si son caros, es tema de tarifas/entitlement
-    allow = new Set(['FEDEX_FEDEX_PRIORITY', 'FEDEX_FEDEX_PRIORITY_EXPRESS']);
-  } else {
-    // Internacional: dejar Economy/Priority
-    allow = new Set([
-      'FEDEX_FEDEX_INTERNATIONAL_CONNECT_PLUS',
-      'FEDEX_FEDEX_INTERNATIONAL_PRIORITY',
-      'FEDEX_INTERNATIONAL_ECONOMY',
-    ]);
+  const ALLOW_ES = new Set(['FEDEX_FEDEX_PRIORITY', 'FEDEX_FEDEX_PRIORITY_EXPRESS']);
+
+  const results = [];
+
+  for (const r of list) {
+    const code = r.serviceType;
+    if (!code) continue;
+
+    if (isDomesticES) {
+      if (!ALLOW_ES.has(code)) continue;
+    } else {
+      if (!ALLOW_INTL.has(code)) continue;
+    }
+
+    const priced = pickBestRated(r);
+    if (!priced || typeof priced.netCharge !== 'number') continue;
+
+    const id = `FEDEX_${code}`;
+    const cost = round2(priced.netCharge);
+
+    // English labels only
+    let name = code;
+    let description = '';
+
+    if (isDomesticES) {
+      if (code === 'FEDEX_FEDEX_PRIORITY') {
+        name = 'Standard (24–48h)';
+        description = 'Standard (24–48h)';
+      } else if (code === 'FEDEX_FEDEX_PRIORITY_EXPRESS') {
+        name = 'Express (before 10/12h)';
+        description = 'Express (before 10/12h)';
+      }
+    } else {
+      if (code === 'FEDEX_INTERNATIONAL_CONNECT_PLUS') {
+        name = 'Economy (3–5 days)';
+        description = 'Economy (3–5 days)';
+      } else if (code === 'FEDEX_INTERNATIONAL_PRIORITY') {
+        name = 'Express (1–3 days)';
+        description = 'Express (1–3 days)';
+      } else if (code === 'FEDEX_INTERNATIONAL_ECONOMY' || code === 'INTERNATIONAL_ECONOMY') {
+        name = 'Economy (4–7 days)';
+        description = 'Economy (4–7 days)';
+      }
+    }
+
+    results.push({ id, name, description, cost });
   }
 
-  const filtered = rates
-    .filter((r) => allow.has(r.id))
-    .map((r) => ({ ...r, name: labelMap.get(r.id) || r.name }))
-    .sort((a, b) => a.cost - b.cost);
-
-  if (!filtered.length && rates.length) {
-    const cheapest = [...rates].sort((a, b) => a.cost - b.cost)[0];
-    cheapest.name = labelMap.get(cheapest.id) || cheapest.name;
-    return [cheapest];
-  }
-  return filtered;
+  // Sort by price asc
+  results.sort((a, b) => a.cost - b.cost);
+  return results;
 }
 
-// ---------- Netlify ESM handler ----------
-export const handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers: JSON_HEADERS,
-      body: JSON.stringify({ error: 'method_not_allowed' }),
-    };
+function pickBestRated(rateReplyDetail) {
+  // prefer ACCOUNT rate with netCharge (netCharge = netFedExCharge + taxes typically)
+  const rsd = rateReplyDetail?.ratedShipmentDetails || [];
+  for (const d of rsd) {
+    const pkg = (d?.ratedPackages && d.ratedPackages[0]) || {};
+    const pr = pkg.packageRateDetail || d.shipmentRateDetail || {};
+    // Some responses have netCharge or totalNetCharge; normalize to netCharge for UI
+    const netCharge =
+      numberOrNull(pr.netCharge) ??
+      numberOrNull(pr.totalNetCharge) ??
+      numberOrNull(d.totalNetCharge);
+    if (typeof netCharge === 'number') {
+      return { netCharge };
+    }
   }
+  return null;
+}
 
-  const hasId = !!process.env.FEDEX_CLIENT_ID;
-  const hasSec = !!process.env.FEDEX_CLIENT_SECRET;
-  const hasAcc = !!process.env.FEDEX_ACCOUNT_NUMBER;
-  console.log('FEDEX env present?:', { id: hasId, secret: hasSec, account: hasAcc });
-
+// --- Utils ---
+function round2(n) {
+  return Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+}
+async function safeJson(res) {
   try {
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+function numberOrNull(x) {
+  const n = Number(x);
+  return Number.isFinite(n) ? n : null;
+}
+
+// ----------------- Netlify handler -----------------
+exports.handler = async (event) => {
+  try {
+    console.info('FEDEX env present?:', {
+      id: !!FEDEX_CLIENT_ID,
+      secret: !!FEDEX_CLIENT_SECRET,
+      account: !!FEDEX_ACCOUNT_NUMBER,
+    });
+
     // Parse payload
     const payload = JSON.parse(event.body || '{}');
     const content = payload.content || {};
@@ -448,19 +286,34 @@ export const handler = async (event) => {
       Number(content.total || 0) ||
       items.reduce((s, it) => s + (Number(it.price) || 0) * (Number(it.quantity) || 1), 0);
 
-    // Address guard: accept partial address (country + postalCode minimum)
+    // --- Address guard ---
+    // Snipcart calls the webhook repeatedly while the user types. If we don't have country+postal yet,
+    // return a placeholder so the UI doesn't flash "No methods".
     if (!destination?.country || !destination?.postalCode) {
-      return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ rates: [] }) };
+      return {
+        statusCode: 200,
+        headers: JSON_HEADERS,
+        body: JSON.stringify({
+          rates: [
+            {
+              id: 'PENDING_RATE',
+              name: 'Calculating shipping…',
+              description: 'Please complete address',
+              cost: 0,
+            },
+          ],
+        }),
+      };
     }
 
-    // Normalize minimal fields so FedEx is happy even if city/street are missing
+    // Normalize minimal fields to keep FedEx happy even if city/street are missing
     destination = {
       ...destination,
       city: destination.city || '',
       address1: destination.address1 || 'Address',
     };
 
-    // OAuth
+    // --- OAuth ---
     let token;
     try {
       token = await getFedExToken();
@@ -479,33 +332,17 @@ export const handler = async (event) => {
       };
     }
 
-    const body = buildRateBody({ destination, items, total });
+    // --- Build body & call FedEx ---
+    const rateBody = buildRateBody({ destination, items, total });
+    console.info('FedEx request payload:', JSON.stringify(rateBody, null, 2));
 
-    let fedexData;
+    let fedexJson;
     try {
-      fedexData = await fetchRates(body, token);
+      fedexJson = await getFedExRates(token, rateBody);
     } catch (e) {
       const status = e.status || 400;
       const data = e.data || {};
-      console.error(`FedEx rates error catch (${status}):`, JSON.stringify(data, null, 2));
-
-      if (ENABLE_FALLBACK) {
-        return {
-          statusCode: 200,
-          headers: JSON_HEADERS,
-          body: JSON.stringify({
-            rates: [
-              {
-                id: 'FALLBACK_STANDARD',
-                name: 'Standard Shipping (fallback)',
-                description: 'Standard Shipping (fallback)',
-                cost: Number(FALLBACK_RATE),
-              },
-            ],
-            warning: 'fedex_rates_unavailable_fallback',
-          }),
-        };
-      }
+      console.error(`FedEx rates error ${status}:`, JSON.stringify(data, null, 2));
       return {
         statusCode: 200,
         headers: JSON_HEADERS,
@@ -517,57 +354,36 @@ export const handler = async (event) => {
       };
     }
 
-    const rates = mapFedExToSnipcartRates(fedexData);
-    const destCountry = (destination?.country || '').toUpperCase();
-    const normalized = normalizeRates(rates, destCountry);
-
-    if (!normalized.length) {
-      console.warn(
-        'FedEx returned rates but none selected after normalization:',
-        JSON.stringify(rates, null, 2),
-      );
-      if (ENABLE_FALLBACK) {
-        return {
-          statusCode: 200,
-          headers: JSON_HEADERS,
-          body: JSON.stringify({
-            rates: [
-              {
-                id: 'FALLBACK_STANDARD',
-                name: 'Standard Shipping (fallback)',
-                description: 'Standard Shipping (fallback)',
-                cost: Number(FALLBACK_RATE),
-              },
-            ],
-            warning: 'fedex_no_rates_fallback',
-          }),
-        };
-      }
+    const rates = mapServicesToRates(destination.country, fedexJson);
+    if (!rates.length) {
+      console.warn('FedEx returned no mappable rates:', JSON.stringify(fedexJson, null, 2));
       return {
         statusCode: 200,
         headers: JSON_HEADERS,
         body: JSON.stringify({
           rates: [],
           error: 'shipping_error',
-          message: 'FedEx returned no rates',
+          message: 'No carrier rates available',
         }),
       };
     }
 
-    // Success: include both name and description for Snipcart
-    const result = normalized.map((r) => ({
-      id: r.id,
-      name: r.name,
-      description: r.name,
-      cost: r.cost,
-    }));
-    return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ rates: result }) };
-  } catch (err) {
-    console.error('shipping_unexpected_error:', err && err.stack ? err.stack : err);
+    // Success
     return {
       statusCode: 200,
       headers: JSON_HEADERS,
-      body: JSON.stringify({ rates: [], error: 'shipping_error', message: 'Unexpected error' }),
+      body: JSON.stringify({ rates }),
+    };
+  } catch (err) {
+    console.error('shipping_unexpected_error:', err);
+    return {
+      statusCode: 200,
+      headers: JSON_HEADERS,
+      body: JSON.stringify({
+        rates: [],
+        error: 'shipping_error',
+        message: 'Unexpected error',
+      }),
     };
   }
 };
