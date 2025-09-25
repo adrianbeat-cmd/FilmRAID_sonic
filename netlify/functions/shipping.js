@@ -289,19 +289,16 @@ exports.handler = async (event) => {
     // --- Address guard ---
     // Snipcart calls the webhook repeatedly while the user types. If we don't have country+postal yet,
     // return a placeholder so the UI doesn't flash "No methods".
+    // If we don't have enough address info yet, return NO rates.
+    // This prevents Snipcart from allowing payment without shipping.
     if (!destination?.country || !destination?.postalCode) {
       return {
         statusCode: 200,
         headers: JSON_HEADERS,
         body: JSON.stringify({
-          rates: [
-            {
-              id: 'PENDING_RATE',
-              name: 'Calculating shipping…',
-              description: 'Please complete address',
-              cost: 0,
-            },
-          ],
+          rates: [],
+          error: 'shipping_error',
+          message: 'Waiting for address',
         }),
       };
     }
