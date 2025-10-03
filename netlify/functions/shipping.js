@@ -173,19 +173,29 @@ function mapServicesToRates(destinationCountry, fedexOutput) {
   const isDomesticES = destinationCountry === 'ES';
   const list = fedexOutput.output.rateReplyDetails;
 
-  // International: EXCLUDE ICP (Connect Plus).
+  // International: exclude ICP (Connect Plus)
   const ALLOW_INTL = new Set([
     'FEDEX_INTERNATIONAL_PRIORITY',
-    'FEDEX_INTERNATIONAL_ECONOMY', // some regions
-    'INTERNATIONAL_ECONOMY', // legacy alias in others
+    'FEDEX_INTERNATIONAL_ECONOMY', // regional spelling
+    'INTERNATIONAL_ECONOMY', // legacy alias
   ]);
 
-  // Spain domestic: exact codes FedEx returns
+  // Spain domestic: accept BOTH naming schemes
   const ALLOW_ES = new Set([
-    'FEDEX_FIRST', // early morning
-    'FEDEX_PRIORITY_EXPRESS', // express (before 10/12h)
-    'FEDEX_PRIORITY', // standard (24–48h)
+    // Newer naming (what your logs show)
+    'FEDEX_FIRST',
+    'FEDEX_PRIORITY_EXPRESS',
+    'FEDEX_PRIORITY',
+    // Older naming some accounts return
+    'FEDEX_FEDEX_FIRST',
+    'FEDEX_FEDEX_PRIORITY_EXPRESS',
+    'FEDEX_FEDEX_PRIORITY',
   ]);
+
+  // Debug: which service codes did FedEx send?
+  try {
+    console.info('mapServicesToRates codes:', list.map((r) => r.serviceType).filter(Boolean));
+  } catch {}
 
   const results = [];
 
@@ -193,7 +203,7 @@ function mapServicesToRates(destinationCountry, fedexOutput) {
     const code = r.serviceType;
     if (!code) continue;
 
-    // Filter per lane
+    // Lane filtering
     if (isDomesticES) {
       if (!ALLOW_ES.has(code)) continue;
     } else {
@@ -210,13 +220,13 @@ function mapServicesToRates(destinationCountry, fedexOutput) {
     let description = '';
 
     if (isDomesticES) {
-      if (code === 'FEDEX_FIRST') {
+      if (code === 'FEDEX_FIRST' || code === 'FEDEX_FEDEX_FIRST') {
         name = 'First (early AM)';
         description = 'Entrega temprana (pre-8/9h si disponible)';
-      } else if (code === 'FEDEX_PRIORITY_EXPRESS') {
+      } else if (code === 'FEDEX_PRIORITY_EXPRESS' || code === 'FEDEX_FEDEX_PRIORITY_EXPRESS') {
         name = 'Express (before 10/12h)';
         description = 'Express (antes de 10/12h)';
-      } else if (code === 'FEDEX_PRIORITY') {
+      } else if (code === 'FEDEX_PRIORITY' || code === 'FEDEX_FEDEX_PRIORITY') {
         name = 'Standard (24–48h)';
         description = 'Estándar (24–48h)';
       }
@@ -234,6 +244,42 @@ function mapServicesToRates(destinationCountry, fedexOutput) {
   }
 
   results.sort((a, b) => a.cost - b.cost);
+
+  // Safety net: if ES→ES still ended empty but FedEx did return domestic rows, surface them unfiltered
+  if (isDomesticES && results.length === 0) {
+    const fallbacks = list
+      .filter((r) =>
+        [
+          'FEDEX_FIRST',
+          'FEDEX_PRIORITY_EXPRESS',
+          'FEDEX_PRIORITY',
+          'FEDEX_FEDEX_FIRST',
+          'FEDEX_FEDEX_PRIORITY_EXPRESS',
+          'FEDEX_FEDEX_PRIORITY',
+        ].includes(r.serviceType),
+      )
+      .map((r) => {
+        const priced = pickBestRated(r);
+        if (!priced || typeof priced.netCharge !== 'number') return null;
+        return {
+          id: `FEDEX_${r.serviceType}`,
+          name: r.serviceType.includes('FIRST')
+            ? 'First (early AM)'
+            : r.serviceType.includes('PRIORITY_EXPRESS')
+              ? 'Express (before 10/12h)'
+              : 'Standard (24–48h)',
+          description: r.serviceType.includes('FIRST')
+            ? 'Entrega temprana (pre-8/9h si disponible)'
+            : r.serviceType.includes('PRIORITY_EXPRESS')
+              ? 'Express (antes de 10/12h)'
+              : 'Estándar (24–48h)',
+          cost: round2(pickBestRated(r).netCharge),
+        };
+      })
+      .filter(Boolean);
+    if (fallbacks.length) return fallbacks.sort((a, b) => a.cost - b.cost);
+  }
+
   return results;
 }
 
