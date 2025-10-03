@@ -173,15 +173,19 @@ function mapServicesToRates(destinationCountry, fedexOutput) {
   const isDomesticES = destinationCountry === 'ES';
   const list = fedexOutput.output.rateReplyDetails;
 
-  // Allow-list per lane
+  // International: EXCLUDE ICP (Connect Plus).
   const ALLOW_INTL = new Set([
-    'FEDEX_INTERNATIONAL_CONNECT_PLUS',
     'FEDEX_INTERNATIONAL_PRIORITY',
-    'INTERNATIONAL_ECONOMY', // FedEx sometimes returns this legacy key
-    'FEDEX_INTERNATIONAL_ECONOMY', // and/or this one in some regions
+    'FEDEX_INTERNATIONAL_ECONOMY', // some regions
+    'INTERNATIONAL_ECONOMY', // legacy alias in others
   ]);
 
-  const ALLOW_ES = new Set(['FEDEX_FEDEX_PRIORITY', 'FEDEX_FEDEX_PRIORITY_EXPRESS']);
+  // Spain domestic: exact codes FedEx returns
+  const ALLOW_ES = new Set([
+    'FEDEX_FIRST', // early morning
+    'FEDEX_PRIORITY_EXPRESS', // express (before 10/12h)
+    'FEDEX_PRIORITY', // standard (24–48h)
+  ]);
 
   const results = [];
 
@@ -189,6 +193,7 @@ function mapServicesToRates(destinationCountry, fedexOutput) {
     const code = r.serviceType;
     if (!code) continue;
 
+    // Filter per lane
     if (isDomesticES) {
       if (!ALLOW_ES.has(code)) continue;
     } else {
@@ -201,35 +206,33 @@ function mapServicesToRates(destinationCountry, fedexOutput) {
     const id = `FEDEX_${code}`;
     const cost = round2(priced.netCharge);
 
-    // English labels only
     let name = code;
     let description = '';
 
     if (isDomesticES) {
-      if (code === 'FEDEX_FEDEX_PRIORITY') {
-        name = 'Standard (24–48h)';
-        description = 'Standard (24–48h)';
-      } else if (code === 'FEDEX_FEDEX_PRIORITY_EXPRESS') {
+      if (code === 'FEDEX_FIRST') {
+        name = 'First (early AM)';
+        description = 'Entrega temprana (pre-8/9h si disponible)';
+      } else if (code === 'FEDEX_PRIORITY_EXPRESS') {
         name = 'Express (before 10/12h)';
-        description = 'Express (before 10/12h)';
+        description = 'Express (antes de 10/12h)';
+      } else if (code === 'FEDEX_PRIORITY') {
+        name = 'Standard (24–48h)';
+        description = 'Estándar (24–48h)';
       }
     } else {
-      if (code === 'FEDEX_INTERNATIONAL_CONNECT_PLUS') {
-        name = 'Economy (3–5 days)';
-        description = 'Economy (3–5 days)';
-      } else if (code === 'FEDEX_INTERNATIONAL_PRIORITY') {
+      if (code === 'FEDEX_INTERNATIONAL_PRIORITY') {
         name = 'Express (1–3 days)';
-        description = 'Express (1–3 days)';
+        description = 'International Priority (1–3 días)';
       } else if (code === 'FEDEX_INTERNATIONAL_ECONOMY' || code === 'INTERNATIONAL_ECONOMY') {
         name = 'Economy (4–7 days)';
-        description = 'Economy (4–7 days)';
+        description = 'International Economy (4–7 días)';
       }
     }
 
     results.push({ id, name, description, cost });
   }
 
-  // Sort by price asc
   results.sort((a, b) => a.cost - b.cost);
   return results;
 }
