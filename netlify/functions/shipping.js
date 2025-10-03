@@ -1,6 +1,9 @@
 // netlify/functions/shipping.js
 // CommonJS style to keep Netlify Lambda compatibility even if package.json has "type": "module"
 const fetch = require('node-fetch'); // v2.x
+// --- DIAGNOSTIC BANNER ---
+const FUNCTION_VERSION = 'shipping-2025-10-03-domestic-wide-open-v1';
+console.info('[shipping] Loading function version:', FUNCTION_VERSION);
 const JSON_HEADERS = {
   'Content-Type': 'application/json; charset=utf-8',
 };
@@ -166,67 +169,54 @@ async function getFedExRates(token, rateBody) {
   return res.json();
 }
 
-// --- Filter/Map services to neat options ---
 function mapServicesToRates(destinationCountry, fedexOutput) {
-  if (!fedexOutput?.output?.rateReplyDetails?.length) return [];
+  const details = fedexOutput?.output?.rateReplyDetails;
+  if (!Array.isArray(details) || details.length === 0) return [];
 
-  const isDomesticES = destinationCountry === 'ES';
-  const list = fedexOutput.output.rateReplyDetails;
-
-  // International: exclude ICP (Connect Plus)
-  const ALLOW_INTL = new Set([
-    'FEDEX_INTERNATIONAL_PRIORITY',
-    'FEDEX_INTERNATIONAL_ECONOMY', // regional spelling
-    'INTERNATIONAL_ECONOMY', // legacy alias
-  ]);
-
-  // Spain domestic: accept BOTH naming schemes
-  const ALLOW_ES = new Set([
-    // Newer naming (what your logs show)
-    'FEDEX_FIRST',
-    'FEDEX_PRIORITY_EXPRESS',
-    'FEDEX_PRIORITY',
-    // Older naming some accounts return
-    'FEDEX_FEDEX_FIRST',
-    'FEDEX_FEDEX_PRIORITY_EXPRESS',
-    'FEDEX_FEDEX_PRIORITY',
-  ]);
-
-  // Debug: which service codes did FedEx send?
+  // Debug: log exactly what FedEx returned
   try {
-    console.info('mapServicesToRates codes:', list.map((r) => r.serviceType).filter(Boolean));
+    console.info(
+      '[shipping] FedEx serviceTypes seen:',
+      details.map((r) => r?.serviceType).filter(Boolean),
+    );
   } catch {}
 
+  const isDomesticES = (destinationCountry || '').toUpperCase() === 'ES';
   const results = [];
 
-  for (const r of list) {
-    const code = r.serviceType;
+  for (const r of details) {
+    const code = r?.serviceType;
     if (!code) continue;
 
-    // Lane filtering
-    if (isDomesticES) {
-      if (!ALLOW_ES.has(code)) continue;
-    } else {
-      if (!ALLOW_INTL.has(code)) continue;
+    // 🔓 For ES→ES, do NOT filter at all — accept any service FedEx returns.
+    // For international, exclude ICP (Connect Plus) but allow Priority / Economy.
+    if (!isDomesticES) {
+      if (code === 'FEDEX_INTERNATIONAL_CONNECT_PLUS' || code === 'INTERNATIONAL_CONNECT_PLUS') {
+        continue; // hide ICP for your B2B focus
+      }
+      const intlAllowed = new Set([
+        'FEDEX_INTERNATIONAL_PRIORITY',
+        'FEDEX_INTERNATIONAL_ECONOMY',
+        'INTERNATIONAL_ECONOMY',
+      ]);
+      if (!intlAllowed.has(code)) continue;
     }
 
     const priced = pickBestRated(r);
     if (!priced || typeof priced.netCharge !== 'number') continue;
 
-    const id = `FEDEX_${code}`;
-    const cost = round2(priced.netCharge);
-
+    // Labeling
     let name = code;
     let description = '';
 
     if (isDomesticES) {
-      if (code === 'FEDEX_FIRST' || code === 'FEDEX_FEDEX_FIRST') {
+      if (code.includes('FIRST')) {
         name = 'First (early AM)';
         description = 'Entrega temprana (pre-8/9h si disponible)';
-      } else if (code === 'FEDEX_PRIORITY_EXPRESS' || code === 'FEDEX_FEDEX_PRIORITY_EXPRESS') {
+      } else if (code.includes('PRIORITY_EXPRESS')) {
         name = 'Express (before 10/12h)';
         description = 'Express (antes de 10/12h)';
-      } else if (code === 'FEDEX_PRIORITY' || code === 'FEDEX_FEDEX_PRIORITY') {
+      } else if (code.includes('PRIORITY')) {
         name = 'Standard (24–48h)';
         description = 'Estándar (24–48h)';
       }
@@ -240,46 +230,15 @@ function mapServicesToRates(destinationCountry, fedexOutput) {
       }
     }
 
-    results.push({ id, name, description, cost });
+    results.push({
+      id: `FEDEX_${code}`,
+      name,
+      description,
+      cost: round2(priced.netCharge),
+    });
   }
 
   results.sort((a, b) => a.cost - b.cost);
-
-  // Safety net: if ES→ES still ended empty but FedEx did return domestic rows, surface them unfiltered
-  if (isDomesticES && results.length === 0) {
-    const fallbacks = list
-      .filter((r) =>
-        [
-          'FEDEX_FIRST',
-          'FEDEX_PRIORITY_EXPRESS',
-          'FEDEX_PRIORITY',
-          'FEDEX_FEDEX_FIRST',
-          'FEDEX_FEDEX_PRIORITY_EXPRESS',
-          'FEDEX_FEDEX_PRIORITY',
-        ].includes(r.serviceType),
-      )
-      .map((r) => {
-        const priced = pickBestRated(r);
-        if (!priced || typeof priced.netCharge !== 'number') return null;
-        return {
-          id: `FEDEX_${r.serviceType}`,
-          name: r.serviceType.includes('FIRST')
-            ? 'First (early AM)'
-            : r.serviceType.includes('PRIORITY_EXPRESS')
-              ? 'Express (before 10/12h)'
-              : 'Standard (24–48h)',
-          description: r.serviceType.includes('FIRST')
-            ? 'Entrega temprana (pre-8/9h si disponible)'
-            : r.serviceType.includes('PRIORITY_EXPRESS')
-              ? 'Express (antes de 10/12h)'
-              : 'Estándar (24–48h)',
-          cost: round2(pickBestRated(r).netCharge),
-        };
-      })
-      .filter(Boolean);
-    if (fallbacks.length) return fallbacks.sort((a, b) => a.cost - b.cost);
-  }
-
   return results;
 }
 
