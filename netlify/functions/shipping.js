@@ -19,6 +19,40 @@ const INCLUDE_INSURANCE_IN_QUOTES = true;
 // ✅ show FEDEX_FIRST (early AM) domestically if available
 const SHOW_DOMESTIC_FIRST = true;
 
+// Optional: show FEDEX_FIRST domestically
+const SHOW_DOMESTIC_FIRST = true;
+
+// EU countries (no import duties within ES → EU)
+const EU = new Set([
+  'AT',
+  'BE',
+  'BG',
+  'HR',
+  'CY',
+  'CZ',
+  'DK',
+  'EE',
+  'FI',
+  'FR',
+  'DE',
+  'GR',
+  'HU',
+  'IE',
+  'IT',
+  'LV',
+  'LT',
+  'LU',
+  'MT',
+  'NL',
+  'PL',
+  'PT',
+  'RO',
+  'SK',
+  'SI',
+  'ES',
+  'SE',
+]);
+
 // --- YOUR ORIGIN (Barcelona) ---
 const SHIPPER = {
   contact: {
@@ -201,7 +235,6 @@ function mapServicesToRates(destinationCountry, fedexOutput) {
   const details = fedexOutput?.output?.rateReplyDetails;
   if (!Array.isArray(details) || details.length === 0) return [];
 
-  // Debug: list serviceTypes we got
   try {
     console.info(
       '[shipping] FedEx serviceTypes seen:',
@@ -209,7 +242,11 @@ function mapServicesToRates(destinationCountry, fedexOutput) {
     );
   } catch {}
 
-  const isDomesticES = (destinationCountry || '').toUpperCase() === 'ES';
+  const dest = (destinationCountry || '').toUpperCase();
+  const isDomesticES = dest === 'ES';
+  const isEUExport = !isDomesticES && EU.has(dest); // ES → EU
+  const isNonEUExport = !isDomesticES && !EU.has(dest); // ES → non-EU (e.g., US, UK, CH)
+
   let list = details.filter((r) => !isICP(r)); // ❌ remove ICP everywhere
 
   const ALLOW_INTL = new Set([
@@ -219,7 +256,7 @@ function mapServicesToRates(destinationCountry, fedexOutput) {
     'FEDEX_REGIONAL_ECONOMY',
   ]);
 
-  // ✅ Correct domestic codes
+  // ✅ Correct domestic codes returned by FedEx Spain
   const ALLOW_ES = new Set([
     'FEDEX_PRIORITY',
     'FEDEX_PRIORITY_EXPRESS',
@@ -241,7 +278,6 @@ function mapServicesToRates(destinationCountry, fedexOutput) {
     const priced = pickBestRated(r);
     if (!priced || typeof priced.netCharge !== 'number') continue;
 
-    // Labels
     let name = code;
     let description = '';
 
@@ -258,20 +294,26 @@ function mapServicesToRates(destinationCountry, fedexOutput) {
       }
     } else {
       if (code === 'FEDEX_INTERNATIONAL_PRIORITY') {
-        name = 'Express (1–3 days)';
+        name = 'International Priority (1–3 días)';
         description = 'International Priority (1–3 días)';
       } else if (
         code === 'FEDEX_INTERNATIONAL_ECONOMY' ||
         code === 'INTERNATIONAL_ECONOMY' ||
         code === 'FEDEX_REGIONAL_ECONOMY'
       ) {
-        name = 'Economy (3–7 days)';
+        name = 'International/Regional Economy (3–7 días)';
         description = 'International/Regional Economy (3–7 días)';
+      }
+      // 👉 add DAP note for non-EU exports
+      if (isNonEUExport) {
+        description += ' — DAP: taxes & import duties payable at destination';
+        // If you prefer Spanish:
+        // description += ' — DAP: aranceles e impuestos de importación a cargo del destinatario';
       }
     }
 
     results.push({
-      id: `FEDEX_${code}`, // e.g. FEDEX_FEDEX_PRIORITY_EXPRESS or FEDEX_FEDEX_FIRST
+      id: `FEDEX_${code}`,
       name,
       description,
       cost: round2(priced.netCharge),
