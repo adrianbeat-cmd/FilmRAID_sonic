@@ -19,9 +19,6 @@ const INCLUDE_INSURANCE_IN_QUOTES = true;
 // ✅ show FEDEX_FIRST (early AM) domestically if available
 const SHOW_DOMESTIC_FIRST = true;
 
-// Optional: show FEDEX_FIRST domestically
-const SHOW_DOMESTIC_FIRST = true;
-
 // EU countries (no import duties within ES → EU)
 const EU = new Set([
   'AT',
