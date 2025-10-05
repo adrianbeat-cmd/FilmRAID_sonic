@@ -1,141 +1,151 @@
-// src/app/products-feed.xml/route.ts
+// app/products-feed.xml/route.ts
+import { NextResponse } from 'next/server';
 
-export const dynamic = 'force-static'; // required for static export (Netlify "output: export")
-// export const revalidate = 3600; // (optional) if you prefer ISR-style regeneration
+export const dynamic = 'force-static'; // requerido por Netlify export
 
+// Datos base
+const SITE = 'https://www.filmraid.pro';
+
+type ModelKey = '4A' | '6' | '8' | '12E';
 type TB = 18 | 20 | 22;
 
-const FEED_BASE = 'https://www.filmraid.pro';
-const IMAGE_BASE = `${FEED_BASE}`; // files live under /public
-
-type ModelCode = '4A' | '6' | '8' | '12E';
-
-type Model = {
-  code: ModelCode;
-  nameBase: string; // "FilmRAID-4A"
-  slug: string; // "filmraid-4a"
-  // map "option TB" (18/20/22) -> marketed capacity in TB shown in URL/title
-  tbMap: Record<TB, number>;
-  // price per option TB
-  prices: Record<TB, number>;
-  // images under /public
-  images: { main: string; back?: string };
+// Pesos (exactos, tomados de tu shipping.js / FedEx)
+const WEIGHT_KG: Record<ModelKey, number> = {
+  '4A': 8,
+  '6': 12,
+  '8': 18,
+  '12E': 22,
 };
 
-const MODELS: Model[] = [
-  {
-    code: '4A',
-    nameBase: 'FilmRAID-4A',
-    slug: 'filmraid-4a',
-    tbMap: { 18: 72, 20: 80, 22: 88 },
-    prices: { 18: 2949, 20: 3129, 22: 3219 },
-    images: { main: '/layout/FilmRaid-4A.jpg', back: '/layout/FilmRaid-4A_back.jpg' },
-  },
-  {
-    code: '6',
-    nameBase: 'FilmRAID-6',
-    slug: 'filmraid-6',
-    tbMap: { 18: 108, 20: 120, 22: 132 },
-    prices: { 18: 4279, 20: 4549, 22: 4679 },
-    images: { main: '/layout/FilmRaid-6.jpg', back: '/layout/FilmRaid-6_back.jpg' },
-  },
-  {
-    code: '8',
-    nameBase: 'FilmRAID-8',
-    slug: 'filmraid-8',
-    tbMap: { 18: 144, 20: 160, 22: 176 },
-    prices: { 18: 5239, 20: 5599, 22: 5779 },
-    images: { main: '/layout/FilmRaid-8.jpg', back: '/layout/FilmRaid-8_back.jpg' },
-  },
-  {
-    code: '12E',
-    nameBase: 'FilmRAID-12E',
-    slug: 'filmraid-12e',
-    tbMap: { 18: 216, 20: 240, 22: 264 },
-    prices: { 18: 7589, 20: 8129, 22: 8399 },
-    images: { main: '/layout/FilmRaid-12E.jpg', back: '/layout/FilmRaid-12E_back.jpg' },
-  },
-];
+// Precios (los que confirmaste)
+const PRICE: Record<ModelKey, Record<TB, number>> = {
+  '4A': { 18: 2949, 20: 3129, 22: 3219 },
+  '6': { 18: 4279, 20: 4549, 22: 4679 },
+  '8': { 18: 5239, 20: 5599, 22: 5779 },
+  '12E': { 18: 7589, 20: 8129, 22: 8399 },
+};
 
-const TB_OPTIONS: TB[] = [18, 20, 22];
+// Títulos legibles por modelo
+const MODEL_TITLE: Record<ModelKey, string> = {
+  '4A': 'FilmRAID-4A',
+  '6': 'FilmRAID-6',
+  '8': 'FilmRAID-8',
+  '12E': 'FilmRAID-12E',
+};
 
-/** Build the canonical product URL for a given model + TB option */
-function productUrl(model: Model, tbOpt: TB): string {
-  const capacity = model.tbMap[tbOpt];
-  return `${FEED_BASE}/products/${model.slug}-${capacity}tb`;
+// Descripciones (puedes ajustar la copy si quieres)
+function makeDescription(model: ModelKey, tb: TB) {
+  const tbLabel: Record<TB, string> = { 18: '72TB', 20: '80TB', 22: '88TB' };
+  const tbLabel6: Record<TB, string> = { 18: '108TB', 20: '120TB', 22: '132TB' };
+  const tbLabel8: Record<TB, string> = { 18: '144TB', 20: '160TB', 22: '176TB' };
+  const tbLabel12E: Record<TB, string> = { 18: '216TB', 20: '240TB', 22: '264TB' };
+
+  let capacity = '';
+  if (model === '4A') capacity = tbLabel[tb];
+  else if (model === '6') capacity = tbLabel6[tb];
+  else if (model === '8') capacity = tbLabel8[tb];
+  else capacity = tbLabel12E[tb];
+
+  return `${MODEL_TITLE[model]} – ${capacity}. Fast, reliable RAID for film workflows. Assembled in EU.`;
 }
 
-/** Basic HTML escape for XML content nodes */
-function esc(s: string): string {
+// Slugs exactos (los que nos diste)
+function productUrl(model: ModelKey, tb: TB) {
+  const slugs: Record<ModelKey, Record<TB, string>> = {
+    '4A': {
+      18: 'filmraid-4a-72tb',
+      20: 'filmraid-4a-80tb',
+      22: 'filmraid-4a-88tb',
+    },
+    '6': {
+      18: 'filmraid-6-108tb',
+      20: 'filmraid-6-120tb',
+      22: 'filmraid-6-132tb',
+    },
+    '8': {
+      18: 'filmraid-8-144tb',
+      20: 'filmraid-8-160tb',
+      22: 'filmraid-8-176tb',
+    },
+    '12E': {
+      18: 'filmraid-12e-216tb',
+      20: 'filmraid-12e-240tb',
+      22: 'filmraid-12e-264tb',
+    },
+  };
+  return `${SITE}/products/${slugs[model][tb]}`;
+}
+
+// Imágenes de producto principales (ajústalas si quieres variantes por TB)
+const IMAGE: Record<ModelKey, string> = {
+  '4A': `${SITE}/layout/FilmRaid-4A.jpg`,
+  '6': `${SITE}/layout/FilmRaid-6.jpg`,
+  '8': `${SITE}/layout/FilmRaid-8.jpg`,
+  '12E': `${SITE}/layout/FilmRaid-12E.jpg`,
+};
+
+const TB_VALUES: TB[] = [18, 20, 22];
+const MODELS: ModelKey[] = ['4A', '6', '8', '12E'];
+
+function buildItem(model: ModelKey, tb: TB) {
+  const id = `FR-${model}-${tb}`; // FR-4A-18, etc.
+  const title = `${MODEL_TITLE[model]} – ${(() => {
+    if (model === '4A') return ({ 18: '72TB', 20: '80TB', 22: '88TB' } as any)[tb];
+    if (model === '6') return ({ 18: '108TB', 20: '120TB', 22: '132TB' } as any)[tb];
+    if (model === '8') return ({ 18: '144TB', 20: '160TB', 22: '176TB' } as any)[tb];
+    return ({ 18: '216TB', 20: '240TB', 22: '264TB' } as any)[tb];
+  })()}`;
+
+  const description = makeDescription(model, tb);
+  const link = productUrl(model, tb);
+  const image = IMAGE[model];
+  const price = PRICE[model][tb];
+  const weight = WEIGHT_KG[model];
+
+  return `
+  <item>
+    <g:id>${id}</g:id>
+    <title>${escapeXml(title)}</title>
+    <g:description>${escapeXml(description)}</g:description>
+    <link>${link}</link>
+    <g:image_link>${image}</g:image_link>
+    <g:availability>in stock</g:availability>
+    <g:condition>new</g:condition>
+    <g:brand>FilmRAID</g:brand>
+    <g:mpn>${id}</g:mpn>
+    <g:price>${price.toFixed(2)} EUR</g:price>
+    <g:shipping_weight>${weight} kg</g:shipping_weight>
+    <g:shipping_label>FILMRAID_MAIN</g:shipping_label>
+  </item>`;
+}
+
+function escapeXml(s: string) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-/** Price to Google format: "1234.00 EUR" */
-function priceStr(n: number): string {
-  return `${n.toFixed(2)} EUR`;
+function buildFeed() {
+  const items = MODELS.flatMap((m) => TB_VALUES.map((tb) => buildItem(m, tb))).join('\n');
+
+  const now = new Date().toISOString();
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
+  <channel>
+    <title>FilmRAID Product Feed</title>
+    <link>${SITE}</link>
+    <description>FilmRAID products for Google Merchant</description>
+    <lastBuildDate>${now}</lastBuildDate>
+${items}
+  </channel>
+</rss>`;
 }
 
 export async function GET() {
-  const now = new Date().toUTCString();
-
-  // Build <item> entries (12 total)
-  const itemsXml: string[] = [];
-
-  for (const model of MODELS) {
-    for (const tbOpt of TB_OPTIONS) {
-      const capacityTB = model.tbMap[tbOpt];
-      const id = `FR-${model.code}-${tbOpt}`; // e.g., FR-4A-18
-      const title = `${model.nameBase} – ${capacityTB}TB`;
-      const link = productUrl(model, tbOpt);
-      const price = model.prices[tbOpt];
-
-      const imageLink = `${IMAGE_BASE}${model.images.main}`;
-      const addlImage = model.images.back ? `${IMAGE_BASE}${model.images.back}` : '';
-
-      const description =
-        `High-performance RAID for filmmakers. Pre-configured options and pro-grade drives. ` +
-        `Ships from Barcelona. International shipping available (DAP).`;
-
-      itemsXml.push(
-        [
-          `<item>`,
-          `  <g:id>${esc(id)}</g:id>`,
-          `  <title>${esc(title)}</title>`,
-          `  <description>${esc(description)}</description>`,
-          `  <link>${esc(link)}</link>`,
-          `  <g:price>${priceStr(price)}</g:price>`,
-          `  <g:availability>in_stock</g:availability>`,
-          `  <g:condition>new</g:condition>`,
-          `  <g:brand>FilmRAID</g:brand>`,
-          `  <g:mpn>${esc(id)}</g:mpn>`,
-          `  <g:image_link>${esc(imageLink)}</g:image_link>`,
-          addlImage ? `  <g:additional_image_link>${esc(addlImage)}</g:additional_image_link>` : '',
-          `</item>`,
-        ]
-          .filter(Boolean)
-          .join('\n'),
-      );
-    }
-  }
-
-  // Wrap in RSS 2.0 + Google namespace
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0"
-  xmlns:g="http://base.google.com/ns/1.0">
-  <channel>
-    <title>FilmRAID Product Feed</title>
-    <link>${FEED_BASE}</link>
-    <description>Official FilmRAID catalog feed</description>
-    <lastBuildDate>${now}</lastBuildDate>
-${itemsXml.join('\n')}
-  </channel>
-</rss>`.trim();
-
-  return new Response(xml, {
+  const xml = buildFeed();
+  return new NextResponse(xml, {
     status: 200,
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=3600',
+      'Cache-Control': 'public, max-age=300, s-maxage=300',
     },
   });
 }
