@@ -93,34 +93,41 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Snipcart v3 CSS */}
         <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css" />
 
-        {/* Block EasyPost address autocomplete before Snipcart loads */}
-        <Script
-          id="block-easypost"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `(function(){
-      try {
-        var _fetch = window.fetch;
-        if (!_fetch) return;
-        window.fetch = new Proxy(_fetch, {
-          apply(target, thisArg, args) {
+        {/* Block EasyPost autocomplete before Snipcart loads (safe + idempotent) */}
+        <Script id="block-easypost" strategy="beforeInteractive">
+          {`
+  (function () {
+    try {
+      if (window.__FR_BLOCK_EP) return; // avoid double install
+      window.__FR_BLOCK_EP = true;
+
+      var _fetch = window.fetch;
+      if (!_fetch) return;
+
+      window.fetch = new Proxy(_fetch, {
+        apply(target, thisArg, args) {
+          try {
             var url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url);
             if (url && url.indexOf('/account/easypost/addresses') !== -1) {
               console.warn('[Snipcart] Blocked EasyPost call:', url);
-              return Promise.resolve(
-                new Response('{}', {
-                  status: 204,
-                  headers: { 'Content-Type': 'application/json' },
-                })
-              );
+              // ✅ Always return HTTP 200 + empty JSON to avoid Response/null-body errors
+              return Promise.resolve(new Response('{}', {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+              }));
             }
-            return Reflect.apply(target, thisArg, args);
+          } catch (e) {
+            console.warn('[Snipcart] EasyPost proxy error', e);
           }
-        });
-      } catch(e) { console.warn('[Snipcart] EasyPost block error', e); }
-    })();`,
-          }}
-        />
+          return Reflect.apply(target, thisArg, args);
+        }
+      });
+    } catch (e) {
+      console.warn('[Snipcart] EasyPost block setup failed', e);
+    }
+  })();
+`}
+        </Script>
 
         {/* Snipcart settings (must load BEFORE snipcart.js) */}
         <Script
