@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+     xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>FilmRAID Product Feed</title>
+    <link>https://www.filmraid.pro</link>
+    <description>High-performance RAID systems for film production workflows.</description>
+
+    <!-- FilmRaid-4A -->
+    <item>
+      <g:id>FR-4A</g:id>
+      <g:title>FilmRAID-4A (72TB / 80TB / 88TB)</g:title>
+      <g:description>Compact and silent 4-bay RAID system optimized for on-set DIT and post workflows.</g:description>
+      <link>https://www.filmraid.pro/products/filmraid-4a</link>
+      <g:image_link>https://www.filmraid.pro/images/products/filmraid-4a.jpg</g:image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>2999.00 EUR</g:price>
+      <g:brand>FilmRAID</g:brand>
+      <g:condition>new</g:condition>
+      <g:shipping>
+        <g:country>ES</g:country>
+        <g:service>Standard (24–48h)</g:service>
+        <g:price>70.00 EUR</g:price>
+      </g:shipping>
+    </item>
+
+    <!-- FilmRaid-6 -->
+    <item>
+      <g:id>FR-6</g:id>
+      <g:title>FilmRAID-6 (108TB / 120TB / 132TB)</g:title>
+      <g:description>6-bay professional RAID with redundant power and enterprise drives. Designed for film production.</g:description>
+      <link>https://www.filmraid.pro/products/filmraid-6</link>
+      <g:image_link>https://www.filmraid.pro/images/products/filmraid-6.jpg</g:image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>3999.00 EUR</g:price>
+      <g:brand>FilmRAID</g:brand>
+      <g:condition>new</g:condition>
+      <g:shipping>
+        <g:country>ES</g:country>
+        <g:service>Standard (24–48h)</g:service>
+        <g:price>70.00 EUR</g:price>
+      </g:shipping>
+    </item>
+
+    <!-- FilmRaid-8 -->
+    <item>
+      <g:id>FR-8</g:id>
+      <g:title>FilmRAID-8 (144TB / 160TB / 176TB)</g:title>
+      <g:description>8-bay performance RAID system with hot-swap enterprise drives. Ideal for DITs and colorists.</g:description>
+      <link>https://www.filmraid.pro/products/filmraid-8</link>
+      <g:image_link>https://www.filmraid.pro/images/products/filmraid-8.jpg</g:image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>4999.00 EUR</g:price>
+      <g:brand>FilmRAID</g:brand>
+      <g:condition>new</g:condition>
+      <g:shipping>
+        <g:country>ES</g:country>
+        <g:service>Standard (24–48h)</g:service>
+        <g:price>70.00 EUR</g:price>
+      </g:shipping>
+    </item>
+
+    <!-- FilmRaid-12E -->
+    <item>
+      <g:id>FR-12E</g:id>
+      <g:title>FilmRAID-12E (216TB / 240TB / 264TB)</g:title>
+      <g:description>12-bay external RAID system with dual chassis and expansion capacity, built for post-production houses.</g:description>
+      <link>https://www.filmraid.pro/products/filmraid-12e</link>
+      <g:image_link>https://www.filmraid.pro/images/products/filmraid-12e.jpg</g:image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>7999.00 EUR</g:price>
+      <g:brand>FilmRAID</g:brand>
+      <g:condition>new</g:condition>
+      <g:shipping>
+        <g:country>ES</g:country>
+        <g:service>Standard (24–48h)</g:service>
+        <g:price>70.00 EUR</g:price>
+      </g:shipping>
+    </item>
+  </channel>
+</rss>
