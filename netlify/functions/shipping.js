@@ -1,14 +1,23 @@
 // netlify/functions/shipping.js
 // CommonJS style to keep Netlify Lambda compatibility even if package.json has "type": "module"
 const fetch = require('node-fetch'); // v2.x
-const JSON_HEADERS = {
-  'Content-Type': 'application/json; charset=utf-8',
-};
+
+// --- DIAGNOSTIC BANNER ---
+const FUNCTION_VERSION = 'shipping-2025-10-03-v3-insured-dap-no-icp';
+console.info('[shipping] Loading function version:', FUNCTION_VERSION);
+
+const JSON_HEADERS = { 'Content-Type': 'application/json; charset=utf-8' };
 
 const FEDEX_BASE = process.env.FEDEX_API_BASE || 'https://apis.fedex.com';
 const FEDEX_CLIENT_ID = process.env.FEDEX_CLIENT_ID;
 const FEDEX_CLIENT_SECRET = process.env.FEDEX_CLIENT_SECRET;
 const FEDEX_ACCOUNT_NUMBER = process.env.FEDEX_ACCOUNT_NUMBER;
+
+// ✅ include insurance (declared value) inside QUOTES
+const INCLUDE_INSURANCE_IN_QUOTES = true;
+
+// ✅ show FEDEX_FIRST (early AM) domestically if available
+const SHOW_DOMESTIC_FIRST = true;
 
 // --- YOUR ORIGIN (Barcelona) ---
 const SHIPPER = {
@@ -22,7 +31,7 @@ const SHIPPER = {
     city: 'Barcelona',
     postalCode: '08030',
     countryCode: 'ES',
-    stateOrProvinceCode: 'B', // optional but helps FedEx routing in ES/Barcelona
+    stateOrProvinceCode: 'B', // helps FedEx routing in ES/Barcelona
   },
 };
 
@@ -36,20 +45,16 @@ const PACK_MAP = {
   // Two-box model (12E) → RAID + HDDs
   'FilmRaid-12E (216TB/240TB/264TB)': {
     boxes: [
-      { w: 10, l: 53, wdt: 39, h: 43, units: 'CM' }, // Box A (RAID)
-      { w: 12, l: 53, wdt: 39, h: 43, units: 'CM' }, // Box B (HDDs)
+      { w: 10, l: 53, wdt: 39, h: 43, units: 'CM' }, // RAID
+      { w: 12, l: 53, wdt: 39, h: 43, units: 'CM' }, // HDDs
     ],
   },
 };
 
 // --- NAME NORMALIZATION ---
 function pickFirstKnownItemName(items) {
-  // We use first item to determine package mapping.
-  for (const it of items) {
-    if (PACK_MAP[it.name]) return it.name;
-  }
-  // If unknown, default to 12kg medium box (safe fallback)
-  return 'FilmRaid-6 (108TB/120TB/132TB)';
+  for (const it of items) if (PACK_MAP[it.name]) return it.name;
+  return 'FilmRaid-6 (108TB/120TB/132TB)'; // safe fallback
 }
 
 // --- FedEx OAuth ---
@@ -77,7 +82,7 @@ async function getFedExToken() {
   return res.json();
 }
 
-// --- Build FedEx Rate body ---
+// --- Build FedEx Rate body (quote, DAP-friendly: no customs block) ---
 function buildRateBody({ destination, items, total }) {
   const itemName = pickFirstKnownItemName(items);
   const spec = PACK_MAP[itemName];
@@ -95,8 +100,8 @@ function buildRateBody({ destination, items, total }) {
       weight: { units: 'KG', value: Number(b.w) },
       dimensions: { length: Number(b.l), width: Number(b.wdt), height: Number(b.h), units: 'CM' },
     };
-    // Include insuredValue to carry declared value cost into quote
-    if (insured > 0) {
+
+    if (INCLUDE_INSURANCE_IN_QUOTES && insured > 0) {
       li.insuredValue = { amount: insured, currency: 'EUR' };
     }
     return li;
@@ -123,16 +128,27 @@ function buildRateBody({ destination, items, total }) {
     pickupType: 'DROPOFF_AT_FEDEX_LOCATION',
     packagingType: 'YOUR_PACKAGING',
 
-    // Total declared value helps some lanes compute fuel/fees consistently
-    totalDeclaredValue: { amount: declaredTotal, currency: 'EUR' },
+    // Shipment-level declared value
+    ...(INCLUDE_INSURANCE_IN_QUOTES
+      ? { totalDeclaredValue: { amount: declaredTotal, currency: 'EUR' } }
+      : {}),
+
+    // Shipment-level special service for insured value
+    ...(INCLUDE_INSURANCE_IN_QUOTES && declaredTotal > 0
+      ? {
+          specialServicesRequested: {
+            specialServiceTypes: ['INSURED_VALUE'],
+            insuredValue: { amount: declaredTotal, currency: 'EUR' },
+          },
+        }
+      : {}),
 
     requestedPackageLineItems: lineItems,
 
-    // For now we keep DDP OFF here (customs block omitted) until Marta habilite DAP/DeclaredValue everywhere.
-    // When switching to DAP: add customsClearanceDetail with dutiesPayment RECIPIENT + termsOfSale DAP
+    // ❗️No customsClearanceDetail here (Samuel’s guidance) to keep quotes working for DAP or DDP later.
   };
 
-  // US/CA require state/province code.
+  // US/CA need state/province when provided
   if ((destination.country === 'US' || destination.country === 'CA') && destination.state) {
     requestedShipment.recipient.address.stateOrProvinceCode = destination.state;
   }
@@ -166,27 +182,54 @@ async function getFedExRates(token, rateBody) {
   return res.json();
 }
 
+// --- HARD FILTER for ICP (International Connect Plus) ---
+function isICP(rateReplyDetail) {
+  const code = (rateReplyDetail?.serviceType || '').toString().toUpperCase();
+  const name = (rateReplyDetail?.serviceName || rateReplyDetail?.serviceDescription || '')
+    .toString()
+    .toUpperCase();
+  return (
+    code.includes('FEDEX_INTERNATIONAL_CONNECT_PLUS') ||
+    code.includes('INTERNATIONAL_CONNECT_PLUS') ||
+    code.includes('FICP') ||
+    name.includes('CONNECT PLUS')
+  );
+}
+
 // --- Filter/Map services to neat options ---
 function mapServicesToRates(destinationCountry, fedexOutput) {
-  if (!fedexOutput?.output?.rateReplyDetails?.length) return [];
+  const details = fedexOutput?.output?.rateReplyDetails;
+  if (!Array.isArray(details) || details.length === 0) return [];
 
-  const isDomesticES = destinationCountry === 'ES';
-  const list = fedexOutput.output.rateReplyDetails;
+  // Debug: list serviceTypes we got
+  try {
+    console.info(
+      '[shipping] FedEx serviceTypes seen:',
+      details.map((r) => r?.serviceType).filter(Boolean),
+    );
+  } catch {}
 
-  // Allow-list per lane
+  const isDomesticES = (destinationCountry || '').toUpperCase() === 'ES';
+  let list = details.filter((r) => !isICP(r)); // ❌ remove ICP everywhere
+
   const ALLOW_INTL = new Set([
-    'FEDEX_INTERNATIONAL_CONNECT_PLUS',
     'FEDEX_INTERNATIONAL_PRIORITY',
-    'INTERNATIONAL_ECONOMY', // FedEx sometimes returns this legacy key
-    'FEDEX_INTERNATIONAL_ECONOMY', // and/or this one in some regions
+    'FEDEX_INTERNATIONAL_ECONOMY',
+    'INTERNATIONAL_ECONOMY',
+    'FEDEX_REGIONAL_ECONOMY',
   ]);
 
-  const ALLOW_ES = new Set(['FEDEX_FEDEX_PRIORITY', 'FEDEX_FEDEX_PRIORITY_EXPRESS']);
+  // ✅ Correct domestic codes
+  const ALLOW_ES = new Set([
+    'FEDEX_PRIORITY',
+    'FEDEX_PRIORITY_EXPRESS',
+    ...(SHOW_DOMESTIC_FIRST ? ['FEDEX_FIRST'] : []),
+  ]);
 
   const results = [];
 
   for (const r of list) {
-    const code = r.serviceType;
+    const code = r?.serviceType;
     if (!code) continue;
 
     if (isDomesticES) {
@@ -198,56 +241,57 @@ function mapServicesToRates(destinationCountry, fedexOutput) {
     const priced = pickBestRated(r);
     if (!priced || typeof priced.netCharge !== 'number') continue;
 
-    const id = `FEDEX_${code}`;
-    const cost = round2(priced.netCharge);
-
-    // English labels only
+    // Labels
     let name = code;
     let description = '';
 
     if (isDomesticES) {
-      if (code === 'FEDEX_FEDEX_PRIORITY') {
-        name = 'Standard (24–48h)';
-        description = 'Standard (24–48h)';
-      } else if (code === 'FEDEX_FEDEX_PRIORITY_EXPRESS') {
+      if (code === 'FEDEX_FIRST') {
+        name = 'First (early AM)';
+        description = 'Entrega temprana (pre-8/9h si disponible)';
+      } else if (code === 'FEDEX_PRIORITY_EXPRESS') {
         name = 'Express (before 10/12h)';
-        description = 'Express (before 10/12h)';
+        description = 'Express (antes de 10/12h)';
+      } else if (code === 'FEDEX_PRIORITY') {
+        name = 'Standard (24–48h)';
+        description = 'Estándar (24–48h)';
       }
     } else {
-      if (code === 'FEDEX_INTERNATIONAL_CONNECT_PLUS') {
-        name = 'Economy (3–5 days)';
-        description = 'Economy (3–5 days)';
-      } else if (code === 'FEDEX_INTERNATIONAL_PRIORITY') {
+      if (code === 'FEDEX_INTERNATIONAL_PRIORITY') {
         name = 'Express (1–3 days)';
-        description = 'Express (1–3 days)';
-      } else if (code === 'FEDEX_INTERNATIONAL_ECONOMY' || code === 'INTERNATIONAL_ECONOMY') {
-        name = 'Economy (4–7 days)';
-        description = 'Economy (4–7 days)';
+        description = 'International Priority (1–3 días)';
+      } else if (
+        code === 'FEDEX_INTERNATIONAL_ECONOMY' ||
+        code === 'INTERNATIONAL_ECONOMY' ||
+        code === 'FEDEX_REGIONAL_ECONOMY'
+      ) {
+        name = 'Economy (3–7 days)';
+        description = 'International/Regional Economy (3–7 días)';
       }
     }
 
-    results.push({ id, name, description, cost });
+    results.push({
+      id: `FEDEX_${code}`, // e.g. FEDEX_FEDEX_PRIORITY_EXPRESS or FEDEX_FEDEX_FIRST
+      name,
+      description,
+      cost: round2(priced.netCharge),
+    });
   }
 
-  // Sort by price asc
   results.sort((a, b) => a.cost - b.cost);
   return results;
 }
 
 function pickBestRated(rateReplyDetail) {
-  // prefer ACCOUNT rate with netCharge (netCharge = netFedExCharge + taxes typically)
   const rsd = rateReplyDetail?.ratedShipmentDetails || [];
   for (const d of rsd) {
     const pkg = (d?.ratedPackages && d.ratedPackages[0]) || {};
     const pr = pkg.packageRateDetail || d.shipmentRateDetail || {};
-    // Some responses have netCharge or totalNetCharge; normalize to netCharge for UI
     const netCharge =
       numberOrNull(pr.netCharge) ??
       numberOrNull(pr.totalNetCharge) ??
       numberOrNull(d.totalNetCharge);
-    if (typeof netCharge === 'number') {
-      return { netCharge };
-    }
+    if (typeof netCharge === 'number') return { netCharge };
   }
   return null;
 }
@@ -277,7 +321,6 @@ exports.handler = async (event) => {
       account: !!FEDEX_ACCOUNT_NUMBER,
     });
 
-    // Parse payload
     const payload = JSON.parse(event.body || '{}');
     const content = payload.content || {};
     let destination = content.shippingAddress || {};
@@ -286,11 +329,7 @@ exports.handler = async (event) => {
       Number(content.total || 0) ||
       items.reduce((s, it) => s + (Number(it.price) || 0) * (Number(it.quantity) || 1), 0);
 
-    // --- Address guard ---
-    // Snipcart calls the webhook repeatedly while the user types. If we don't have country+postal yet,
-    // return a placeholder so the UI doesn't flash "No methods".
-    // If we don't have enough address info yet, return NO rates.
-    // This prevents Snipcart from allowing payment without shipping.
+    // Guard: missing address → no methods yet
     if (!destination?.country || !destination?.postalCode) {
       return {
         statusCode: 200,
@@ -303,14 +342,14 @@ exports.handler = async (event) => {
       };
     }
 
-    // Normalize minimal fields to keep FedEx happy even if city/street are missing
+    // Normalize minimal fields
     destination = {
       ...destination,
       city: destination.city || '',
       address1: destination.address1 || 'Address',
     };
 
-    // --- OAuth ---
+    // OAuth
     let token;
     try {
       token = await getFedExToken();
@@ -329,7 +368,7 @@ exports.handler = async (event) => {
       };
     }
 
-    // --- Build body & call FedEx ---
+    // Build & call
     const rateBody = buildRateBody({ destination, items, total });
     console.info('FedEx request payload:', JSON.stringify(rateBody, null, 2));
 
@@ -365,12 +404,7 @@ exports.handler = async (event) => {
       };
     }
 
-    // Success
-    return {
-      statusCode: 200,
-      headers: JSON_HEADERS,
-      body: JSON.stringify({ rates }),
-    };
+    return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ rates }) };
   } catch (err) {
     console.error('shipping_unexpected_error:', err);
     return {

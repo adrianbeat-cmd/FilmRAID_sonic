@@ -87,10 +87,6 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const publicKey =
-    process.env.NEXT_PUBLIC_SNIPCART_PUBLIC_API_KEY ??
-    'NzhjOGJmOTEtY2Y1MS00MGRkLWIwNmEtNjkzYWVlNTYxMjViNjM4OTA0NTgxOTU4MTA2ODQy';
-
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -103,17 +99,30 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
-      window.SnipcartSettings = {
-        publicApiKey: "${process.env.NEXT_PUBLIC_SNIPCART_PUBLIC_API_KEY ?? 'NzhjOGJmOTEtY2Y1MS00MGRkLWIwNmEtNjkzYWVlNTYxMjViNjM4OTA0NTgxOTU4MTA2ODQy'}",
-        loadStrategy: "always",
-        modalStyle: "full",
-        addProductBehavior: "open",
-        timeoutDuration: 2000,
-        // cache-bust so Snipcart fetches the latest template
-        templatesUrl: "/snipcart-templates.html?v=20250826-1",
-        version: "3.6.0"
-      };
-    `,
+              (function () {
+                // Public keys (public by design)
+                var LIVE_KEY = "ZmM4ZTIwN2UtOWI3Yi00NDFlLWFmYmMtZDgwNTQzYzc0YWE2NjM4OTA0NTgxOTU4MTA2ODQy";
+                var TEST_KEY = "NzhjOGJmOTEtY2Y1MS00MGRkLWIwNmEtNjkzYWVlNTYxMjViNjM4OTA0NTgxOTU4MTA2ODQy";
+
+                var host = (location.hostname || "").toLowerCase();
+                var isProd = host === "filmraid.pro" || host === "www.filmraid.pro";
+                var apiKey = isProd ? LIVE_KEY : TEST_KEY;
+
+                window.SnipcartSettings = {
+                  publicApiKey: apiKey,
+                  loadStrategy: "always",
+                  modalStyle: "full",
+                  addProductBehavior: "open",
+                  timeoutDuration: 2000,
+                  // cache-bust so Snipcart fetches the latest template
+                  templatesUrl: "/snipcart-templates.html?v=20250826-1",
+                  version: "3.6.0"
+                };
+
+                // Optional: quick debug
+                try { console.log("[Snipcart] Using", isProd ? "LIVE" : "TEST", "key for host:", host); } catch {}
+              })();
+            `,
           }}
         />
 
@@ -154,9 +163,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   })();
           `}
         </Script>
-        {/* ✅ reCAPTCHA stash: guarda enterprise apenas exista (sin handlers) */}
-
-        {/* ✅ Carga global de reCAPTCHA Enterprise (antes de snipcart.js) */}
 
         {/* Snipcart core */}
         <Script
@@ -300,11 +306,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className={`${sfProDisplay.variable} antialiased`}>
         <RecaptchaBoot />
 
-        {/* Snipcart container */}
+        {/* Snipcart container (key provided via SnipcartSettings above) */}
         <div
           hidden
           id="snipcart"
-          data-api-key={publicKey}
           data-config-add-product-behavior="open"
           data-config-modal-style="full"
         />
