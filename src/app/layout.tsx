@@ -93,6 +93,35 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Snipcart v3 CSS */}
         <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css" />
 
+        {/* Block EasyPost address autocomplete before Snipcart loads */}
+        <Script
+          id="block-easypost"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+      try {
+        var _fetch = window.fetch;
+        if (!_fetch) return;
+        window.fetch = new Proxy(_fetch, {
+          apply(target, thisArg, args) {
+            var url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url);
+            if (url && url.indexOf('/account/easypost/addresses') !== -1) {
+              console.warn('[Snipcart] Blocked EasyPost call:', url);
+              return Promise.resolve(
+                new Response('{}', {
+                  status: 204,
+                  headers: { 'Content-Type': 'application/json' },
+                })
+              );
+            }
+            return Reflect.apply(target, thisArg, args);
+          }
+        });
+      } catch(e) { console.warn('[Snipcart] EasyPost block error', e); }
+    })();`,
+          }}
+        />
+
         {/* Snipcart settings (must load BEFORE snipcart.js) */}
         <Script
           id="snipcart-settings"
