@@ -1,0 +1,18 @@
+{
+  "FilmRaid-4A": {
+    "main": "/layout/FilmRaid-4A.jpg",
+    "back": "/layout/FilmRaid-4A_back.jpg"
+  },
+  "FilmRaid-6": {
+    "main": "/layout/FilmRaid-6.jpg",
+    "back": "/layout/FilmRaid-6_back.jpg"
+  },
+  "FilmRaid-8": {
+    "main": "/layout/FilmRaid-8.jpg",
+    "back": "/layout/FilmRaid-8_back.jpg"
+  },
+  "FilmRaid-12E": {
+    "main": "/layout/FilmRaid-12E.jpg",
+    "back": "/layout/FilmRaid-12E_back.jpg"
+  }
+}
