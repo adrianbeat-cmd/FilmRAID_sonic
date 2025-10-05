@@ -1,3 +1,6 @@
+export const dynamic = 'force-static';
+export const revalidate = 3600; // 1 hora (ajústalo si quieres)
+
 // src/app/products-feed.xml/route.ts
 import { NextResponse } from 'next/server';
 
