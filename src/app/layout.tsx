@@ -107,13 +107,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       window.fetch = new Proxy(_fetch, {
         apply(target, thisArg, args) {
           try {
-            var url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url);
+            var req = args[0];
+            var url = typeof req === 'string' ? req : (req && req.url);
             if (url && url.indexOf('/account/easypost/addresses') !== -1) {
               console.warn('[Snipcart] Blocked EasyPost call:', url);
-              // ✅ Always return HTTP 200 + empty JSON to avoid Response/null-body errors
-              return Promise.resolve(new Response('{}', {
+              // Return 200 + explicit body + marker header
+              return Promise.resolve(new Response(JSON.stringify({ __frBlocked: true }), {
                 status: 200,
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 'Content-Type': 'application/json', 'X-FR-Blocked': '1' }
               }));
             }
           } catch (e) {
