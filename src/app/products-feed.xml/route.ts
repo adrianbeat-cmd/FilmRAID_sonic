@@ -1,6 +1,4 @@
 // src/app/products-feed.xml/route.ts
-import { NextRequest } from 'next/server';
-
 export const dynamic = 'force-static';
 export const revalidate = 3600;
 
@@ -239,7 +237,7 @@ ${items}
 </rss>`;
 }
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   const xml = feedXml(PRODUCTS.map(itemXml).join('\n'));
   return new Response(xml, {
     headers: {
