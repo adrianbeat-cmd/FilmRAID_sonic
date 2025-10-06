@@ -1,125 +1,250 @@
-// app/products-feed.xml/route.ts
-import { NextResponse } from 'next/server';
+// src/app/products-feed.xml/route.ts
+import { NextRequest } from 'next/server';
 
 export const dynamic = 'force-static';
+export const revalidate = 3600;
 
 const SITE = 'https://www.filmraid.pro';
 
-type ModelKey = '4A' | '6' | '8' | '12E';
-type TB = 18 | 20 | 22;
-
-// Exact shipping weights (kg)
-const WEIGHT_KG: Record<ModelKey, number> = {
-  '4A': 8,
-  '6': 12,
-  '8': 18,
-  '12E': 22,
+type Sku = {
+  id: string;
+  title: string;
+  url: string;
+  priceEUR: number;
+  image: string;
+  shippingWeightKg: number;
+  availability: 'in stock' | 'preorder' | 'out of stock';
+  description: string;
 };
 
-// Prices
-const PRICE: Record<ModelKey, Record<TB, number>> = {
-  '4A': { 18: 2949, 20: 3129, 22: 3219 },
-  '6': { 18: 4279, 20: 4549, 22: 4679 },
-  '8': { 18: 5239, 20: 5599, 22: 5779 },
-  '12E': { 18: 7589, 20: 8129, 22: 8399 },
-};
+const PRODUCTS: Sku[] = [
+  // --- FilmRAID-4A (8 kg)
+  {
+    id: 'FR-4A-72',
+    title: 'FilmRAID-4A – 72 TB',
+    url: `${SITE}/products/filmraid-4a-72tb`,
+    priceEUR: 2949,
+    image: `${SITE}/layout/FilmRaid-4A.jpg`,
+    shippingWeightKg: 8.0,
+    availability: 'in stock',
+    description: 'All-in-one 4-bay RAID with 72 TB raw capacity.',
+  },
+  {
+    id: 'FR-4A-80',
+    title: 'FilmRAID-4A – 80 TB',
+    url: `${SITE}/products/filmraid-4a-80tb`,
+    priceEUR: 3129,
+    image: `${SITE}/layout/FilmRaid-4A.jpg`,
+    shippingWeightKg: 8.0,
+    availability: 'in stock',
+    description: 'All-in-one 4-bay RAID with 80 TB raw capacity.',
+  },
+  {
+    id: 'FR-4A-88',
+    title: 'FilmRAID-4A – 88 TB',
+    url: `${SITE}/products/filmraid-4a-88tb`,
+    priceEUR: 3219,
+    image: `${SITE}/layout/FilmRaid-4A.jpg`,
+    shippingWeightKg: 8.0,
+    availability: 'in stock',
+    description: 'All-in-one 4-bay RAID with 88 TB raw capacity.',
+  },
 
-// Titles per model
-const MODEL_TITLE: Record<ModelKey, string> = {
-  '4A': 'FilmRAID-4A',
-  '6': 'FilmRAID-6',
-  '8': 'FilmRAID-8',
-  '12E': 'FilmRAID-12E',
-};
+  // --- FilmRAID-6 (12 kg)
+  {
+    id: 'FR-6-108',
+    title: 'FilmRAID-6 – 108 TB',
+    url: `${SITE}/products/filmraid-6-108tb`,
+    priceEUR: 4279,
+    image: `${SITE}/layout/FilmRaid-6.jpg`,
+    shippingWeightKg: 12.0,
+    availability: 'in stock',
+    description: '6-bay RAID tuned for film workflows.',
+  },
+  {
+    id: 'FR-6-120',
+    title: 'FilmRAID-6 – 120 TB',
+    url: `${SITE}/products/filmraid-6-120tb`,
+    priceEUR: 4549,
+    image: `${SITE}/layout/FilmRaid-6.jpg`,
+    shippingWeightKg: 12.0,
+    availability: 'in stock',
+    description: '6-bay RAID with 120 TB raw capacity.',
+  },
+  {
+    id: 'FR-6-132',
+    title: 'FilmRAID-6 – 132 TB',
+    url: `${SITE}/products/filmraid-6-132tb`,
+    priceEUR: 4679,
+    image: `${SITE}/layout/FilmRaid-6.jpg`,
+    shippingWeightKg: 12.0,
+    availability: 'in stock',
+    description: '6-bay RAID with 132 TB raw capacity.',
+  },
 
-// Capacity labels per model/TB (what appears in product title)
-const CAPACITY_LABEL: Record<ModelKey, Record<TB, string>> = {
-  '4A': { 18: '72TB', 20: '80TB', 22: '88TB' },
-  '6': { 18: '108TB', 20: '120TB', 22: '132TB' },
-  '8': { 18: '144TB', 20: '160TB', 22: '176TB' },
-  '12E': { 18: '216TB', 20: '240TB', 22: '264TB' },
-};
+  // --- FilmRAID-8 (18 kg)
+  {
+    id: 'FR-8-144',
+    title: 'FilmRAID-8 – 144 TB',
+    url: `${SITE}/products/filmraid-8-144tb`,
+    priceEUR: 5239,
+    image: `${SITE}/layout/FilmRaid-8.jpg`,
+    shippingWeightKg: 18.0,
+    availability: 'in stock',
+    description: '8-bay RAID with 144 TB raw capacity.',
+  },
+  {
+    id: 'FR-8-160',
+    title: 'FilmRAID-8 – 160 TB',
+    url: `${SITE}/products/filmraid-8-160tb`,
+    priceEUR: 5599,
+    image: `${SITE}/layout/FilmRaid-8.jpg`,
+    shippingWeightKg: 18.0,
+    availability: 'in stock',
+    description: '8-bay RAID with 160 TB raw capacity.',
+  },
+  {
+    id: 'FR-8-176',
+    title: 'FilmRAID-8 – 176 TB',
+    url: `${SITE}/products/filmraid-8-176tb`,
+    priceEUR: 5779,
+    image: `${SITE}/layout/FilmRaid-8.jpg`,
+    shippingWeightKg: 18.0,
+    availability: 'in stock',
+    description: '8-bay RAID with 176 TB raw capacity.',
+  },
 
-// Slugs you provided
-const SLUGS: Record<ModelKey, Record<TB, string>> = {
-  '4A': { 18: 'filmraid-4a-72tb', 20: 'filmraid-4a-80tb', 22: 'filmraid-4a-88tb' },
-  '6': { 18: 'filmraid-6-108tb', 20: 'filmraid-6-120tb', 22: 'filmraid-6-132tb' },
-  '8': { 18: 'filmraid-8-144tb', 20: 'filmraid-8-160tb', 22: 'filmraid-8-176tb' },
-  '12E': { 18: 'filmraid-12e-216tb', 20: 'filmraid-12e-240tb', 22: 'filmraid-12e-264tb' },
-};
+  // --- FilmRAID-12E (10 + 12 kg = 22 kg)
+  {
+    id: 'FR-12E-216',
+    title: 'FilmRAID-12E – 216 TB',
+    url: `${SITE}/products/filmraid-12e-216tb`,
+    priceEUR: 7589,
+    image: `${SITE}/layout/FilmRaid-12E.jpg`,
+    shippingWeightKg: 22.0,
+    availability: 'in stock',
+    description: '12-bay RAID (two-box shipment) with 216 TB capacity.',
+  },
+  {
+    id: 'FR-12E-240',
+    title: 'FilmRAID-12E – 240 TB',
+    url: `${SITE}/products/filmraid-12e-240tb`,
+    priceEUR: 8129,
+    image: `${SITE}/layout/FilmRaid-12E.jpg`,
+    shippingWeightKg: 22.0,
+    availability: 'in stock',
+    description: '12-bay RAID (two-box shipment) with 240 TB capacity.',
+  },
+  {
+    id: 'FR-12E-264',
+    title: 'FilmRAID-12E – 264 TB',
+    url: `${SITE}/products/filmraid-12e-264tb`,
+    priceEUR: 8399,
+    image: `${SITE}/layout/FilmRaid-12E.jpg`,
+    shippingWeightKg: 22.0,
+    availability: 'in stock',
+    description: '12-bay RAID (two-box shipment) with 264 TB capacity.',
+  },
+];
 
-// Main images (one per model)
-const IMAGE: Record<ModelKey, string> = {
-  '4A': `${SITE}/layout/FilmRAID-4A.jpg`,
-  '6': `${SITE}/layout/FilmRAID-6.jpg`,
-  '8': `${SITE}/layout/FilmRAID-8.jpg`,
-  '12E': `${SITE}/layout/FilmRAID-12E.jpg`,
-};
+// --- Shipping table (unchanged, FedEx-style) ---
+const EU_COUNTRIES = [
+  'AT',
+  'BE',
+  'BG',
+  'HR',
+  'CY',
+  'CZ',
+  'DK',
+  'EE',
+  'FI',
+  'FR',
+  'DE',
+  'GR',
+  'HU',
+  'IE',
+  'IT',
+  'LV',
+  'LT',
+  'LU',
+  'MT',
+  'NL',
+  'PL',
+  'PT',
+  'RO',
+  'SK',
+  'SI',
+  'ES',
+  'SE',
+] as const;
 
-const TB_VALUES: TB[] = [18, 20, 22];
-const MODELS: ModelKey[] = ['4A', '6', '8', '12E'];
+type ShippingRow = { country: string; service: string; priceEUR: number };
+const SHIPPING_TABLE: ShippingRow[] = [
+  { country: 'ES', service: 'Standard (24–48 h)', priceEUR: 70.35 },
+  ...EU_COUNTRIES.filter((c) => c !== 'ES').map<ShippingRow>((c) => ({
+    country: c,
+    service: 'International Economy (3–7 days)',
+    priceEUR: 120.0,
+  })),
+  { country: 'US', service: 'International Economy (3–7 days) — DAP', priceEUR: 196.66 },
+  { country: 'CA', service: 'International Economy (3–7 days) — DAP', priceEUR: 196.66 },
+  { country: 'GB', service: 'International Economy (3–7 days) — DAP', priceEUR: 150.0 },
+  { country: 'CH', service: 'International Economy (3–7 days) — DAP', priceEUR: 150.0 },
+  { country: 'AU', service: 'International Economy (3–7 days) — DAP', priceEUR: 260.0 },
+  { country: 'MX', service: 'International Economy (3–7 days) — DAP', priceEUR: 230.0 },
+  { country: 'AR', service: 'International Economy (3–7 days) — DAP', priceEUR: 260.0 },
+  { country: 'BR', service: 'International Economy (3–7 days) — DAP', priceEUR: 260.0 },
+  { country: 'CL', service: 'International Economy (3–7 days) — DAP', priceEUR: 240.0 },
+];
 
-function productUrl(model: ModelKey, tb: TB) {
-  return `${SITE}/products/${SLUGS[model][tb]}`;
-}
+// --- Helpers ---
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-function makeDescription(model: ModelKey, tb: TB) {
-  const capacity = CAPACITY_LABEL[model][tb];
-  return `${MODEL_TITLE[model]} – ${capacity}. Fast, reliable RAID for film workflows. Assembled in EU.`;
-}
-
-function escapeXml(s: string) {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function buildItem(model: ModelKey, tb: TB) {
-  const id = `FR-${model}-${tb}`;
-  const title = `${MODEL_TITLE[model]} – ${CAPACITY_LABEL[model][tb]}`;
-  const description = makeDescription(model, tb);
-  const link = productUrl(model, tb);
-  const image = IMAGE[model];
-  const price = PRICE[model][tb];
-  const weight = WEIGHT_KG[model];
+function itemXml(p: Sku): string {
+  const shippingLines = SHIPPING_TABLE.map(
+    (r) => `
+    <g:shipping>
+      <g:country>${r.country}</g:country>
+      <g:service>${esc(r.service)}</g:service>
+      <g:price>${r.priceEUR.toFixed(2)} EUR</g:price>
+    </g:shipping>`,
+  ).join('');
 
   return `
   <item>
-    <g:id>${id}</g:id>
-    <title>${escapeXml(title)}</title>
-    <g:description>${escapeXml(description)}</g:description>
-    <link>${link}</link>
-    <g:image_link>${image}</g:image_link>
-    <g:availability>in stock</g:availability>
+    <g:id>${p.id}</g:id>
+    <title>${esc(p.title)}</title>
+    <description>${esc(p.description)}</description>
+    <link>${p.url}</link>
+    <g:image_link>${p.image}</g:image_link>
+    <g:availability>${p.availability}</g:availability>
     <g:condition>new</g:condition>
+    <g:price>${p.priceEUR.toFixed(2)} EUR</g:price>
     <g:brand>FilmRAID</g:brand>
-    <g:mpn>${id}</g:mpn>
-    <g:price>${price.toFixed(2)} EUR</g:price>
-    <g:shipping_weight>${weight} kg</g:shipping_weight>
-    <g:shipping_label>FILMRAID_MAIN</g:shipping_label>
+    <g:mpn>${p.id}</g:mpn>
+    <g:shipping_weight>${p.shippingWeightKg.toFixed(1)} kg</g:shipping_weight>
+    ${shippingLines}
   </item>`;
 }
 
-function buildFeed() {
-  const items = MODELS.flatMap((m) => TB_VALUES.map((tb) => buildItem(m, tb))).join('\n');
-  const now = new Date().toISOString();
+function feedXml(items: string) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
   <channel>
     <title>FilmRAID Product Feed</title>
     <link>${SITE}</link>
-    <description>FilmRAID products for Google Merchant</description>
-    <lastBuildDate>${now}</lastBuildDate>
+    <description>FilmRAID product feed for Google Merchant</description>
 ${items}
   </channel>
 </rss>`;
 }
 
-export async function GET() {
-  const xml = buildFeed();
-  return new NextResponse(xml, {
-    status: 200,
+export async function GET(_req: NextRequest) {
+  const xml = feedXml(PRODUCTS.map(itemXml).join('\n'));
+  return new Response(xml, {
     headers: {
-      'Content-Type': 'application/xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=300, s-maxage=300',
+      'content-type': 'application/xml; charset=utf-8',
+      'cache-control': 'public, max-age=3600, s-maxage=3600',
     },
   });
 }
