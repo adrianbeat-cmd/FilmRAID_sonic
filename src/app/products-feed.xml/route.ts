@@ -4,6 +4,8 @@ export const revalidate = 3600;
 
 const SITE = 'https://www.filmraid.pro';
 
+const backImg = (url: string) => url.replace(/(\.(jpg|jpeg|png|webp))$/i, '_back$1');
+
 type Sku = {
   id: string;
   title: string;
@@ -215,6 +217,7 @@ function itemXml(p: Sku): string {
     <description>${esc(p.description)}</description>
     <link>${p.url}</link>
     <g:image_link>${p.image}</g:image_link>
+    <g:additional_image_link>${backImg(p.image)}</g:additional_image_link>
     <g:availability>${p.availability}</g:availability>
     <g:condition>new</g:condition>
     <g:price>${p.priceEUR.toFixed(2)} EUR</g:price>
