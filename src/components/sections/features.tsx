@@ -35,7 +35,7 @@ const features: Feature[] = [
   {
     icon: <HardDrive />,
     label: 'High-Capacity Storage',
-    title: '18TB to 22TB options with enterprise-grade HDDs.',
+    title: '18TB to 24TB options with enterprise-grade HDDs.',
     description:
       'Store massive film files securely with customizable RAID levels for redundancy and performance.',
     image: '/layout/feature-2.png',
@@ -49,7 +49,7 @@ const features: Feature[] = [
     label: 'Secure & Versatile',
     title: 'Robust security and versatile interfaces like Thunderbolt and PCIe.',
     description:
-      'Built for cinema experts, with no-stock model for 2-day EU delivery and AI-assisted configs.',
+      'Built for cinema experts, with no-stock model for 3-day EU delivery and AI-assisted configs.',
     image: '/layout/feature-3.png',
     link: {
       text: 'Learn more',
