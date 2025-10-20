@@ -10,7 +10,7 @@ const benefits = [
     icon: <Clock className="size-6" />,
     value: '3-Day EU Delivery',
     description:
-      'Get your custom RAID system delivered across Europe in just 2 days—no ' + 'stock delays.',
+      'Get your custom RAID system delivered across Europe in just 3 days—no ' + 'stock delays.',
   },
   {
     icon: <HardDrive className="size-6" />,
