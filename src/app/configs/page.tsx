@@ -164,7 +164,7 @@ const modelData = [
       { label: 'Processor', value: 'Dual core 1.6GHz' },
       { label: 'Memory', value: '8GB DDR4 ECC' },
       { label: 'Dimensions', value: '206 x 310 x 290 mm' },
-      { label: 'Weight', value: '9.5 Kg diskless' },
+      { label: 'Weight', value: '8.9 Kg diskless' },
       { label: 'Power', value: '400W' },
       { label: 'Cooling', value: '1 x 2700rpm fan' },
       { label: 'Warranty', value: '3 Years' },
@@ -191,10 +191,10 @@ const capacityOptions = [
     prices: [3129, 4549, 5599, 8129],
   },
   {
-    tb: 22,
-    raid0: (hdd: number) => hdd * 22,
-    raid5: (hdd: number) => (hdd - 1) * 22,
-    prices: [3219, 4679, 5779, 8399],
+    tb: 24, // Updated from 22 to 24
+    raid0: (hdd: number) => hdd * 24,
+    raid5: (hdd: number) => (hdd - 1) * 24,
+    prices: [3219, 4679, 5779, 8399], // Kept prices as is; adjust if needed
   },
 ];
 
@@ -219,8 +219,8 @@ const ConfigsPage = () => {
 
   return (
     <section className="section-padding container">
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-        <div className="md:sticky md:top-0">
+      <div className="flex flex-col gap-8 md:grid md:grid-cols-2 md:gap-8">
+        <div className="order-1 md:sticky md:top-0 md:col-start-1 md:row-start-1">
           <h2 className="mb-4 text-left text-3xl font-bold text-black md:text-right dark:text-white">
             {currentModel.name}
           </h2>
@@ -244,33 +244,8 @@ const ConfigsPage = () => {
               />
             ))}
           </div>
-          <Card className="mb-4 dark:bg-gray-800">
-            <CardContent className="p-6">
-              <h3 className="mb-2 text-xl font-bold text-black dark:text-white">Overview</h3>
-              <p className="text-gray-600 dark:text-gray-300">{currentModel.description}</p>
-            </CardContent>
-          </Card>
-          <Card className="dark:bg-gray-800">
-            <CardContent className="p-6">
-              <h3 className="mb-2 text-xl font-bold text-black dark:text-white">
-                Technical Specifications
-              </h3>
-              <ul className="space-y-2 text-gray-600 dark:text-gray-300">
-                {currentModel.specs.map((spec, index) => (
-                  <li key={index} className="flex justify-between">
-                    <span className="font-semibold">{spec.label}</span>
-                    <span className="text-right">
-                      {Array.isArray(spec.value)
-                        ? spec.value.map((line, i) => <div key={i}>{line}</div>)
-                        : spec.value}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
         </div>
-        <div>
+        <div className="order-2 md:col-start-2 md:row-start-1">
           <h2 className="mb-8 text-left text-3xl font-bold text-black dark:text-white">
             Customize your FilmRaid
           </h2>
@@ -315,6 +290,33 @@ const ConfigsPage = () => {
               Go to Product Page
             </Link>
           </Button>
+        </div>
+        <div className="order-3 flex flex-col gap-4 md:col-start-1 md:row-start-2">
+          <Card className="dark:bg-gray-800">
+            <CardContent className="p-6">
+              <h3 className="mb-2 text-xl font-bold text-black dark:text-white">Overview</h3>
+              <p className="text-gray-600 dark:text-gray-300">{currentModel.description}</p>
+            </CardContent>
+          </Card>
+          <Card className="dark:bg-gray-800">
+            <CardContent className="p-6">
+              <h3 className="mb-2 text-xl font-bold text-black dark:text-white">
+                Technical Specifications
+              </h3>
+              <ul className="space-y-2 text-gray-600 dark:text-gray-300">
+                {currentModel.specs.map((spec, index) => (
+                  <li key={index} className="flex justify-between">
+                    <span className="font-semibold">{spec.label}</span>
+                    <span className="text-right">
+                      {Array.isArray(spec.value)
+                        ? spec.value.map((line, i) => <div key={i}>{line}</div>)
+                        : spec.value}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </section>
