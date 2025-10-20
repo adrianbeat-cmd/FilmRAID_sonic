@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-// Model data with images, back images, descriptions, and specs
+// Force redeploy to revert to 22TB capacity and update warranty - Oct 20, 2025
 const modelData = [
   {
     name: 'FilmRaid-4A',
@@ -21,8 +21,11 @@ const modelData = [
       <>
         4-bay <span className="font-bold">portable tower RAID system</span> with dual Thunderbolt 3
         ports for <span className="font-bold">up to 40Gb/s transfers</span>. Supports SAS/SATA
-        drives, RAID 0/1/1E/3/5/6/10, DisplayPort, USB-A. Ideal for{' '}
-        <span className="font-bold">compact, high-speed film workflows</span>.
+        drives, RAID 0/1/1E/3/5/6/10, DisplayPort, USB-C/USB4 compatibility. Available in 18TB to
+        22TB options with enterprise-grade HDDs. Ideal for{' '}
+        <span className="font-bold">compact, high-speed film workflows</span>. All FilmRAID systems
+        come with a limited factory warranty covering hardware defects, with expert support for
+        warranty claims.
       </>
     ),
     specs: [
@@ -60,8 +63,10 @@ const modelData = [
       <>
         6-bay <span className="font-bold">desktop RAID system</span> with dual core processor and
         2GB DDR3 ECC memory. Supports 4K/6K/8K workflows, RAID 0/1/1E/3/5/6/10/30/50/60, low-noise
-        fan, 180W power. Perfect for{' '}
-        <span className="font-bold">professional post-production setups</span>.
+        fan, USB-C/USB4 compatibility. Available in 18TB to 22TB options with enterprise-grade HDDs.
+        Perfect for <span className="font-bold">professional post-production setups</span>. All
+        FilmRAID systems come with a limited factory warranty covering hardware defects, with expert
+        support for warranty claims.
       </>
     ),
     specs: [
@@ -101,8 +106,11 @@ const modelData = [
       <>
         8-bay <span className="font-bold">tower RAID system</span> with dual core processor and 2GB
         DDR3 ECC memory. Thunderbolt 3 up to 40Gb/s, DisplayPort 1.4 for 8K 30Hz, RAID
-        0/1/1E/3/5/6/10/30/50/60. Dimensions 5.7 x 11.8 x 11.4 in, 270W power. Designed for{' '}
-        <span className="font-bold">high-capacity cinema storage</span>.
+        0/1/1E/3/5/6/10/30/50/60, USB-C/USB4 compatibility. Available in 18TB to 22TB options with
+        enterprise-grade HDDs. Designed for{' '}
+        <span className="font-bold">high-capacity cinema storage</span>. All FilmRAID systems come
+        with a limited factory warranty covering hardware defects, with expert support for warranty
+        claims.
       </>
     ),
     specs: [
@@ -142,8 +150,11 @@ const modelData = [
       <>
         12-bay <span className="font-bold">expandable RAID system</span> with dual core 1.6GHz
         processor and 8GB DDR4 ECC memory. Supports 4K/6K/8K/VR, RAID 0/1/1E/3/5/6/10/30/50/60,
-        removable bays, dimensions 8.1 x 12.2 x 11.4 in, 400W power. Ultimate for{' '}
-        <span className="font-bold">large-scale film projects</span>.
+        removable bays, USB-C/USB4 compatibility. Available in 18TB to 22TB options with
+        enterprise-grade HDDs. Ultimate for{' '}
+        <span className="font-bold">large-scale film projects</span>. All FilmRAID systems come with
+        a limited factory warranty covering hardware defects, with expert support for warranty
+        claims.
       </>
     ),
     specs: [
@@ -191,10 +202,10 @@ const capacityOptions = [
     prices: [3129, 4549, 5599, 8129],
   },
   {
-    tb: 24, // Updated from 22 to 24
-    raid0: (hdd: number) => hdd * 24,
-    raid5: (hdd: number) => (hdd - 1) * 24,
-    prices: [3219, 4679, 5779, 8399], // Kept prices as is; adjust if needed
+    tb: 22,
+    raid0: (hdd: number) => hdd * 22,
+    raid5: (hdd: number) => (hdd - 1) * 22,
+    prices: [3219, 4679, 5779, 8399],
   },
 ];
 
