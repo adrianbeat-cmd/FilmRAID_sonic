@@ -10,12 +10,6 @@ import usePrefersReducedMotion from '@/hooks/usePrefersReducedMotion';
 // Single content array with all items
 const CONTENT_ITEMS = [
   { type: 'text', content: 'Unlock Seamless', index: 0 },
-  {
-    type: 'image',
-    imageSrc: '/layout/raid1.jpg',
-    alt: 'RAID Tower 1',
-    index: 1,
-  },
   { type: 'text', content: 'Storage for Your', index: 2 },
   { type: 'text', content: 'Film Projects', index: 3 },
 ];
@@ -125,7 +119,7 @@ const ValueProposition = () => {
         </motion.h2>
         <p className="mb-12 text-center text-lg">
           FilmRAID delivers pre-configured RAID systems tailored for digital cinema and
-          post-production. With 2-day EU delivery, high-speed interfaces like Thunderbolt and PCIe,
+          post-production. With 3-day EU delivery, high-speed interfaces like Thunderbolt and PCIe,
           and robust security, focus on creating—not managing data.
         </p>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">

@@ -31,7 +31,7 @@ const faqData = [
   {
     question: 'Do you offer a warranty?',
     answer:
-      'All FilmRAID systems come with a 2-year limited warranty covering hardware defects, plus expert support from our DIT World team.',
+      'All FilmRAID systems come with a limited factory warranty covering hardware defects. We provide expert support and assist with warranty claims if needed to ensure a smooth customer experience.',
   },
 ];
 
