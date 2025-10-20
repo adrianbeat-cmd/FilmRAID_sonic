@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
 
 import AnimatedBorderButton from '../animated-border-button';
-
+// Force redeploy to update 3-day delivery - Oct 20, 2025
 const CTA = () => {
   const pathname = usePathname();
   const shouldShowCTA = !['/privacy-policy', '/terms-of-service'].includes(pathname);
@@ -37,7 +37,7 @@ const CTA = () => {
           <h3 className="text-3xl font-bold">Elevate Your Production Workflow</h3>
           <p className="text-xl leading-8">
             Don't risk data loss or slow transfers. Our pre-configured RAID systems deliver
-            unmatched speed, security, and 2-day EU delivery – perfect for filmmakers ready to focus
+            unmatched speed, security, and 3-day EU delivery – perfect for filmmakers ready to focus
             on creating, not waiting.
           </p>
         </div>
