@@ -8,7 +8,7 @@ import { Card, CardHeader, CardContent } from '../ui/card';
 const benefits = [
   {
     icon: <Clock className="size-6" />,
-    value: '2-Day EU Delivery',
+    value: '3-Day EU Delivery',
     description:
       'Get your custom RAID system delivered across Europe in just 2 days—no ' + 'stock delays.',
   },
