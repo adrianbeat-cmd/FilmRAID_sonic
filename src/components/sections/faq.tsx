@@ -1,5 +1,4 @@
 'use client';
-
 import {
   Accordion,
   AccordionContent,
@@ -19,9 +18,9 @@ const faqData = [
       'We offer RAID 0 (speed-focused), RAID 5 (balanced speed and redundancy), RAID 6 (extra protection), and more up to RAID 10. Choose based on your needs for speed, security, or capacity in cinema workflows.',
   },
   {
-    question: 'How fast is delivery in the EU?',
+    question: 'How fast is the delivery in the EU?',
     answer:
-      'We source and assemble your custom RAID system for delivery across Europe in just 2 days after order confirmation.',
+      'We source and assemble your custom RAID system for delivery across Europe in just 3 days after order confirmation.',
   },
   {
     question: 'Are your RAID systems compatible with film equipment?',
@@ -44,7 +43,6 @@ export default function FAQ() {
           Common Questions About Our Custom RAID Storage Solutions
         </h3>
       </div>
-
       <Accordion defaultValue="item-0" type="single" className="space-y-8">
         {faqData.map((item, index) => (
           <AccordionItem key={index} value={`item-${index}`} className="px-4">

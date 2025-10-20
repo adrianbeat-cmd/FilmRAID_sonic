@@ -1,17 +1,21 @@
 'use client';
 import React, { useEffect, useRef } from 'react';
 
-import Image from 'next/image';
-
 import { motion, useInView, useAnimation } from 'framer-motion';
 
 import usePrefersReducedMotion from '@/hooks/usePrefersReducedMotion';
 
-// Single content array with all items
-const CONTENT_ITEMS = [
+// Define type for text items
+interface ContentItem {
+  type: 'text';
+  content: string;
+  index: number;
+}
+
+const CONTENT_ITEMS: ContentItem[] = [
   { type: 'text', content: 'Unlock Seamless', index: 0 },
-  { type: 'text', content: 'Storage for Your', index: 2 },
-  { type: 'text', content: 'Film Projects', index: 3 },
+  { type: 'text', content: 'Storage for Your', index: 1 },
+  { type: 'text', content: 'Film Projects', index: 2 },
 ];
 
 const ValueProposition = () => {
@@ -26,7 +30,7 @@ const ValueProposition = () => {
     }
   }, [isInView, controls, prefersReducedMotion]);
 
-  // Combined animation variants
+  // Animation variants for text only
   const variants = {
     text: {
       hidden: {
@@ -44,30 +48,6 @@ const ValueProposition = () => {
         },
       },
     },
-
-    image: {
-      hidden: {
-        opacity: 0,
-        scale: 1.05,
-        y: -5,
-        filter: 'blur(8px) brightness(1.07) drop-shadow(0 20px 30px rgba(0,0,0,0.15))',
-        transition: {
-          duration: 0.7,
-          ease: [0.25, 0.1, 0.25, 1],
-        },
-      },
-      visible: {
-        opacity: 1,
-        scale: 0.92,
-        filter: 'blur(0px) brightness(1) drop-shadow(0 0 0 rgba(0,0,0,0))',
-        y: 0,
-        transition: {
-          duration: 0.9,
-          ease: [0.22, 1, 0.36, 1],
-        },
-      },
-    },
-
     container: {
       hidden: { opacity: 0 },
       visible: {
@@ -91,31 +71,15 @@ const ValueProposition = () => {
           initial={prefersReducedMotion ? 'visible' : 'hidden'}
           animate={controls}
         >
-          {CONTENT_ITEMS.map((item, idx) =>
-            item.type === 'text' ? (
-              <motion.span
-                key={`feature-${idx}`}
-                className="m-1.5 inline-block md:m-4"
-                variants={variants.text}
-              >
-                {item.content}
-              </motion.span>
-            ) : (
-              <motion.div
-                key={`feature-${idx}`}
-                className="relative inline-block h-7.5 w-15 translate-y-1/4 overflow-visible lg:h-12.5 lg:w-22.5"
-                variants={variants.image}
-              >
-                <Image
-                  src={item.imageSrc || ''}
-                  alt={item.alt || ''}
-                  fill
-                  className="inline-block"
-                  style={{ willChange: 'transform' }}
-                />
-              </motion.div>
-            ),
-          )}{' '}
+          {CONTENT_ITEMS.map((item, idx) => (
+            <motion.span
+              key={`feature-${idx}`}
+              className="m-1.5 inline-block md:m-4"
+              variants={variants.text}
+            >
+              {item.content}
+            </motion.span>
+          ))}
         </motion.h2>
         <p className="mb-12 text-center text-lg">
           FilmRAID delivers pre-configured RAID systems tailored for digital cinema and
@@ -135,15 +99,17 @@ const ValueProposition = () => {
           <div className="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
             <h3 className="mb-4 text-xl font-semibold text-black dark:text-white">Fast Delivery</h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Order today, assembled and shipped in 2 days—no inventory delays.
+              Order today, assembled and shipped in 3 days—no inventory delays.
             </p>
           </div>
           <div className="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
             <h3 className="mb-4 text-xl font-semibold text-black dark:text-white">
-              Cinema Expertise
+              Reliable Support
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Backed by DIT World experience, optimized for filmmakers' needs.
+              All FilmRAID systems come with a limited factory warranty covering hardware defects.
+              We provide expert support and assist with warranty claims if needed to ensure a smooth
+              customer experience.
             </p>
           </div>
         </div>
