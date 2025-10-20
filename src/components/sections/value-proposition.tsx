@@ -93,7 +93,7 @@ const ValueProposition = () => {
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
               RAID 0 to RAID 6 setups ensure blazing-fast transfers up to 3000MB/s, perfect for 8K
-              workflows.
+              workflows. Available in 18TB to 24TB options with enterprise-grade HDDs.
             </p>
           </div>
           <div className="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">

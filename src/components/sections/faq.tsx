@@ -28,6 +28,11 @@ const faqData = [
       'Yes, our systems support high-speed interfaces like Thunderbolt 3, NVMe, SAS, Fibre, iSCSI, and USB4, making them ideal for digital cinema cameras, editing software, and post-production setups.',
   },
   {
+    question: 'What storage capacities are available?',
+    answer:
+      'Our systems offer flexible configurations from 18TB to 24TB options with enterprise-grade HDDs, scalable up to 264TB depending on the bay count and RAID level.',
+  },
+  {
     question: 'Do you offer a warranty?',
     answer:
       'All FilmRAID systems come with a limited factory warranty covering hardware defects. We provide expert support and assist with warranty claims if needed to ensure a smooth customer experience.',
