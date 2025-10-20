@@ -83,8 +83,8 @@ const ValueProposition = () => {
         </motion.h2>
         <p className="mb-12 text-center text-lg">
           FilmRAID delivers pre-configured RAID systems tailored for digital cinema and
-          post-production. With 3-day EU delivery, high-speed interfaces like Thunderbolt and PCIe,
-          and robust security, focus on creating—not managing data.
+          post-production. With 3-day EU delivery, high-speed interfaces like Thunderbolt 3 and
+          USB4, and robust security, focus on creating—not managing data.
         </p>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           <div className="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">

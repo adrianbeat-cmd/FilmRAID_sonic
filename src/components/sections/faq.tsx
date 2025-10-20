@@ -25,7 +25,7 @@ const faqData = [
   {
     question: 'Are your RAID systems compatible with film equipment?',
     answer:
-      'Yes, our systems support high-speed interfaces like Thunderbolt 3, NVMe, SAS, Fibre, iSCSI, and PCIe, making them ideal for digital cinema cameras, editing software, and post-production setups.',
+      'Yes, our systems support high-speed interfaces like Thunderbolt 3, NVMe, SAS, Fibre, iSCSI, and USB4, making them ideal for digital cinema cameras, editing software, and post-production setups.',
   },
   {
     question: 'Do you offer a warranty?',
