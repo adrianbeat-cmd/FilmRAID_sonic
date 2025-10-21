@@ -23,8 +23,7 @@ const benefits = [
     icon: <Shield className="size-6" />,
     value: 'Expert-Backed Reliability',
     description:
-      'Built on years of DIT World expertise, ensuring top-tier quality and ' +
-      'support for filmmakers.',
+      'Built on years of expertise, ensuring top-tier quality and ' + 'support for filmmakers.',
   },
 ];
 
