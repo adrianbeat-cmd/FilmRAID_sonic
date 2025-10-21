@@ -231,7 +231,8 @@ const ConfigsPage = () => {
   return (
     <section className="section-padding container">
       <div className="flex flex-col gap-8 md:grid md:grid-cols-2 md:gap-8">
-        <div className="order-1 md:sticky md:top-0 md:col-start-1 md:row-start-1">
+        {/* IMAGES — mobile first */}
+        <div className="order-1 md:sticky md:top-0 md:order-none md:col-start-1 md:row-start-1">
           <h2 className="mb-4 text-left text-3xl font-bold text-black md:text-right dark:text-white">
             {currentModel.name}
           </h2>
@@ -256,7 +257,9 @@ const ConfigsPage = () => {
             ))}
           </div>
         </div>
-        <div className="order-2 md:col-start-2 md:row-start-1">
+
+        {/* CONFIGURATOR — sits under images on mobile */}
+        <div className="order-2 md:order-none md:col-start-2 md:row-start-1">
           <h2 className="mb-8 text-left text-3xl font-bold text-black dark:text-white">
             Customize your FilmRaid
           </h2>
@@ -302,7 +305,9 @@ const ConfigsPage = () => {
             </Link>
           </Button>
         </div>
-        <div className="order-3 flex flex-col gap-4 md:col-start-1 md:row-start-2">
+
+        {/* DESCRIPTION — after configurator on mobile */}
+        <div className="order-3 flex flex-col gap-4 md:order-none md:col-start-1 md:row-start-2">
           <Card className="dark:bg-gray-800">
             <CardContent className="p-6">
               <h3 className="mb-2 text-xl font-bold text-black dark:text-white">Overview</h3>
