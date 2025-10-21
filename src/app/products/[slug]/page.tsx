@@ -5,7 +5,10 @@ import ProductClient from './ProductClient';
 interface Params {
   slug: string;
 }
-// Model data with images, back images, descriptions, and specs
+
+/**
+ * Model data with images, back images, descriptions, and specs
+ */
 const modelData = [
   {
     name: 'FilmRaid-4A',
@@ -147,34 +150,39 @@ const modelData = [
   },
 ];
 
-// Capacity options
+/**
+ * Capacity options
+ */
 const capacityOptions = [
   { tb: 18, prices: [2949, 4279, 5239, 7589] },
   { tb: 20, prices: [3129, 4549, 5599, 8129] },
   { tb: 22, prices: [3219, 4679, 5779, 8399] },
 ];
 
-interface Params {
-  slug: string;
-}
+type PageProps = {
+  params: Promise<Params>;
+};
 
-const ProductPage = ({ params }: { params: Params }) => {
-  const { slug } = params;
+const ProductPage = async ({ params }: PageProps) => {
+  const { slug } = await params;
 
   // Parse slug, e.g., 'filmraid-4a-72tb'
   const parts = slug.toLowerCase().split('-');
   if (parts.length !== 3) notFound();
-  const modelLower = 'filmraid-' + parts[1];
+
+  const modelLower = `filmraid-${parts[1]}`;
   const capacityStr = parts[2].replace('tb', '');
-  const totalTb = parseInt(capacityStr);
-  if (isNaN(totalTb)) notFound();
+  const totalTb = Number.parseInt(capacityStr, 10);
+  if (Number.isNaN(totalTb)) notFound();
 
   const selectedModel = modelData.findIndex((m) => m.name.toLowerCase() === modelLower);
   if (selectedModel === -1) notFound();
 
   const currentModel = modelData[selectedModel];
   const hdd = currentModel.hddCount;
+
   if (totalTb % hdd !== 0) notFound();
+
   const perDriveTb = totalTb / hdd;
 
   const selectedCapacity = capacityOptions.findIndex((c) => c.tb === perDriveTb);
@@ -203,7 +211,7 @@ const ProductPage = ({ params }: { params: Params }) => {
     offers: {
       '@type': 'Offer',
       priceCurrency: 'EUR',
-      price: price,
+      price,
       availability: 'http://schema.org/InStock',
       url: `https://www.filmraid.pro/products/${currentModel.name.toLowerCase()}-${raid0}tb`,
     },
@@ -235,6 +243,7 @@ const ProductPage = ({ params }: { params: Params }) => {
       >
         Add to Cart
       </button>
+
       <ProductClient
         currentModel={currentModel}
         tb={perDriveTb}
