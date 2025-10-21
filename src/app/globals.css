@@ -415,3 +415,14 @@ html.snipcart-modal-open .snipcart-overlay {
     min-width: 160px !important;
   }
 }
+
+/* ---------- reCAPTCHA (Enterprise) Badge Handling ---------- */
+/* We hide the floating badge globally (allowed if attribution text is shown near the form). */
+.grecaptcha-badge {
+  visibility: hidden !important;
+}
+
+/* Helper: if you ever need to show it on a specific page, add `show-recaptcha-badge` to <html>. */
+html.show-recaptcha-badge .grecaptcha-badge {
+  visibility: visible !important;
+}

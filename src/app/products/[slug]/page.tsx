@@ -2,6 +2,9 @@ import { notFound } from 'next/navigation';
 
 import ProductClient from './ProductClient';
 
+interface Params {
+  slug: string;
+}
 // Model data with images, back images, descriptions, and specs
 const modelData = [
   {
@@ -155,9 +158,8 @@ interface Params {
   slug: string;
 }
 
-const ProductPage = async ({ params }: { params: Promise<Params> }) => {
-  const resolvedParams = await params;
-  const { slug } = resolvedParams;
+const ProductPage = ({ params }: { params: Params }) => {
+  const { slug } = params;
 
   // Parse slug, e.g., 'filmraid-4a-72tb'
   const parts = slug.toLowerCase().split('-');

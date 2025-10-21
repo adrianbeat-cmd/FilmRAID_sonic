@@ -166,21 +166,23 @@ export default function Contact() {
 
       <Card className="mx-auto max-w-md dark:bg-gray-800">
         <CardContent className="space-y-6 p-6">
-          {/* inline success/error notice */}
-          {notice.msg && (
-            <div
-              className={`rounded-md border p-3 text-sm ${
-                notice.type === 'success'
-                  ? 'border-green-200 bg-green-50 text-green-700'
-                  : 'border-red-200 bg-red-50 text-red-700'
-              }`}
-              role={notice.type === 'success' ? 'status' : 'alert'}
-            >
-              {notice.msg}
-            </div>
-          )}
+          {/* Live region for notices (a11y) */}
+          <div aria-live="polite" aria-atomic="true">
+            {notice.msg && (
+              <div
+                className={`rounded-md border p-3 text-sm ${
+                  notice.type === 'success'
+                    ? 'border-green-200 bg-green-50 text-green-700'
+                    : 'border-red-200 bg-red-50 text-red-700'
+                }`}
+                role={notice.type === 'success' ? 'status' : 'alert'}
+              >
+                {notice.msg}
+              </div>
+            )}
+          </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
             <div className="space-y-2">
               <Label htmlFor="name" className="dark:text-white">
                 Your Name
@@ -200,9 +202,16 @@ export default function Contact() {
               </Label>
               <Input
                 id="email"
-                {...register('email', { required: 'Email is required' })}
                 type="email"
-                placeholder="Your Email"
+                {...register('email', {
+                  required: 'Email is required',
+                  pattern: {
+                    value:
+                      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@(([^<>()[\]\\.,;:\s@"]+\.)+[^<>()[\]\\.,;:\s@"]{2,})$/i,
+                    message: 'Please enter a valid email',
+                  },
+                })}
+                placeholder="your@email.com"
                 className="dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
               />
               {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
@@ -214,8 +223,11 @@ export default function Contact() {
               </Label>
               <Textarea
                 id="message"
-                {...register('message', { required: 'Message is required' })}
-                placeholder="Your Message"
+                {...register('message', {
+                  required: 'Message is required',
+                  minLength: { value: 10, message: 'Message is too short' },
+                })}
+                placeholder="Tell us what you need…"
                 className="h-32 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
               />
               {errors.message && <p className="text-sm text-red-500">{errors.message.message}</p>}
@@ -225,7 +237,8 @@ export default function Contact() {
               {isSubmitting ? 'Sending...' : 'Send Message'}
             </Button>
 
-            <p className="text-muted-foreground mt-2 text-xs leading-snug">
+            {/* Required attribution for hiding the global reCAPTCHA badge */}
+            <p className="text-muted-foreground mt-2 text-center text-xs leading-snug">
               This site is protected by reCAPTCHA and the Google{' '}
               <a
                 href="https://policies.google.com/privacy"
