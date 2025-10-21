@@ -231,8 +231,8 @@ const ConfigsPage = () => {
   return (
     <section className="section-padding container">
       <div className="flex flex-col gap-8 md:grid md:grid-cols-2 md:gap-8">
-        {/* IMAGES — mobile first */}
-        <div className="order-1 md:sticky md:top-0 md:order-none md:col-start-1 md:row-start-1">
+        {/* LEFT column — images (scrolls normally on desktop) */}
+        <div className="order-1 md:col-start-1 md:row-start-1">
           <h2 className="mb-4 text-left text-3xl font-bold text-black md:text-right dark:text-white">
             {currentModel.name}
           </h2>
@@ -258,11 +258,12 @@ const ConfigsPage = () => {
           </div>
         </div>
 
-        {/* CONFIGURATOR — sits under images on mobile */}
-        <div className="order-2 md:order-none md:col-start-2 md:row-start-1">
+        {/* RIGHT column — configurator (sticky on desktop) */}
+        <div className="order-2 md:sticky md:top-6 md:col-start-2 md:row-start-1 md:h-fit">
           <h2 className="mb-8 text-left text-3xl font-bold text-black dark:text-white">
             Customize your FilmRaid
           </h2>
+
           <Tabs
             defaultValue="FilmRaid-4A"
             onValueChange={(value) =>
@@ -276,7 +277,9 @@ const ConfigsPage = () => {
               <TabsTrigger value="FilmRaid-12E">12E</TabsTrigger>
             </TabsList>
           </Tabs>
+
           <h3 className="mt-8 text-2xl font-bold text-black dark:text-white">Storage</h3>
+
           <RadioGroup
             className="mt-4 space-y-4"
             value={selectedCapacity.toString()}
@@ -298,7 +301,9 @@ const ConfigsPage = () => {
               </div>
             ))}
           </RadioGroup>
+
           <p className="mt-8 text-2xl font-bold text-black dark:text-white">Total: €{price}</p>
+
           <Button className="mt-4 w-full" asChild>
             <Link href={`/products/${currentModel.name.toLowerCase()}-${raid0}tb`}>
               Go to Product Page
@@ -306,14 +311,15 @@ const ConfigsPage = () => {
           </Button>
         </div>
 
-        {/* DESCRIPTION — after configurator on mobile */}
-        <div className="order-3 flex flex-col gap-4 md:order-none md:col-start-1 md:row-start-2">
+        {/* BOTTOM — description/specs (comes after configurator on mobile) */}
+        <div className="order-3 flex flex-col gap-4 md:col-start-1 md:row-start-2">
           <Card className="dark:bg-gray-800">
             <CardContent className="p-6">
               <h3 className="mb-2 text-xl font-bold text-black dark:text-white">Overview</h3>
               <p className="text-gray-600 dark:text-gray-300">{currentModel.description}</p>
             </CardContent>
           </Card>
+
           <Card className="dark:bg-gray-800">
             <CardContent className="p-6">
               <h3 className="mb-2 text-xl font-bold text-black dark:text-white">
