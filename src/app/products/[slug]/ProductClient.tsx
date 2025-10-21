@@ -51,7 +51,7 @@ interface ProductClientProps {
     hddCount: number;
     image: string;
     back_image: string;
-    description: React.ReactNode;
+    description: string | React.ReactNode; // ✅ allow both
     specs: { label: string; value: string | string[] }[];
   };
   tb: number;
