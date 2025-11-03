@@ -27,7 +27,7 @@
               id="vatNumber"
               name="vatNumber"
               placeholder="e.g. ESB10680478"
-              pattern="^[A-Z]{2}[A-Za-z0-9]{8,14}$"
+              pattern="^[A-Z]{2}[A-Z0-9]{8,12}$"
               style="padding-left: 0.75rem"
             ></snipcart-input>
             <snipcart-field-error name="vatNumber"></snipcart-field-error>
@@ -36,6 +36,12 @@
               class="snipcart__font--tiny"
               style="display: block; margin: 0.25rem 0 0.75rem"
             ></small>
+            <small
+              class="snipcart__font--tiny"
+              style="display: block; margin-top: 0.25rem; color: #6b7280"
+            >
+              Optional for B2B. Leave blank for B2C.
+            </small>
           </snipcart-field>
 
           <!-- Phone (required) -->
@@ -121,19 +127,19 @@
             <!-- Taxes/VAT/IVA: single, always-present row -->
             <div class="snipcart-cart-summary-fees__item snipcart__font--slim">
               <span class="snipcart-cart-summary-fees__title">
-                {{ (function () { var C = (cart &amp;&amp; cart.shippingAddress &amp;&amp;
-                cart.shippingAddress.country) || (cart &amp;&amp; cart.billingAddress &amp;&amp;
+                {{ (function () { var C = (cart && cart.shippingAddress &&
+                cart.shippingAddress.country) || (cart && cart.billingAddress &&
                 cart.billingAddress.country) || ''; var EU = [
                 'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT',
                 'LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE' ]; var label = C ===
                 'ES' ? 'IVA' : EU.indexOf(C) !== -1 ? 'VAT' : 'Taxes'; var T = taxes || []; var
-                positive = T.filter(function (t) { return t &amp;&amp; t.rate &gt; 0; }); var pct =
+                positive = T.filter(function (t) { return t && t.rate > 0; }); var pct =
                 positive.length === 1 ? Math.round(positive[0].rate * 100) : null; return label +
                 (pct ? ' (' + pct + '%)' : ''); })() }}
               </span>
               <span class="snipcart-cart-summary-fees__amount">
-                {{ ((taxes &amp;&amp; taxes.length) ? taxes.reduce(function (a, t) { return a + ((t
-                &amp;&amp; t.amount) || 0); }, 0) : 0) | money(cart.currency) }}
+                {{ ((taxes && taxes.length) ? taxes.reduce(function (a, t) { return a + ((t &&
+                t.amount) || 0); }, 0) : 0) | money(cart.currency) }}
               </span>
             </div>
 
@@ -169,7 +175,7 @@
               document.querySelector('input[type="email"]') ||
               (function () {
                 var host = document.querySelector('snipcart-input[name="email"]');
-                return host &amp;&amp; host.shadowRoot
+                return host && host.shadowRoot
                   ? host.shadowRoot.querySelector('input[type="email"]')
                   : null;
               })();
@@ -209,19 +215,46 @@
           window.fetch = new Proxy(_fetch, {
             apply(target, thisArg, args) {
               const url = typeof args[0] === 'string' ? args[0] : args[0]?.url;
-              if (url &amp;&amp; url.includes('/account/easypost/addresses')) {
+              if (url && url.includes('/account/easypost/addresses')) {
                 console.warn('Blocked EasyPost call:', url);
                 return Promise.resolve(
-                  new Response(JSON.stringify({ address: { street1: '', city: '', country: '' } }), {
-                    status: 200,
-                    headers: { 'Content-Type': 'application/json' },
-                  }),
+                  new Response(
+                    JSON.stringify({ address: { street1: '', city: '', country: '' } }),
+                    {
+                      status: 200,
+                      headers: { 'Content-Type': 'application/json' },
+                    },
+                  ),
                 );
               }
               return Reflect.apply(target, thisArg, args);
             },
           });
         })();
+      </script>
+
+      <!-- Live VAT format feedback -->
+      <script>
+        document.addEventListener('snipcart.ready', () => {
+          const vatInput = document.querySelector('#vatNumber');
+          if (!vatInput) return;
+
+          vatInput.addEventListener('blur', () => {
+            const val = vatInput.value.trim().toUpperCase();
+            const msg = document.getElementById('vat-message');
+            if (!val) {
+              msg.textContent = '';
+              return;
+            }
+            if (!/^[A-Z]{2}[A-Z0-9]{8,12}$/.test(val)) {
+              msg.textContent = 'Invalid format. Example: ESB10680478';
+              msg.style.color = '#ef4444';
+            } else {
+              msg.textContent = 'Valid format';
+              msg.style.color = '#16a34a';
+            }
+          });
+        });
       </script>
     </div>
   </div>
