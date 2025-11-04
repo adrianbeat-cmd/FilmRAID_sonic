@@ -187,25 +187,25 @@ const modelData = [
   },
 ];
 
-// Capacity options
+// Capacity options – NEW PRICES
 const capacityOptions = [
   {
     tb: 18,
     raid0: (hdd: number) => hdd * 18,
     raid5: (hdd: number) => (hdd - 1) * 18,
-    prices: [2949, 4279, 5239, 7589],
+    prices: [3129, 4549, 5599, 8129],
   },
   {
     tb: 20,
     raid0: (hdd: number) => hdd * 20,
     raid5: (hdd: number) => (hdd - 1) * 20,
-    prices: [3129, 4549, 5599, 8129],
+    prices: [3199, 4649, 5749, 8349],
   },
   {
     tb: 22,
     raid0: (hdd: number) => hdd * 22,
     raid5: (hdd: number) => (hdd - 1) * 22,
-    prices: [3219, 4679, 5779, 8399],
+    prices: [3369, 4909, 6079, 8849],
   },
 ];
 
@@ -213,13 +213,11 @@ const ConfigsPage = () => {
   const [selectedModel, setSelectedModel] = useState(0);
   const [selectedCapacity, setSelectedCapacity] = useState(0);
   const [selectedImage, setSelectedImage] = useState(0);
-
   const currentModel = modelData[selectedModel];
   const currentCapacity = capacityOptions[selectedCapacity];
   const hdd = currentModel.hddCount;
   const raid0 = currentCapacity.raid0(hdd);
   const price = currentCapacity.prices[selectedModel];
-
   const images = [currentModel.image, currentModel.back_image];
 
   const getIncrement = (optionPrice: number) => {
