@@ -73,18 +73,10 @@ exports.handler = async (event) => {
 
     const isEU = EU.has(country);
 
-    // Validate VAT only for EU (non-ES)
+    // Validate VAT only for EU (non-ES) - regex only
     let validVat = false;
     if (isEU && country !== 'ES' && /^[A-Z]{2}[A-Z0-9]{8,14}$/.test(vatNumber)) {
-      try {
-        const r = await fetch(
-          `https://api.vatcomply.com/vat?vat_number=${encodeURIComponent(vatNumber)}`,
-        );
-        const j = await r.json();
-        validVat = !!j.valid;
-      } catch {
-        validVat = false; // fail closed
-      }
+      validVat = true;
     }
 
     // Rate logic
