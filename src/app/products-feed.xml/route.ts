@@ -1,9 +1,7 @@
 // src/app/products-feed.xml/route.ts
 export const dynamic = 'force-static';
 export const revalidate = 3600;
-
 const SITE = 'https://www.filmraid.pro';
-
 const backImg = (url: string) => url.replace(/(\.(jpg|jpeg|png|webp))$/i, '_back$1');
 
 type Sku = {
@@ -23,7 +21,7 @@ const PRODUCTS: Sku[] = [
     id: 'FR-4A-72',
     title: 'FilmRAID-4A – 72 TB',
     url: `${SITE}/products/filmraid-4a-72tb`,
-    priceEUR: 2949,
+    priceEUR: 3129,
     image: `${SITE}/layout/FilmRaid-4A.jpg`,
     shippingWeightKg: 8.0,
     availability: 'in stock',
@@ -33,7 +31,7 @@ const PRODUCTS: Sku[] = [
     id: 'FR-4A-80',
     title: 'FilmRAID-4A – 80 TB',
     url: `${SITE}/products/filmraid-4a-80tb`,
-    priceEUR: 3129,
+    priceEUR: 3199,
     image: `${SITE}/layout/FilmRaid-4A.jpg`,
     shippingWeightKg: 8.0,
     availability: 'in stock',
@@ -43,7 +41,7 @@ const PRODUCTS: Sku[] = [
     id: 'FR-4A-88',
     title: 'FilmRAID-4A – 88 TB',
     url: `${SITE}/products/filmraid-4a-88tb`,
-    priceEUR: 3219,
+    priceEUR: 3369,
     image: `${SITE}/layout/FilmRaid-4A.jpg`,
     shippingWeightKg: 8.0,
     availability: 'in stock',
@@ -55,7 +53,7 @@ const PRODUCTS: Sku[] = [
     id: 'FR-6-108',
     title: 'FilmRAID-6 – 108 TB',
     url: `${SITE}/products/filmraid-6-108tb`,
-    priceEUR: 4279,
+    priceEUR: 4549,
     image: `${SITE}/layout/FilmRaid-6.jpg`,
     shippingWeightKg: 12.0,
     availability: 'in stock',
@@ -65,7 +63,7 @@ const PRODUCTS: Sku[] = [
     id: 'FR-6-120',
     title: 'FilmRAID-6 – 120 TB',
     url: `${SITE}/products/filmraid-6-120tb`,
-    priceEUR: 4549,
+    priceEUR: 4649,
     image: `${SITE}/layout/FilmRaid-6.jpg`,
     shippingWeightKg: 12.0,
     availability: 'in stock',
@@ -75,7 +73,7 @@ const PRODUCTS: Sku[] = [
     id: 'FR-6-132',
     title: 'FilmRAID-6 – 132 TB',
     url: `${SITE}/products/filmraid-6-132tb`,
-    priceEUR: 4679,
+    priceEUR: 4909,
     image: `${SITE}/layout/FilmRaid-6.jpg`,
     shippingWeightKg: 12.0,
     availability: 'in stock',
@@ -87,7 +85,7 @@ const PRODUCTS: Sku[] = [
     id: 'FR-8-144',
     title: 'FilmRAID-8 – 144 TB',
     url: `${SITE}/products/filmraid-8-144tb`,
-    priceEUR: 5239,
+    priceEUR: 5599,
     image: `${SITE}/layout/FilmRaid-8.jpg`,
     shippingWeightKg: 18.0,
     availability: 'in stock',
@@ -97,7 +95,7 @@ const PRODUCTS: Sku[] = [
     id: 'FR-8-160',
     title: 'FilmRAID-8 – 160 TB',
     url: `${SITE}/products/filmraid-8-160tb`,
-    priceEUR: 5599,
+    priceEUR: 5749,
     image: `${SITE}/layout/FilmRaid-8.jpg`,
     shippingWeightKg: 18.0,
     availability: 'in stock',
@@ -107,7 +105,7 @@ const PRODUCTS: Sku[] = [
     id: 'FR-8-176',
     title: 'FilmRAID-8 – 176 TB',
     url: `${SITE}/products/filmraid-8-176tb`,
-    priceEUR: 5779,
+    priceEUR: 6079,
     image: `${SITE}/layout/FilmRaid-8.jpg`,
     shippingWeightKg: 18.0,
     availability: 'in stock',
@@ -119,7 +117,7 @@ const PRODUCTS: Sku[] = [
     id: 'FR-12E-216',
     title: 'FilmRAID-12E – 216 TB',
     url: `${SITE}/products/filmraid-12e-216tb`,
-    priceEUR: 7589,
+    priceEUR: 8129,
     image: `${SITE}/layout/FilmRaid-12E.jpg`,
     shippingWeightKg: 22.0,
     availability: 'in stock',
@@ -129,7 +127,7 @@ const PRODUCTS: Sku[] = [
     id: 'FR-12E-240',
     title: 'FilmRAID-12E – 240 TB',
     url: `${SITE}/products/filmraid-12e-240tb`,
-    priceEUR: 8129,
+    priceEUR: 8349,
     image: `${SITE}/layout/FilmRaid-12E.jpg`,
     shippingWeightKg: 22.0,
     availability: 'in stock',
@@ -139,7 +137,7 @@ const PRODUCTS: Sku[] = [
     id: 'FR-12E-264',
     title: 'FilmRAID-12E – 264 TB',
     url: `${SITE}/products/filmraid-12e-264tb`,
-    priceEUR: 8399,
+    priceEUR: 8849,
     image: `${SITE}/layout/FilmRaid-12E.jpg`,
     shippingWeightKg: 22.0,
     availability: 'in stock',
@@ -224,7 +222,7 @@ function itemXml(p: Sku): string {
     <g:brand>FilmRAID</g:brand>
     <g:mpn>${p.id}</g:mpn>
     <g:shipping_weight>${p.shippingWeightKg.toFixed(1)} kg</g:shipping_weight>
-    ${shippingLines}
+${shippingLines}
   </item>`;
 }
 
