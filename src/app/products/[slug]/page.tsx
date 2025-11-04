@@ -154,9 +154,9 @@ const modelData = [
  * Capacity options
  */
 const capacityOptions = [
-  { tb: 18, prices: [2949, 4279, 5239, 7589] },
-  { tb: 20, prices: [3129, 4549, 5599, 8129] },
-  { tb: 22, prices: [3219, 4679, 5779, 8399] },
+  { tb: 18, prices: [3129, 4549, 5599, 8129] },
+  { tb: 20, prices: [3199, 4649, 5749, 8349] },
+  { tb: 22, prices: [3369, 4909, 6079, 8849] },
 ];
 
 type PageProps = {
