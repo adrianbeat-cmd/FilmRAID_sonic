@@ -1,4 +1,4 @@
-// netlify/functions/taxes.js
+// eenetlify/functions/taxes.js
 const EU = new Set([
   'AT',
   'BE',
