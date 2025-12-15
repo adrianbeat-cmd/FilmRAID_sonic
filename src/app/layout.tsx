@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     template: '%s | FilmRAID',
   },
   description:
-    'Custom RAID storage solutions for film productions. Secure, fast transfers with 2-day EU delivery, tailored for digital cinema workflows.',
+    'Custom RAID storage solutions for film productions. Secure, fast transfers with 3-day EU delivery, tailored for digital cinema workflows.',
   keywords: [
     'RAID storage',
     'film production',
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'FilmRAID - Fast & Reliable Storage for Filmmakers',
     description:
-      'Custom RAID storage solutions for film productions. Secure, fast transfers with 2-day EU delivery, tailored for digital cinema workflows.',
+      'Custom RAID storage solutions for film productions. Secure, fast transfers with 3-day EU delivery, tailored for digital cinema workflows.',
     siteName: 'FilmRAID',
     type: 'website',
     url: 'https://www.filmraid.pro',
@@ -80,7 +80,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'FilmRAID - Fast & Reliable Storage for Filmmakers',
     description:
-      'Custom RAID storage solutions for film productions. Secure, fast transfers with 2-day EU delivery, tailored for digital cinema workflows.',
+      'Custom RAID storage solutions for film productions. Secure, fast transfers with 3-day EU delivery, tailored for digital cinema workflows.',
     images: ['https://www.filmraid.pro/images/preview.jpg'],
     creator: '@filmraid',
   },
