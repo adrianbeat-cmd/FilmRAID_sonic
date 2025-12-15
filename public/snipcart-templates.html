@@ -1,14 +1,11 @@
 <div id="snipcart-templates-root">
-  <!-- SINGLE ROOT ELEMENT - required by Snipcart -->
   <div id="snipcart-templates">
-    <!-- Billing: Company + EU VAT + Phone -->
     <billing section="bottom">
       <fieldset class="snipcart-form__set">
-        <!-- Company (optional) -->
         <div class="snipcart-form__field">
-          <snipcart-label class="snipcart__font--tiny" for="company">
-            Company (optional)
-          </snipcart-label>
+          <snipcart-label class="snipcart__font--tiny" for="company"
+            >Company (optional)</snipcart-label
+          >
           <snipcart-input
             id="company"
             name="company"
@@ -17,11 +14,10 @@
           ></snipcart-input>
         </div>
 
-        <!-- EU VAT -->
         <snipcart-field name="vatNumber">
-          <snipcart-label class="snipcart__font--tiny" for="vatNumber">
-            EU VAT Number (optional)
-          </snipcart-label>
+          <snipcart-label class="snipcart__font--tiny" for="vatNumber"
+            >EU VAT Number (optional)</snipcart-label
+          >
           <snipcart-input
             id="vatNumber"
             name="vatNumber"
@@ -39,17 +35,15 @@
           <small
             class="snipcart__font--tiny"
             style="display: block; margin-top: 0.25rem; color: #6b7280"
+            >Optional for B2B. Leave blank for B2C.</small
           >
-            Optional for B2B. Leave blank for B2C.
-          </small>
         </snipcart-field>
 
-        <!-- Phone (required) -->
         <div id="fr-phone-field">
           <snipcart-field name="phone">
-            <snipcart-label class="snipcart__font--tiny" for="phone">
-              Phone (required)
-            </snipcart-label>
+            <snipcart-label class="snipcart__font--tiny" for="phone"
+              >Phone (required)</snipcart-label
+            >
             <snipcart-input
               id="phone"
               name="phone"
@@ -63,15 +57,13 @@
             <small
               class="snipcart__font--tiny"
               style="display: block; margin-top: 0.25rem; color: #6b7280"
+              >Required by the courier for delivery updates.</small
             >
-              Required by the courier for delivery updates.
-            </small>
           </snipcart-field>
         </div>
       </fieldset>
     </billing>
 
-    <!-- Order summary: ALWAYS render one IVA/VAT/Taxes row -->
     <cart-summary-fees>
       <div class="snipcart-cart-summary-fees">
         <div
@@ -82,7 +74,6 @@
         </div>
 
         <div class="snipcart-cart-summary-fees">
-          <!-- Discounts -->
           <div
             class="snipcart-cart-summary-fees__item snipcart-cart-summary-fees__discounts snipcart__font--slim"
             v-if="discountsTotal"
@@ -95,7 +86,6 @@
             >
           </div>
 
-          <!-- Subtotal -->
           <div class="snipcart-cart-summary-fees__item snipcart__font--slim" v-if="subtotal">
             <span class="snipcart-cart-summary-fees__title"
               >{{ $localize('cart_summary.subtotal') }}</span
@@ -105,7 +95,6 @@
             >
           </div>
 
-          <!-- Shipping -->
           <div
             class="snipcart-cart-summary-fees__item snipcart__font--slim"
             v-if="shipping.cost != null"
@@ -118,7 +107,6 @@
             >
           </div>
 
-          <!-- Taxes -->
           <div class="snipcart-cart-summary-fees__item snipcart__font--slim">
             <span class="snipcart-cart-summary-fees__title">
               {{ (function () { var C = (cart && cart.shippingAddress &&
@@ -136,7 +124,6 @@
             </span>
           </div>
 
-          <!-- Total -->
           <div
             class="snipcart-cart-summary-fees__item snipcart-cart-summary-fees__total snipcart__font--bold snipcart__font--secondary"
           >
@@ -155,7 +142,6 @@
       </div>
     </cart-summary-fees>
 
-    <!-- Scripts -->
     <div id="scripts-root">
       <script>
         (function () {
@@ -199,7 +185,6 @@
           }
           document.addEventListener('snipcart.ready', init);
 
-          // Block EasyPost (defensive)
           const originalFetch = window.fetch;
           window.fetch = function (...args) {
             const url = typeof args[0] === 'string' ? args[0] : args[0]?.url;
@@ -215,7 +200,6 @@
         })();
       </script>
 
-      <!-- VAT format feedback -->
       <script>
         document.addEventListener('snipcart.ready', () => {
           const vatInput = document.querySelector('#vatNumber');
