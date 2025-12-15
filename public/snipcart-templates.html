@@ -1,7 +1,7 @@
 <div id="snipcart-templates-root">
   <div id="snipcart-templates">
     <billing section="bottom">
-      <fieldset class="snipcart-form__set">
+      <div class="snipcart-form__set">
         <div class="snipcart-form__field">
           <snipcart-label class="snipcart__font--tiny" for="company"
             >Company (optional)</snipcart-label
@@ -61,7 +61,7 @@
             >
           </snipcart-field>
         </div>
-      </fieldset>
+      </div>
     </billing>
 
     <cart-summary-fees>
@@ -161,16 +161,18 @@
               emailInput.closest('.snipcart-form__field') || emailInput.closest('snipcart-field');
             if (!emailField) return;
 
-            emailField.parentNode.insertBefore(phone, emailField.nextSibling);
+            try {
+              emailField.parentNode.insertBefore(phone, emailField.nextSibling);
+            } catch (e) {
+              emailField.parentNode.appendChild(phone); // fallback
+            }
             phone.__moved = true;
           }
 
           function init() {
             movePhoneAfterEmail();
             if (window.Snipcart?.events?.on) {
-              window.Snipcart.events.on('theme.routechanged', () =>
-                setTimeout(movePhoneAfterEmail, 100),
-              );
+              window.Snipcart.events.on('theme.routechanged', movePhoneAfterEmail);
             }
             new MutationObserver(movePhoneAfterEmail).observe(document.body, {
               childList: true,
@@ -178,25 +180,10 @@
             });
           }
 
-          if (document.readyState === 'loading') {
+          if (document.readyState === 'loading')
             document.addEventListener('DOMContentLoaded', init);
-          } else {
-            init();
-          }
+          else init();
           document.addEventListener('snipcart.ready', init);
-
-          const originalFetch = window.fetch;
-          window.fetch = function (...args) {
-            const url = typeof args[0] === 'string' ? args[0] : args[0]?.url;
-            if (url && url.includes('/account/easypost/addresses')) {
-              return Promise.resolve(
-                new Response(JSON.stringify({ address: { street1: '', city: '', country: '' } }), {
-                  status: 200,
-                }),
-              );
-            }
-            return originalFetch.apply(this, args);
-          };
         })();
       </script>
 
