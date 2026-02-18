@@ -207,6 +207,18 @@ const Navbar = () => {
               onMouseLeave={handleMouseLeave}
             >
               <div className="mx-auto max-w-[1232px] px-4 py-2">
+                {/* View All Models button - clear and visible at the top */}
+                <div className="mb-6 flex justify-center">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    asChild
+                    className="w-full max-w-xs font-medium"
+                  >
+                    <Link href="/catalog">View All Models</Link>
+                  </Button>
+                </div>
+
                 <div className="flex flex-row justify-end gap-4">
                   {products.map((model, idx) => (
                     <motion.div
@@ -227,7 +239,7 @@ const Navbar = () => {
                           <li key={v.slug}>
                             <Link
                               href={`/products/${v.slug}`}
-                              className="block flex items-center gap-1 py-1 text-sm hover:opacity-80"
+                              className="block flex items-center gap-1 py-1 text-sm hover:opacity-80 [&_svg]:transition-transform hover:[&_svg]:translate-x-0.5"
                             >
                               {v.totalTB}TB <ChevronRight size={14} />
                             </Link>
@@ -236,13 +248,14 @@ const Navbar = () => {
                       </ul>
                     </motion.div>
                   ))}
+
                   <div className="mx-4 border-r border-gray-200 dark:border-gray-700" />
                   <motion.div
                     variants={thumbnailVariants}
                     className="flex min-w-[140px] items-center"
                   >
                     <Button variant="outline" size="lg" className="rounded-full text-sm" asChild>
-                      <Link href="/configs">
+                      <Link href="/configs" onClick={() => setIsMenuOpen(false)}>
                         Configure <ChevronRight size={16} />
                       </Link>
                     </Button>
