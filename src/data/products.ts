@@ -15,7 +15,7 @@ export type ProductModel = {
   name: string;
   hddCount: number;
   image: string;
-  backImage: string;
+  back_image: string; // ← fixed to match ProductClient
   description: string;
   specs: Array<{ label: string; value: string | string[] }>;
   variants: ProductVariant[];
@@ -27,7 +27,7 @@ export const products: ProductModel[] = [
     name: 'FilmRaid-4A',
     hddCount: 4,
     image: '/layout/filmraid-4a.jpg',
-    backImage: '/layout/FilmRaid-4A_back.jpg',
+    back_image: '/layout/FilmRaid-4A_back.jpg',
     description:
       '4-bay portable tower RAID system with dual Thunderbolt 3 ports for up to 40Gb/s transfers. Supports SAS/SATA drives, RAID 0/1/1E/3/5/6/10, DisplayPort, USB-A. Ideal for compact, high-speed film workflows.',
     specs: [
@@ -92,7 +92,7 @@ export const products: ProductModel[] = [
     name: 'FilmRaid-6',
     hddCount: 6,
     image: '/layout/filmraid-6.jpg',
-    backImage: '/layout/FilmRaid-6_back.jpg',
+    back_image: '/layout/FilmRaid-6_back.jpg',
     description:
       '6-bay desktop RAID system with dual core processor and 2GB DDR3 ECC memory. Supports 4K/6K/8K workflows, RAID 0/1/1E/3/5/6/10/30/50/60, low-noise fan, 180W power.',
     specs: [
@@ -159,7 +159,7 @@ export const products: ProductModel[] = [
     name: 'FilmRaid-8',
     hddCount: 8,
     image: '/layout/filmraid-8.jpg',
-    backImage: '/layout/FilmRaid-8_back.jpg',
+    back_image: '/layout/FilmRaid-8_back.jpg',
     description:
       '8-bay tower RAID system with dual core processor and 2GB DDR3 ECC memory. Thunderbolt 3 up to 40Gb/s, DisplayPort 1.4 for 8K 30Hz, RAID 0/1/1E/3/5/6/10/30/50/60.',
     specs: [
@@ -226,7 +226,7 @@ export const products: ProductModel[] = [
     name: 'FilmRaid-12E',
     hddCount: 12,
     image: '/layout/filmraid-12e.jpg',
-    backImage: '/layout/FilmRaid-12E_back.jpg',
+    back_image: '/layout/FilmRaid-12E_back.jpg',
     description:
       '12-bay tower RAID system (two-box shipment) with dual core processor and 8GB DDR4 ECC memory. Thunderbolt 3 up to 40Gb/s, DisplayPort 1.4 for 8K 30Hz, RAID 0/1/1E/3/5/6/10/30/50/60.',
     specs: [
