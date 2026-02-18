@@ -27,7 +27,7 @@ const Navbar = () => {
   const [direction, setDirection] = useState<'forward' | 'back'>('forward');
   const pathname = usePathname();
 
-  // Dynamic Products menu
+  // Dynamic Products (includes 24TB)
   const dynamicProducts = products.map((model, idx) => ({
     label: model.name,
     children: model.variants.map((v) => ({
@@ -56,7 +56,7 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [scrollPos]);
 
-  // Mobile menu body lock
+  // Mobile menu lock
   useEffect(() => {
     if (isMenuOpen) {
       document.documentElement.style.overflow = 'hidden';
@@ -84,33 +84,27 @@ const Navbar = () => {
 
   const currentMenu = menuStack[menuStack.length - 1] || [];
 
-  // Desktop render
-  const renderDesktopNav = (item: any) => {
-    if (!item.children) {
-      return (
-        <li key={item.label} className="flex items-center">
-          <Button variant="ghost" className="px-5.5 text-sm">
-            <Link href={item.href!} className="font-semibold transition-all hover:opacity-80">
-              {item.label}
-            </Link>
-          </Button>
-        </li>
-      );
-    }
-    return (
-      <li key={item.label} className="relative">
-        <div
-          className="relative inline-block"
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-        >
-          <Button variant="ghost" className="px-5.5 text-sm">
-            <span className="font-semibold">{item.label}</span>
-          </Button>
-        </div>
-      </li>
-    );
+  // Animation definitions
+  const menuVariants = {
+    closed: { opacity: 0, y: -20, transition: { duration: 0.6 } },
+    open: { opacity: 1, y: 0, transition: { duration: 0.3, staggerChildren: 0.1 } },
   };
+
+  const thumbnailVariants = {
+    closed: { opacity: 0, y: 10 },
+    open: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+  };
+
+  const blurVariants = {
+    closed: { opacity: 0 },
+    open: { opacity: 1, transition: { duration: 0.4 } },
+  };
+
+  const getPanelVariants = () => ({
+    enter: { x: direction === 'forward' ? '100%' : '-100%', opacity: 0 },
+    center: { x: 0, opacity: 1 },
+    exit: { x: direction === 'forward' ? '-100%' : '100%', opacity: 0 },
+  });
 
   return (
     <>
@@ -142,7 +136,29 @@ const Navbar = () => {
 
           <nav className="flex flex-1 justify-center">
             <ul className="m-0 hidden items-center gap-0 p-0 md:flex">
-              {ITEMS.map(renderDesktopNav)}
+              {ITEMS.map((item) => (
+                <li key={item.label} className="relative">
+                  {item.href ? (
+                    <Button variant="ghost" className="px-5.5 text-sm">
+                      <Link
+                        href={item.href}
+                        className="font-semibold transition-all hover:opacity-80"
+                      >
+                        {item.label}
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      className="px-5.5 text-sm"
+                      onMouseEnter={handleMouseEnter}
+                      onMouseLeave={handleMouseLeave}
+                    >
+                      <span className="font-semibold">{item.label}</span>
+                    </Button>
+                  )}
+                </li>
+              ))}
             </ul>
           </nav>
 
@@ -150,7 +166,7 @@ const Navbar = () => {
             <ThemeToggle />
             <Button
               variant="ghost"
-              className="snipcart-checkout hover:text-primary px-5.5 text-sm transition-transform hover:scale-105 hover:bg-[#f7f7f7] hover:opacity-90 dark:hover:bg-[#2a2a2a]"
+              className="snipcart-checkout hover:text-primary px-5.5 text-sm transition-transform hover:scale-105"
             >
               <ShoppingCart size={16} className="mr-1" />
               <span className="snipcart-items-count"></span>
@@ -176,7 +192,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Desktop Dropdown with 24TB */}
+        {/* Desktop Dropdown - includes 24TB */}
         <AnimatePresence>
           {isProductsOpen && (
             <motion.div
@@ -211,7 +227,7 @@ const Navbar = () => {
                           <li key={v.slug}>
                             <Link
                               href={`/products/${v.slug}`}
-                              className="block flex items-center gap-1 py-1 text-sm hover:opacity-80 [&_svg]:transition-transform hover:[&_svg]:translate-x-0.5"
+                              className="block flex items-center gap-1 py-1 text-sm hover:opacity-80"
                             >
                               {v.totalTB}TB <ChevronRight size={14} />
                             </Link>
@@ -226,7 +242,7 @@ const Navbar = () => {
                     className="flex min-w-[140px] items-center"
                   >
                     <Button variant="outline" size="lg" className="rounded-full text-sm" asChild>
-                      <Link href="/configs" onClick={() => setIsMenuOpen(false)}>
+                      <Link href="/configs">
                         Configure <ChevronRight size={16} />
                       </Link>
                     </Button>
@@ -306,7 +322,6 @@ const Navbar = () => {
   );
 };
 
-// Panel variants for mobile menu
 const getPanelVariants = () => ({
   enter: { x: '100%', opacity: 0 },
   center: { x: 0, opacity: 1 },
