@@ -1,5 +1,5 @@
 // src/data/products.ts
-// SINGLE SOURCE OF TRUTH — edit only this file when prices change
+// SINGLE SOURCE OF TRUTH — only edit this file when prices change
 
 export type ProductVariant = {
   slug: string;
@@ -15,7 +15,7 @@ export type ProductModel = {
   name: string;
   hddCount: number;
   image: string;
-  back_image: string; // ← fixed to match ProductClient
+  back_image: string;
   description: string;
   specs: Array<{ label: string; value: string | string[] }>;
   variants: ProductVariant[];
@@ -29,7 +29,7 @@ export const products: ProductModel[] = [
     image: '/layout/filmraid-4a.jpg',
     back_image: '/layout/FilmRaid-4A_back.jpg',
     description:
-      '4-bay portable tower RAID system with dual Thunderbolt 3 ports for up to 40Gb/s transfers. Supports SAS/SATA drives, RAID 0/1/1E/3/5/6/10, DisplayPort, USB-A. Ideal for compact, high-speed film workflows.',
+      '4-bay portable tower RAID system with dual Thunderbolt 3 ports for up to 40Gb/s transfers.',
     specs: [
       { label: 'Bays', value: '4 x 3.5"/2.5" SAS/SATA' },
       {
@@ -56,7 +56,7 @@ export const products: ProductModel[] = [
         slug: 'filmraid-4a-72tb',
         totalTB: 72,
         perDriveTB: 18,
-        priceEUR: 3129,
+        priceEUR: 3562.5,
         raid0TB: 72,
         raid5TB: 54,
       },
@@ -64,7 +64,7 @@ export const products: ProductModel[] = [
         slug: 'filmraid-4a-80tb',
         totalTB: 80,
         perDriveTB: 20,
-        priceEUR: 3199,
+        priceEUR: 3742.5,
         raid0TB: 80,
         raid5TB: 60,
       },
@@ -72,7 +72,7 @@ export const products: ProductModel[] = [
         slug: 'filmraid-4a-88tb',
         totalTB: 88,
         perDriveTB: 22,
-        priceEUR: 3369,
+        priceEUR: 3922.5,
         raid0TB: 88,
         raid5TB: 66,
       },
@@ -80,10 +80,10 @@ export const products: ProductModel[] = [
         slug: 'filmraid-4a-96tb',
         totalTB: 96,
         perDriveTB: 24,
-        priceEUR: 4905,
+        priceEUR: 4942.5,
         raid0TB: 96,
         raid5TB: 72,
-      }, // ← NEW 24TB
+      },
     ],
   },
 
@@ -93,8 +93,7 @@ export const products: ProductModel[] = [
     hddCount: 6,
     image: '/layout/filmraid-6.jpg',
     back_image: '/layout/FilmRaid-6_back.jpg',
-    description:
-      '6-bay desktop RAID system with dual core processor and 2GB DDR3 ECC memory. Supports 4K/6K/8K workflows, RAID 0/1/1E/3/5/6/10/30/50/60, low-noise fan, 180W power.',
+    description: '6-bay desktop RAID system with dual core processor and 2GB DDR3 ECC memory.',
     specs: [
       { label: 'Bays', value: '6 x 3.5"/2.5" SAS/SATA' },
       {
@@ -123,7 +122,7 @@ export const products: ProductModel[] = [
         slug: 'filmraid-6-108tb',
         totalTB: 108,
         perDriveTB: 18,
-        priceEUR: 4549,
+        priceEUR: 5220,
         raid0TB: 108,
         raid5TB: 90,
       },
@@ -131,7 +130,7 @@ export const products: ProductModel[] = [
         slug: 'filmraid-6-120tb',
         totalTB: 120,
         perDriveTB: 20,
-        priceEUR: 4649,
+        priceEUR: 5490,
         raid0TB: 120,
         raid5TB: 100,
       },
@@ -139,7 +138,7 @@ export const products: ProductModel[] = [
         slug: 'filmraid-6-132tb',
         totalTB: 132,
         perDriveTB: 22,
-        priceEUR: 4909,
+        priceEUR: 5760,
         raid0TB: 132,
         raid5TB: 110,
       },
@@ -147,10 +146,10 @@ export const products: ProductModel[] = [
         slug: 'filmraid-6-144tb',
         totalTB: 144,
         perDriveTB: 24,
-        priceEUR: 7245,
+        priceEUR: 7290,
         raid0TB: 144,
         raid5TB: 120,
-      }, // ← NEW 24TB
+      },
     ],
   },
 
@@ -160,8 +159,7 @@ export const products: ProductModel[] = [
     hddCount: 8,
     image: '/layout/filmraid-8.jpg',
     back_image: '/layout/FilmRaid-8_back.jpg',
-    description:
-      '8-bay tower RAID system with dual core processor and 2GB DDR3 ECC memory. Thunderbolt 3 up to 40Gb/s, DisplayPort 1.4 for 8K 30Hz, RAID 0/1/1E/3/5/6/10/30/50/60.',
+    description: '8-bay tower RAID system with dual core processor and 2GB DDR3 ECC memory.',
     specs: [
       { label: 'Bays', value: '8 x 3.5"/2.5" SAS/SATA' },
       {
@@ -190,7 +188,7 @@ export const products: ProductModel[] = [
         slug: 'filmraid-8-144tb',
         totalTB: 144,
         perDriveTB: 18,
-        priceEUR: 5599,
+        priceEUR: 6622.5,
         raid0TB: 144,
         raid5TB: 126,
       },
@@ -198,7 +196,7 @@ export const products: ProductModel[] = [
         slug: 'filmraid-8-160tb',
         totalTB: 160,
         perDriveTB: 20,
-        priceEUR: 5749,
+        priceEUR: 6982.5,
         raid0TB: 160,
         raid5TB: 140,
       },
@@ -206,7 +204,7 @@ export const products: ProductModel[] = [
         slug: 'filmraid-8-176tb',
         totalTB: 176,
         perDriveTB: 22,
-        priceEUR: 6079,
+        priceEUR: 7342.5,
         raid0TB: 176,
         raid5TB: 154,
       },
@@ -214,10 +212,10 @@ export const products: ProductModel[] = [
         slug: 'filmraid-8-192tb',
         totalTB: 192,
         perDriveTB: 24,
-        priceEUR: 9330,
+        priceEUR: 9382.5,
         raid0TB: 192,
         raid5TB: 168,
-      }, // ← NEW 24TB
+      },
     ],
   },
 
@@ -228,7 +226,7 @@ export const products: ProductModel[] = [
     image: '/layout/filmraid-12e.jpg',
     back_image: '/layout/FilmRaid-12E_back.jpg',
     description:
-      '12-bay tower RAID system (two-box shipment) with dual core processor and 8GB DDR4 ECC memory. Thunderbolt 3 up to 40Gb/s, DisplayPort 1.4 for 8K 30Hz, RAID 0/1/1E/3/5/6/10/30/50/60.',
+      '12-bay tower RAID system (two-box shipment) with dual core processor and 8GB DDR4 ECC memory.',
     specs: [
       { label: 'Bays', value: '12 x 3.5"/2.5" SAS/SATA' },
       {
@@ -257,7 +255,7 @@ export const products: ProductModel[] = [
         slug: 'filmraid-12e-216tb',
         totalTB: 216,
         perDriveTB: 18,
-        priceEUR: 8129,
+        priceEUR: 9480,
         raid0TB: 216,
         raid5TB: 198,
       },
@@ -265,7 +263,7 @@ export const products: ProductModel[] = [
         slug: 'filmraid-12e-240tb',
         totalTB: 240,
         perDriveTB: 20,
-        priceEUR: 8349,
+        priceEUR: 10020,
         raid0TB: 240,
         raid5TB: 220,
       },
@@ -273,7 +271,7 @@ export const products: ProductModel[] = [
         slug: 'filmraid-12e-264tb',
         totalTB: 264,
         perDriveTB: 22,
-        priceEUR: 8849,
+        priceEUR: 10560,
         raid0TB: 264,
         raid5TB: 242,
       },
@@ -281,10 +279,10 @@ export const products: ProductModel[] = [
         slug: 'filmraid-12e-288tb',
         totalTB: 288,
         perDriveTB: 24,
-        priceEUR: 13545,
+        priceEUR: 13620,
         raid0TB: 288,
         raid5TB: 264,
-      }, // ← NEW 24TB
+      },
     ],
   },
 ];
