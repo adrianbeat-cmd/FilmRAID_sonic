@@ -15,8 +15,6 @@ export default function SnipcartLoader() {
     window.SnipcartSettings = {
       publicApiKey: key,
       loadStrategy: 'on-user-interaction',
-      templatesUrl: '', // override to prevent warning
-      ...(window.SnipcartSettings || {}),
     };
 
     const script = document.createElement('script');
@@ -36,5 +34,12 @@ export default function SnipcartLoader() {
     };
   }, []);
 
-  return <div hidden id="snipcart" data-config-modal-style="side" />;
+  return (
+    <div
+      hidden
+      id="snipcart"
+      data-config-modal-style="side"
+      data-config-add-product-behavior="open"
+    />
+  );
 }
