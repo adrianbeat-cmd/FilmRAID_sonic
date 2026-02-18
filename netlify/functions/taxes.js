@@ -47,16 +47,13 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || '{}');
     const content = body?.content || body || {};
 
-    // Country (shipping first, then billing)
     const shipping = content.shippingAddress || content.cart?.shippingAddress || {};
     const billing = content.billingAddress || content.cart?.billingAddress || {};
     const country = String(shipping.country || billing.country || '')
       .toUpperCase()
       .trim();
 
-    console.info('[taxes] Received country:', country);
-
-    // VAT number
+    // VAT number from custom field
     const cf = content.customFields || content.cart?.customFields || {};
     let vatNumber = '';
     if (Array.isArray(cf)) {
@@ -68,16 +65,10 @@ exports.handler = async (event) => {
       .replace(/\s+/g, '')
       .toUpperCase();
 
-    console.info('[taxes] VAT number received:', vatNumber || '(empty)');
-
-    if (!country) {
-      console.info('[taxes] No country yet → returning empty taxes');
-      return ok({ taxes: [] });
-    }
+    if (!country) return ok({ taxes: [] });
 
     const isEU = EU.has(country);
 
-    // Rate logic
     let rate = 0;
     let label = 'VAT';
 
@@ -93,15 +84,12 @@ exports.handler = async (event) => {
       label = 'VAT (0%)';
     }
 
-    // Calculate amount (items + shipping)
     const itemsTotal = Number(content.itemsTotal ?? content.cart?.itemsTotal ?? 0) || 0;
     const shippingFees =
       Number(content.shippingInformation?.fees ?? content.cart?.shippingInformation?.fees ?? 0) ||
       0;
     const base = itemsTotal + shippingFees;
     const amount = Math.round(base * rate * 100) / 100;
-
-    console.info(`[taxes] ${country} → ${label} = ${amount}€ (rate ${rate})`);
 
     return ok({
       taxes: [
@@ -111,7 +99,6 @@ exports.handler = async (event) => {
           amount: amount,
           appliesOnShipping: true,
           includedInPrice: false,
-          numberForInvoice: country === 'ES' ? 'ES-IVA' : 'EU-VAT',
         },
       ],
     });
