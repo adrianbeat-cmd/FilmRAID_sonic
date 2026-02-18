@@ -1,3 +1,4 @@
+// Your existing content...
 interface CartItem {
   name: string;
   quantity: number;
@@ -53,7 +54,12 @@ declare global {
     Snipcart?: Snipcart;
     SnipcartSettings?: {
       publicApiKey: string;
+      loadStrategy?: string;
+      modalStyle?: string;
       templatesUrl?: string;
+      [key: string]: any;
     };
   }
 }
+
+export {}; // Important: keeps this as a module declaration
