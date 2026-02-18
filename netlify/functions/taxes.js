@@ -53,7 +53,8 @@ exports.handler = async (event) => {
       .toUpperCase()
       .trim();
 
-    // VAT number from custom field
+    console.info('[taxes] Detected country:', country); // ← for debugging
+
     const cf = content.customFields || content.cart?.customFields || {};
     let vatNumber = '';
     if (Array.isArray(cf)) {
