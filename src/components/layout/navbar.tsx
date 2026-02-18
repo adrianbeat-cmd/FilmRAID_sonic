@@ -15,12 +15,7 @@ import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { products } from '@/data/products';
 
-const thumbnails = [
-  '/layout/th_1.png', // FilmRaid-4A
-  '/layout/th_2.png', // FilmRaid-6
-  '/layout/th_3.png', // FilmRaid-8
-  '/layout/th_4.png', // FilmRaid-12E
-];
+const thumbnails = ['/layout/th_1.png', '/layout/th_2.png', '/layout/th_3.png', '/layout/th_4.png'];
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -28,12 +23,12 @@ const Navbar = () => {
   const [visible, setVisible] = useState(true);
   const [scrollPos, setScrollPos] = useState(0);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [menuStack, setMenuStack] = useState<any[][]>([[]]);
+  const [menuStack, setMenuStack] = useState<any[][]>([]);
   const [direction, setDirection] = useState<'forward' | 'back'>('forward');
   const pathname = usePathname();
 
-  // Generate dynamic menu from central products.ts
-  const dynamicItems = products.map((model, idx) => ({
+  // Dynamic Products menu
+  const dynamicProducts = products.map((model, idx) => ({
     label: model.name,
     children: model.variants.map((v) => ({
       label: `${v.totalTB}TB`,
@@ -44,66 +39,35 @@ const Navbar = () => {
   const ITEMS = [
     {
       label: 'Products',
-      children: [...dynamicItems, { label: 'Configure', href: '/configs' }],
+      children: [...dynamicProducts, { label: 'Configure', href: '/configs' }],
     },
     { label: 'About', href: '/about' },
     { label: 'Contact', href: '/contact' },
   ];
 
-  // Rest of your existing code (scroll, menu, cart, etc.) stays the same
+  // Scroll hide/show
   useEffect(() => {
     const handleScroll = () => {
-      const currentScrollPos = window.pageYOffset;
-      setVisible(scrollPos > currentScrollPos || currentScrollPos < 10);
-      setScrollPos(currentScrollPos);
+      const current = window.pageYOffset;
+      setVisible(scrollPos > current || current < 10);
+      setScrollPos(current);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [scrollPos]);
 
+  // Mobile menu body lock
   useEffect(() => {
     if (isMenuOpen) {
       document.documentElement.style.overflow = 'hidden';
       document.body.style.overflow = 'hidden';
-    } else {
-      document.documentElement.style.overflow = '';
-      document.body.style.overflow = '';
       setMenuStack([ITEMS]);
-      setDirection('forward');
-    }
-    return () => {
+    } else {
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
-    };
+      setMenuStack([]);
+    }
   }, [isMenuOpen]);
-
-  useEffect(() => {
-    setIsProductsOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    if (isProductsOpen) {
-      document.body.classList.add('dropdown-open');
-    } else {
-      document.body.classList.remove('dropdown-open');
-    }
-  }, [isProductsOpen]);
-
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsCartOpen(document.documentElement.classList.contains('snipcart-modal-open'));
-    });
-
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (menuStack.length === 1) {
-      setDirection('forward');
-    }
-  }, [menuStack]);
 
   const handleMouseEnter = () => setIsProductsOpen(true);
   const handleMouseLeave = () => setIsProductsOpen(false);
@@ -118,8 +82,9 @@ const Navbar = () => {
     setTimeout(() => setMenuStack((prev) => prev.slice(0, -1)), 0);
   };
 
-  const currentMenu = menuStack[menuStack.length - 1];
+  const currentMenu = menuStack[menuStack.length - 1] || [];
 
+  // Desktop render
   const renderDesktopNav = (item: any) => {
     if (!item.children) {
       return (
@@ -132,7 +97,6 @@ const Navbar = () => {
         </li>
       );
     }
-
     return (
       <li key={item.label} className="relative">
         <div
@@ -146,21 +110,6 @@ const Navbar = () => {
         </div>
       </li>
     );
-  };
-
-  const menuVariants = {
-    closed: { opacity: 0, y: -20, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
-    open: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeIn', staggerChildren: 0.1 } },
-  };
-
-  const thumbnailVariants = {
-    closed: { opacity: 0, y: 10 },
-    open: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
-  };
-
-  const blurVariants = {
-    closed: { opacity: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } },
-    open: { opacity: 1, transition: { duration: 0.4, ease: 'easeIn' } },
   };
 
   return (
@@ -208,7 +157,6 @@ const Navbar = () => {
             </Button>
           </div>
 
-          {/* Mobile menu button */}
           <div className="ml-auto flex items-center gap-4 md:hidden">
             <ThemeToggle />
             <button
@@ -228,7 +176,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Desktop Dropdown */}
+        {/* Desktop Dropdown with 24TB */}
         <AnimatePresence>
           {isProductsOpen && (
             <motion.div
@@ -272,7 +220,6 @@ const Navbar = () => {
                       </ul>
                     </motion.div>
                   ))}
-
                   <div className="mx-4 border-r border-gray-200 dark:border-gray-700" />
                   <motion.div
                     variants={thumbnailVariants}
@@ -291,10 +238,79 @@ const Navbar = () => {
         </AnimatePresence>
       </header>
 
-      {/* The rest of your mobile menu code remains exactly the same */}
-      {/* ... (I kept it unchanged so you can just paste the whole file) */}
+      {/* FULL MOBILE MENU RESTORED */}
+      <div
+        className={cn(
+          'fixed inset-x-0 top-14 bottom-0 z-[60] overflow-hidden md:hidden',
+          isMenuOpen ? 'visible' : 'invisible',
+        )}
+      >
+        <div
+          className={cn(
+            'bg-base-dark/85 dark:bg-base-dark/25 absolute inset-0 z-10 backdrop-blur-[10px] transition-opacity duration-500 ease-out',
+            !isMenuOpen && 'opacity-0',
+          )}
+          onClick={() => setIsMenuOpen(false)}
+        />
+        <div className="bg-background absolute top-0 right-0 z-50 h-full w-full">
+          <AnimatePresence>
+            <motion.div
+              key={menuStack.length}
+              variants={getPanelVariants()}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              className="absolute inset-0 flex flex-col p-6"
+            >
+              {menuStack.length > 1 && (
+                <button
+                  onClick={handleBackClick}
+                  className="mb-6 flex items-center text-left text-xl font-medium"
+                >
+                  <ChevronLeft size={28} className="mr-2" /> Back
+                </button>
+              )}
+              <ul className="flex flex-col space-y-6">
+                {currentMenu.map((item: any, index: number) => (
+                  <React.Fragment key={item.label}>
+                    <li>
+                      {item.href ? (
+                        <Link
+                          href={item.href}
+                          className="hover:text-primary block flex items-center justify-between text-left text-xl transition-colors"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          {item.label} <ChevronRight size={28} />
+                        </Link>
+                      ) : item.children ? (
+                        <button
+                          onClick={() => handleSubmenuClick(item.children!)}
+                          className="hover:text-primary flex w-full items-center justify-between text-left text-xl transition-colors"
+                        >
+                          {item.label} <ChevronRight size={28} />
+                        </button>
+                      ) : null}
+                    </li>
+                    {index < currentMenu.length - 1 && (
+                      <hr className="my-2 border-gray-200 opacity-50 dark:border-gray-700" />
+                    )}
+                  </React.Fragment>
+                ))}
+              </ul>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
     </>
   );
 };
+
+// Panel variants for mobile menu
+const getPanelVariants = () => ({
+  enter: { x: '100%', opacity: 0 },
+  center: { x: 0, opacity: 1 },
+  exit: { x: '-100%', opacity: 0 },
+});
 
 export default Navbar;
