@@ -23,8 +23,17 @@ const ProductPage = async ({ params }: { params: Promise<Params> }) => {
 
   const { model, totalTB, perDriveTB, priceEUR, raid0TB, raid5TB } = variant;
 
-  const availableRaids = (model.specs.find((s) => s.label === 'RAID Levels')
-    ?.value as string[]) || ['RAID 0', 'RAID 5'];
+  // Safe normalization of RAID levels (handles string or array)
+  const raidLevelsSpec = model.specs.find((s) => s.label === 'RAID Levels');
+  let availableRaids: string[] = ['RAID 0', 'RAID 5']; // safe default
+
+  if (raidLevelsSpec?.value) {
+    if (Array.isArray(raidLevelsSpec.value)) {
+      availableRaids = raidLevelsSpec.value;
+    } else if (typeof raidLevelsSpec.value === 'string') {
+      availableRaids = raidLevelsSpec.value.split(',').map((r) => r.trim());
+    }
+  }
 
   const jsonLd = {
     '@context': 'http://schema.org',
@@ -62,7 +71,6 @@ const ProductPage = async ({ params }: { params: Promise<Params> }) => {
   );
 };
 
-// ✅ THIS IS THE PART THAT FIXES THE BUILD ERROR
 export async function generateStaticParams() {
   return products.flatMap((model) =>
     model.variants.map((v) => ({
