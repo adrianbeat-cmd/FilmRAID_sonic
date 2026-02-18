@@ -27,8 +27,8 @@ const Navbar = () => {
   const [direction, setDirection] = useState<'forward' | 'back'>('forward');
   const pathname = usePathname();
 
-  // Dynamic Products (includes 24TB)
-  const dynamicProducts = products.map((model, idx) => ({
+  // Dynamic Products menu (includes 24TB)
+  const dynamicProducts = products.map((model) => ({
     label: model.name,
     children: model.variants.map((v) => ({
       label: `${v.totalTB}TB`,
@@ -84,7 +84,7 @@ const Navbar = () => {
 
   const currentMenu = menuStack[menuStack.length - 1] || [];
 
-  // Animation definitions
+  // Animation variants
   const menuVariants = {
     closed: { opacity: 0, y: -20, transition: { duration: 0.6 } },
     open: { opacity: 1, y: 0, transition: { duration: 0.3, staggerChildren: 0.1 } },
@@ -93,11 +93,6 @@ const Navbar = () => {
   const thumbnailVariants = {
     closed: { opacity: 0, y: 10 },
     open: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-  };
-
-  const blurVariants = {
-    closed: { opacity: 0 },
-    open: { opacity: 1, transition: { duration: 0.4 } },
   };
 
   const getPanelVariants = () => ({
@@ -166,7 +161,7 @@ const Navbar = () => {
             <ThemeToggle />
             <Button
               variant="ghost"
-              className="snipcart-checkout hover:text-primary px-5.5 text-sm transition-transform hover:scale-105"
+              className="snipcart-checkout hover:text-primary px-5.5 text-sm transition-transform hover:scale-105 hover:bg-[#f7f7f7] hover:opacity-90 dark:hover:bg-[#2a2a2a]"
             >
               <ShoppingCart size={16} className="mr-1" />
               <span className="snipcart-items-count"></span>
@@ -192,7 +187,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Desktop Dropdown - includes 24TB */}
+        {/* Desktop Dropdown */}
         <AnimatePresence>
           {isProductsOpen && (
             <motion.div
@@ -207,7 +202,7 @@ const Navbar = () => {
               onMouseLeave={handleMouseLeave}
             >
               <div className="mx-auto max-w-[1232px] px-4 py-2">
-                {/* View All Models button - clear and visible at the top */}
+                {/* View All Models - Desktop */}
                 <div className="mb-6 flex justify-center">
                   <Button
                     variant="outline"
@@ -267,7 +262,7 @@ const Navbar = () => {
         </AnimatePresence>
       </header>
 
-      {/* FULL MOBILE MENU RESTORED */}
+      {/* FULL MOBILE MENU */}
       <div
         className={cn(
           'fixed inset-x-0 top-14 bottom-0 z-[60] overflow-hidden md:hidden',
@@ -300,6 +295,7 @@ const Navbar = () => {
                   <ChevronLeft size={28} className="mr-2" /> Back
                 </button>
               )}
+
               <ul className="flex flex-col space-y-6">
                 {currentMenu.map((item: any, index: number) => (
                   <React.Fragment key={item.label}>
@@ -327,6 +323,19 @@ const Navbar = () => {
                   </React.Fragment>
                 ))}
               </ul>
+
+              {/* Mobile-only View All link */}
+              {menuStack.length === 1 && (
+                <div className="mt-8 border-t pt-6">
+                  <Link
+                    href="/catalog"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="hover:text-primary block text-center text-lg font-medium"
+                  >
+                    View All Models
+                  </Link>
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
