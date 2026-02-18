@@ -17,7 +17,7 @@ export default function CatalogPage() {
         <div className="mb-16 text-center">
           <h1 className="text-4xl font-bold tracking-tight md:text-5xl">FilmRAID Systems</h1>
           <p className="text-muted-foreground mx-auto mt-4 max-w-2xl text-xl">
-            Professional RAID storage built for film and video professionals.
+            Professional RAID storage built for film and video professionals
           </p>
         </div>
 
@@ -28,12 +28,15 @@ export default function CatalogPage() {
                 key={variant.slug}
                 className="group overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
-                <div className="relative aspect-video overflow-hidden bg-zinc-900">
+                {/* Image container - no cropping */}
+                <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-zinc-100 dark:bg-zinc-900">
                   <Image
                     src={model.image}
                     alt={`${model.name} ${variant.totalTB}TB`}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    width={600}
+                    height={450}
+                    className="max-h-full max-w-full object-contain p-4 transition-transform group-hover:scale-105"
+                    priority={false}
                   />
                 </div>
 
