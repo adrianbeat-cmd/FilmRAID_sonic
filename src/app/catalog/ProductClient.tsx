@@ -403,25 +403,11 @@ const ProductClient = ({
                   </div>
 
                   <p className="text-muted-foreground mt-2 text-xs leading-snug">
-                    This site is protected by reCAPTCHA to prevent spam and abuse{' '}
-                    <a
-                      href="https://policies.google.com/privacy"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline"
-                    >
+                    This site is protected by reCAPTCHA to prevent spam and abuse. See our{' '}
+                    <a href="/privacy-policy" className="hover:text-primary underline">
                       Privacy Policy
                     </a>{' '}
-                    and{' '}
-                    <a
-                      href="https://policies.google.com/terms"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline"
-                    >
-                      Terms of Service
-                    </a>{' '}
-                    apply.
+                    for details on data processing.
                   </p>
 
                   <DialogFooter>
