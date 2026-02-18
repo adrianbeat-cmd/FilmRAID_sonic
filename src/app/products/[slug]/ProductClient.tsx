@@ -103,7 +103,6 @@ const ProductClient = ({
   const productName = `${currentModel.name} ${raid0}TB`;
 
   const onSubmit: SubmitHandler<OrderFormData> = async (data) => {
-    // ... (your existing onSubmit code remains unchanged)
     try {
       if (!selectedRaid) {
         toast('Select RAID Level', {
@@ -112,16 +111,64 @@ const ProductClient = ({
         });
         return;
       }
-      // ... rest of your onSubmit code
+
+      setIsSubmitting(true);
+
+      await grecaptchaReady();
+      const token = await getEnterpriseToken(ACTION);
+
+      const templateParams = {
+        ...data,
+        model: currentModel.name,
+        capacity: `${raid0}TB`,
+        raid0: `${raid0}TB`,
+        raid5: `${raid5}TB`,
+        raid: selectedRaid,
+        price: `€${totalPrice}`,
+        quantity: quantity.toString(),
+        time: new Date().toISOString(),
+      };
+
+      const res = await fetch('/.netlify/functions/submit-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token,
+          siteKey: SITE_KEY,
+          expectedAction: ACTION,
+          templateId: 'template_bic87oh',
+          templateParams,
+        }),
+      });
+
+      const dataResp = await res.json();
+      if (!res.ok) throw new Error(dataResp?.error || 'Send failed');
+
+      toast('Wire transfer request sent!', {
+        description: `We’ll email you bank details shortly.`,
+        style: { background: '#16a34a', color: '#fff' },
+      });
+
+      setSubmitNotice({ type: 'success', msg: 'Request sent! Please check your inbox.' });
+
+      reset();
+      setIsDialogOpen(false);
+      setSelectedRaid('');
+      setQuantity(1);
+      setTotalPrice(price);
     } catch (error) {
-      // ... rest of your error handling
+      const msg = error instanceof Error ? error.message : 'Failed to send request.';
+      toast('Error', { description: msg, style: { background: '#ff4d4f', color: '#fff' } });
+      setSubmitNotice({ type: 'error', msg });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <section className="py-12 md:py-16 lg:py-20">
       <div className="container grid grid-cols-1 gap-8 md:grid-cols-2">
-        {/* Image column - unchanged */}
+        {/* Image Column */}
         <div className="order-1">
           <div className="relative">
             <Image
@@ -136,9 +183,7 @@ const ProductClient = ({
                 <button
                   key={idx}
                   onClick={() => setSelectedImage(idx)}
-                  className={`rounded border p-1 ${
-                    selectedImage === idx ? 'border-primary' : 'border-transparent'
-                  }`}
+                  className={`rounded border p-1 ${selectedImage === idx ? 'border-primary' : 'border-transparent'}`}
                 >
                   <Image src={img} alt={`Thumbnail ${idx + 1}`} width={80} height={60} />
                 </button>
@@ -147,14 +192,14 @@ const ProductClient = ({
           </div>
         </div>
 
-        {/* Config column */}
+        {/* Config Column */}
         <div className="order-2 space-y-4 md:sticky md:top-16 md:col-start-2 md:row-start-1 md:self-start">
           <h1 className="text-3xl font-bold">{currentModel.name}</h1>
           <p className="text-muted-foreground">{currentModel.description}</p>
 
           <div>
             <h3 className="font-bold">Storage</h3>
-            <p className="text-sm">{tb}TB HDD</p>
+            <p className="text-sm">{tb}TB per drive</p>
             <p className="text-sm">
               RAID 0: {raid0}TB | RAID 5: {raid5}TB
             </p>
@@ -162,10 +207,10 @@ const ProductClient = ({
 
           <p className="mb-2 text-xl font-semibold">Total: €{totalPrice}</p>
 
-          {/* === NEW CLEAR INSTRUCTION WITH ARROW === */}
+          {/* Clear instruction with arrow */}
           {!selectedRaid && (
             <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300">
-              <div className="text-2xl">👇</div>
+              <div className="text-3xl">👇</div>
               <div>
                 <strong>First select a RAID Level</strong>
                 <br />
@@ -222,8 +267,60 @@ const ProductClient = ({
                   Request Wire Transfer
                 </Button>
               </DialogTrigger>
-              {/* Dialog content unchanged */}
-              <DialogContent>{/* ... your existing dialog ... */}</DialogContent>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Request Wire Transfer</DialogTitle>
+                  <DialogDescription>{configSummary}</DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="company">Name/Company</Label>
+                    <Input
+                      id="company"
+                      {...register('company', { required: true })}
+                      placeholder="Name or Company"
+                    />
+                    {errors.company && <p className="text-sm text-red-500">Required</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="vat">EU VAT Number (Optional for B2C)</Label>
+                    <Input id="vat" {...register('vat')} placeholder="e.g., ESB12345678" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Shipping Address</Label>
+                    <Textarea
+                      id="address"
+                      {...register('address', { required: true })}
+                      placeholder="Shipping Address"
+                    />
+                    {errors.address && <p className="text-sm text-red-500">Required</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      {...register('email', { required: true })}
+                      type="email"
+                      placeholder="Your Email"
+                    />
+                    {errors.email && <p className="text-sm text-red-500">Required</p>}
+                  </div>
+
+                  <p className="text-muted-foreground mt-2 text-xs leading-snug">
+                    This site is protected by reCAPTCHA to prevent spam and abuse. See our{' '}
+                    <a href="/privacy-policy" className="hover:text-primary underline">
+                      Privacy Policy
+                    </a>{' '}
+                    for details.
+                  </p>
+
+                  <DialogFooter>
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? 'Sending…' : 'Send Request'}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
             </Dialog>
 
             <Button
@@ -248,11 +345,18 @@ const ProductClient = ({
           </div>
         </div>
 
-        {/* Technical Specs - unchanged */}
+        {/* === TECHNICAL SPECIFICATIONS - RESTORED === */}
         <Card className="order-3 md:col-start-1 md:row-start-2">
           <CardContent className="space-y-4 p-6">
             <h2 className="text-2xl font-bold">Technical Specifications</h2>
-            {/* ... your existing specs ... */}
+            {currentModel.specs.map((spec, idx) => (
+              <div key={idx} className="flex justify-between border-b py-3">
+                <span className="font-medium text-gray-700 dark:text-gray-300">{spec.label}</span>
+                <span className="text-right">
+                  {Array.isArray(spec.value) ? spec.value.join(', ') : spec.value}
+                </span>
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>
