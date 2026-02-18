@@ -27,12 +27,6 @@ interface Snipcart {
   };
 }
 
-declare global {
-  interface Window {
-    Snipcart?: Snipcart;
-  }
-}
-
 const ITEMS: NavItem[] = [
   {
     label: 'Products',
