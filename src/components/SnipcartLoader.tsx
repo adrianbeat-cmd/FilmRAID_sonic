@@ -12,14 +12,12 @@ export default function SnipcartLoader() {
       return;
     }
 
-    // Set config early – no red flag, includes required publicApiKey
     window.SnipcartSettings = {
       publicApiKey: key,
+      loadStrategy: 'on-user-interaction',
+      templatesUrl: '', // override to prevent warning
       ...(window.SnipcartSettings || {}),
     };
-
-    // Optional defer
-    // window.SnipcartSettings.loadStrategy = 'on-user-interaction';
 
     const script = document.createElement('script');
     script.src = 'https://cdn.snipcart.com/themes/v3.6.3/default/snipcart.js';
@@ -38,12 +36,5 @@ export default function SnipcartLoader() {
     };
   }, []);
 
-  return (
-    <div
-      hidden
-      id="snipcart"
-      data-config-modal-style="side"
-      // Do NOT add data-templates-url here unless you create/fix the file
-    />
-  );
+  return <div hidden id="snipcart" data-config-modal-style="side" />;
 }
