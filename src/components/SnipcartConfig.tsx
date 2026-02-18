@@ -9,9 +9,11 @@ const SnipcartConfig = () => {
         const snipcart = window.Snipcart; // Type guard
         // Client-side validation for VAT (adds error if invalid; taxes handled server-side)
         // @ts-ignore - Snipcart event types infer no-params but docs show (ev); using unknown for params
-        snipcart.events.on('page.validating', async (ev) => {
-          if (ev.type === 'billing-address') {
-            // @ts-ignore - api.cart methods defined in d.ts but TS not recognizing on Snipcart type
+        snipcart.events.on('page.validating', async (ev: any) => {
+          // or unknown if you prefer strictness
+          // Narrow the type safely
+          if (ev && typeof ev === 'object' && 'type' in ev && ev.type === 'billing-address') {
+            // Now TS knows ev has .type, so no error
             const vatNumber = snipcart.api.cart.getCustomFieldValue('vatNumber');
             // @ts-ignore - api.cart methods defined in d.ts but TS not recognizing on Snipcart type
             const billingAddress = snipcart.api.cart.getBillingAddress();
