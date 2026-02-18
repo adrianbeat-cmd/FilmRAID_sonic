@@ -1,4 +1,6 @@
 // netlify/functions/taxes.js
+const JSON_HEADERS = { 'content-type': 'application/json' };
+
 const EU = new Set([
   'AT',
   'BE',
@@ -32,7 +34,7 @@ const EU = new Set([
 function ok(obj) {
   return {
     statusCode: 200,
-    headers: { 'content-type': 'application/json' },
+    headers: JSON_HEADERS,
     body: JSON.stringify(obj),
   };
 }
@@ -45,18 +47,16 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || '{}');
     const content = body?.content || body || {};
 
-    // Prefer shipping, fallback billing
+    // Country (shipping first, then billing)
     const shipping = content.shippingAddress || content.cart?.shippingAddress || {};
     const billing = content.billingAddress || content.cart?.billingAddress || {};
-    const country = String(shipping.country || billing.country || '').toUpperCase();
+    const country = String(shipping.country || billing.country || '')
+      .toUpperCase()
+      .trim();
 
-    // Totals
-    const itemsTotal = Number(content.itemsTotal ?? content.cart?.itemsTotal ?? 0) || 0;
-    const shippingFees =
-      Number(content.shippingInformation?.fees ?? content.cart?.shippingInformation?.fees ?? 0) ||
-      0;
+    console.info('[taxes] Received country:', country);
 
-    // VAT number from custom fields (object or array)
+    // VAT number
     const cf = content.customFields || content.cart?.customFields || {};
     let vatNumber = '';
     if (Array.isArray(cf)) {
@@ -68,51 +68,55 @@ exports.handler = async (event) => {
       .replace(/\s+/g, '')
       .toUpperCase();
 
-    // If country not chosen yet → let UI show placeholder
-    if (!country) return ok({ taxes: [] });
+    console.info('[taxes] VAT number received:', vatNumber || '(empty)');
+
+    if (!country) {
+      console.info('[taxes] No country yet → returning empty taxes');
+      return ok({ taxes: [] });
+    }
 
     const isEU = EU.has(country);
 
-    // Validate VAT only for EU (non-ES) - regex only
-    let validVat = false;
-    if (isEU && country !== 'ES' && /^[A-Z]{2}[A-Z0-9]{8,14}$/.test(vatNumber)) {
-      validVat = true;
-    }
-
     // Rate logic
     let rate = 0;
+    let label = 'VAT';
+
     if (country === 'ES') {
       rate = 0.21;
+      label = 'IVA (21%)';
     } else if (isEU) {
-      rate = validVat ? 0 : 0.21;
+      const hasValidVat = vatNumber.length > 4 && /^[A-Z]{2}[A-Z0-9]{8,14}$/.test(vatNumber);
+      rate = hasValidVat ? 0 : 0.21;
+      label = hasValidVat ? 'VAT (reverse charge)' : 'VAT (21%)';
     } else {
       rate = 0;
+      label = 'VAT (0%)';
     }
 
-    // Base and amount (VAT applies on shipping in EU)
+    // Calculate amount (items + shipping)
+    const itemsTotal = Number(content.itemsTotal ?? content.cart?.itemsTotal ?? 0) || 0;
+    const shippingFees =
+      Number(content.shippingInformation?.fees ?? content.cart?.shippingInformation?.fees ?? 0) ||
+      0;
     const base = itemsTotal + shippingFees;
     const amount = Math.round(base * rate * 100) / 100;
 
-    // Region label
-    let baseLabel = 'Taxes';
-    if (country === 'ES') baseLabel = 'IVA';
-    else if (isEU) baseLabel = 'VAT';
-
-    const label = rate > 0 ? `${baseLabel} (${Math.round(rate * 100)}%)` : baseLabel;
+    console.info(`[taxes] ${country} → ${label} = ${amount}€ (rate ${rate})`);
 
     return ok({
       taxes: [
         {
           name: label,
-          rate,
-          amount,
+          rate: rate,
+          amount: amount,
           appliesOnShipping: true,
           includedInPrice: false,
-          numberForInvoice: 'ES-IVA',
+          numberForInvoice: country === 'ES' ? 'ES-IVA' : 'EU-VAT',
         },
       ],
     });
-  } catch {
+  } catch (err) {
+    console.error('[taxes] Error:', err);
     return ok({ taxes: [] });
   }
 };
