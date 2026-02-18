@@ -10,7 +10,6 @@ interface Params {
 const ProductPage = async ({ params }: { params: Promise<Params> }) => {
   const { slug } = await params;
 
-  // Find the variant in our central data
   const variant = products
     .flatMap((model) =>
       model.variants.map((v) => ({
@@ -62,5 +61,14 @@ const ProductPage = async ({ params }: { params: Promise<Params> }) => {
     </>
   );
 };
+
+// ✅ THIS IS THE PART THAT FIXES THE BUILD ERROR
+export async function generateStaticParams() {
+  return products.flatMap((model) =>
+    model.variants.map((v) => ({
+      slug: v.slug,
+    })),
+  );
+}
 
 export default ProductPage;
