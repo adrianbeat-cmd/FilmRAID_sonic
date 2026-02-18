@@ -1,67 +1,71 @@
 <div id="snipcart-templates-root">
   <div id="snipcart-templates">
     <billing section="bottom">
-      <div class="snipcart-form__set">
-        <div class="snipcart-form__field">
-          <snipcart-label class="snipcart__font--tiny" for="company"
-            >Company (optional)</snipcart-label
-          >
-          <snipcart-input
-            id="company"
-            name="company"
-            autocomplete="organization"
-            placeholder="Your company"
-          ></snipcart-input>
-        </div>
-
-        <snipcart-field name="vatNumber">
-          <snipcart-label class="snipcart__font--tiny" for="vatNumber"
-            >EU VAT Number (optional)</snipcart-label
-          >
-          <snipcart-input
-            id="vatNumber"
-            name="vatNumber"
-            placeholder="e.g. ESB10680478"
-            pattern="^[A-Z]{2}[A-Z0-9]{8,12}$"
-            style="padding-left: 0.75rem"
-            data-snipcart-field="vatNumber"
-          ></snipcart-input>
-          <snipcart-field-error name="vatNumber"></snipcart-field-error>
-          <small
-            id="vat-message"
-            class="snipcart__font--tiny"
-            style="display: block; margin: 0.25rem 0 0.75rem"
-          ></small>
-          <small
-            class="snipcart__font--tiny"
-            style="display: block; margin-top: 0.25rem; color: #6b7280"
-            >Optional for B2B. Leave blank for B2C.</small
-          >
-        </snipcart-field>
-
-        <div id="fr-phone-field">
-          <snipcart-field name="phone">
-            <snipcart-label class="snipcart__font--tiny" for="phone"
-              >Phone (required)</snipcart-label
+      <div class="snipcart-billing-custom-wrapper">
+        <!-- Single root div for billing -->
+        <div class="snipcart-form__set">
+          <div class="snipcart-form__field">
+            <snipcart-label class="snipcart__font--tiny" for="company"
+              >Company (optional)</snipcart-label
             >
             <snipcart-input
-              id="phone"
-              name="phone"
-              autocomplete="tel"
-              inputmode="tel"
-              placeholder="+34 612 345 678"
-              required
-              style="padding-left: 0.75rem"
+              id="company"
+              name="company"
+              autocomplete="organization"
+              placeholder="Your company"
             ></snipcart-input>
-            <snipcart-field-error name="phone"></snipcart-field-error>
+          </div>
+
+          <snipcart-field name="vatNumber">
+            <snipcart-label class="snipcart__font--tiny" for="vatNumber"
+              >EU VAT Number (optional)</snipcart-label
+            >
+            <snipcart-input
+              id="vatNumber"
+              name="vatNumber"
+              placeholder="e.g. ESB10680478"
+              pattern="^[A-Z]{2}[A-Z0-9]{8,12}$"
+              style="padding-left: 0.75rem"
+              data-snipcart-field="vatNumber"
+            ></snipcart-input>
+            <snipcart-field-error name="vatNumber"></snipcart-field-error>
+            <small
+              id="vat-message"
+              class="snipcart__font--tiny"
+              style="display: block; margin: 0.25rem 0 0.75rem"
+            ></small>
             <small
               class="snipcart__font--tiny"
               style="display: block; margin-top: 0.25rem; color: #6b7280"
-              >Required by the courier for delivery updates.</small
+              >Optional for B2B. Leave blank for B2C.</small
             >
           </snipcart-field>
+
+          <div id="fr-phone-field">
+            <snipcart-field name="phone">
+              <snipcart-label class="snipcart__font--tiny" for="phone"
+                >Phone (required)</snipcart-label
+              >
+              <snipcart-input
+                id="phone"
+                name="phone"
+                autocomplete="tel"
+                inputmode="tel"
+                placeholder="+34 612 345 678"
+                required
+                style="padding-left: 0.75rem"
+              ></snipcart-input>
+              <snipcart-field-error name="phone"></snipcart-field-error>
+              <small
+                class="snipcart__font--tiny"
+                style="display: block; margin-top: 0.25rem; color: #6b7280"
+                >Required by the courier for delivery updates.</small
+              >
+            </snipcart-field>
+          </div>
         </div>
       </div>
+      <!-- End single root -->
     </billing>
 
     <cart-summary-fees>
@@ -141,74 +145,72 @@
         </div>
       </div>
     </cart-summary-fees>
-
-    <div id="scripts-root">
-      <script>
-        (function () {
-          function movePhoneAfterEmail() {
-            const phone = document.getElementById('fr-phone-field');
-            if (!phone || phone.__moved) return;
-
-            const emailInput =
-              document.querySelector('input[type="email"]') ||
-              document
-                .querySelector('snipcart-input[name="email"]')
-                ?.shadowRoot?.querySelector('input[type="email"]');
-
-            if (!emailInput) return;
-
-            const emailField =
-              emailInput.closest('.snipcart-form__field') || emailInput.closest('snipcart-field');
-            if (!emailField) return;
-
-            try {
-              emailField.parentNode.insertBefore(phone, emailField.nextSibling);
-            } catch (e) {
-              emailField.parentNode.appendChild(phone); // fallback
-            }
-            phone.__moved = true;
-          }
-
-          function init() {
-            movePhoneAfterEmail();
-            if (window.Snipcart?.events?.on) {
-              window.Snipcart.events.on('theme.routechanged', movePhoneAfterEmail);
-            }
-            new MutationObserver(movePhoneAfterEmail).observe(document.body, {
-              childList: true,
-              subtree: true,
-            });
-          }
-
-          if (document.readyState === 'loading')
-            document.addEventListener('DOMContentLoaded', init);
-          else init();
-          document.addEventListener('snipcart.ready', init);
-        })();
-      </script>
-
-      <script>
-        document.addEventListener('snipcart.ready', () => {
-          const vatInput = document.querySelector('#vatNumber');
-          if (!vatInput) return;
-
-          vatInput.addEventListener('blur', () => {
-            const val = vatInput.value.trim().toUpperCase();
-            const msg = document.getElementById('vat-message');
-            if (!val) {
-              msg.textContent = '';
-              return;
-            }
-            if (!/^[A-Z]{2}[A-Z0-9]{8,12}$/.test(val)) {
-              msg.textContent = 'Invalid format. Example: ESB10680478';
-              msg.style.color = '#ef4444';
-            } else {
-              msg.textContent = 'Valid format';
-              msg.style.color = '#16a34a';
-            }
-          });
-        });
-      </script>
-    </div>
   </div>
 </div>
+
+<!-- Move scripts outside templates, add as separate JS file or in dashboard -->
+<script>
+  (function () {
+    function movePhoneAfterEmail() {
+      const phone = document.getElementById('fr-phone-field');
+      if (!phone || phone.__moved) return;
+
+      const emailInput =
+        document.querySelector('input[type="email"]') ||
+        document
+          .querySelector('snipcart-input[name="email"]')
+          ?.shadowRoot?.querySelector('input[type="email"]');
+
+      if (!emailInput) return;
+
+      const emailField =
+        emailInput.closest('.snipcart-form__field') || emailInput.closest('snipcart-field');
+      if (!emailField) return;
+
+      try {
+        emailField.parentNode.insertBefore(phone, emailField.nextSibling);
+      } catch (e) {
+        emailField.parentNode.appendChild(phone); // fallback
+      }
+      phone.__moved = true;
+    }
+
+    function init() {
+      movePhoneAfterEmail();
+      if (window.Snipcart?.events?.on) {
+        window.Snipcart.events.on('theme.routechanged', movePhoneAfterEmail);
+      }
+      new MutationObserver(movePhoneAfterEmail).observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+    document.addEventListener('snipcart.ready', init);
+  })();
+</script>
+
+<script>
+  document.addEventListener('snipcart.ready', () => {
+    const vatInput = document.querySelector('#vatNumber');
+    if (!vatInput) return;
+
+    vatInput.addEventListener('blur', () => {
+      const val = vatInput.value.trim().toUpperCase();
+      const msg = document.getElementById('vat-message');
+      if (!val) {
+        msg.textContent = '';
+        return;
+      }
+      if (!/^[A-Z]{2}[A-Z0-9]{8,12}$/.test(val)) {
+        msg.textContent = 'Invalid format. Example: ESB10680478';
+        msg.style.color = '#ef4444';
+      } else {
+        msg.textContent = 'Valid format';
+        msg.style.color = '#16a34a';
+      }
+    });
+  });
+</script>
