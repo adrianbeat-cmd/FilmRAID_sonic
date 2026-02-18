@@ -51,7 +51,7 @@ interface ProductClientProps {
     hddCount: number;
     image: string;
     back_image: string;
-    description: string | React.ReactNode; // ✅ allow both
+    description: string;
     specs: { label: string; value: string | string[] }[];
   };
   tb: number;
@@ -80,7 +80,10 @@ const ProductClient = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitNotice, setSubmitNotice] = useState<{ type: '' | 'success' | 'error'; msg: string }>(
-    { type: '', msg: '' },
+    {
+      type: '',
+      msg: '',
+    },
   );
 
   const {
@@ -108,7 +111,6 @@ const ProductClient = ({
         });
         return;
       }
-      if (!SITE_KEY) throw new Error('Missing NEXT_PUBLIC_RECAPTCHA_SITE_KEY');
 
       setIsSubmitting(true);
 
@@ -143,15 +145,8 @@ const ProductClient = ({
       if (!res.ok) throw new Error(dataResp?.error || 'Send failed');
 
       toast('Wire transfer request sent!', {
-        description: `We’ll email you bank details shortly.${
-          typeof dataResp.score === 'number' ? ` reCAPTCHA score: ${dataResp.score.toFixed(2)}` : ''
-        }`,
+        description: `We’ll email you bank details shortly.`,
         style: { background: '#16a34a', color: '#fff' },
-      });
-
-      setSubmitNotice({
-        type: 'success',
-        msg: 'Request sent! Please check your inbox for bank details (and Spam folder just in case).',
       });
 
       reset();
@@ -160,106 +155,17 @@ const ProductClient = ({
       setQuantity(1);
       setTotalPrice(price);
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Failed to send wire transfer request.';
+      const msg = error instanceof Error ? error.message : 'Failed to send request.';
       toast('Error', { description: msg, style: { background: '#ff4d4f', color: '#fff' } });
-      setSubmitNotice({ type: 'error', msg });
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const technicalSpecs = [
-    { label: 'Form Factor', value: `${currentModel.hddCount}-Bay Desktop` },
-    { label: 'Connection', value: '2x Thunderbolt 3, 1x DisplayPort 1.4' },
-    {
-      label: 'Disk Port',
-      value:
-        currentModel.name === 'FilmRaid-4A'
-          ? '4 x 6Gb/s SAS/SATA'
-          : `${currentModel.hddCount} x 12Gb/s SAS or 6Gb/s SATA`,
-    },
-    {
-      label: 'I/O Processor',
-      value:
-        currentModel.name === 'FilmRaid-4A'
-          ? 'One Core 800 MHz SAS ROC'
-          : currentModel.name === 'FilmRaid-6'
-            ? 'Dual Core 1.2 GHz SAS ROC'
-            : 'Tri-Mode Dual Core ARM A15 1.6GHz ROC',
-    },
-    {
-      label: 'On-Board Cache',
-      value:
-        currentModel.name === 'FilmRaid-4A'
-          ? '1GB DDR3-800'
-          : currentModel.name === 'FilmRaid-6'
-            ? '2GB DDR3-1866 SDRAM'
-            : '8GB DDR4-2666 SDRAM',
-    },
-    {
-      label: 'Expansion Support',
-      value:
-        currentModel.name === 'FilmRaid-4A' || currentModel.name === 'FilmRaid-8'
-          ? 'N/A'
-          : currentModel.name === 'FilmRaid-6'
-            ? 'SFF-8644 (2-lanes)'
-            : 'SFF-8644 (4-lanes)',
-    },
-    {
-      label: 'Cooling Fan',
-      value:
-        currentModel.name === 'FilmRaid-4A' || currentModel.name === 'FilmRaid-6'
-          ? '1 x 2700rpm'
-          : '2 x 2700rpm',
-    },
-    {
-      label: 'Power Supply',
-      value:
-        currentModel.name === 'FilmRaid-4A'
-          ? '135W (inside) / 150W (outside)'
-          : currentModel.name === 'FilmRaid-6'
-            ? '180W'
-            : currentModel.name === 'FilmRaid-8'
-              ? '270W'
-              : '400W',
-    },
-    {
-      label: 'Physical Dimensions (H x W x D)',
-      value:
-        currentModel.name === 'FilmRaid-4A'
-          ? '4.84 x 6.51 x 9.11 in (123 x 165.6 x 232 mm)'
-          : currentModel.name === 'FilmRaid-6'
-            ? '4.84 x 8.45 x 9.11 in (146 x 255 x 290 mm)'
-            : currentModel.name === 'FilmRaid-8'
-              ? '5.7 x 11.8 x 11.4 in (146 x 302 x 290 mm)'
-              : '8.1 x 12.2 x 11.4 in (206 x 310 x 290 mm)',
-    },
-    {
-      label: 'Weight (without disks)',
-      value:
-        currentModel.name === 'FilmRaid-4A'
-          ? '3.6 Kg'
-          : currentModel.name === 'FilmRaid-6'
-            ? '4.8 Kg'
-            : currentModel.name === 'FilmRaid-8'
-              ? '5.2 Kg'
-              : '9.5 Kg',
-    },
-    { label: 'Warranty', value: '3 years' },
-  ];
-
-  const handleButtonClick = () => {
-    if (!selectedRaid) {
-      toast('Select RAID Level', {
-        description: 'Please select a RAID configuration to proceed.',
-        style: { background: '#ff4d4f', color: '#fff' },
-      });
     }
   };
 
   return (
     <section className="py-12 md:py-16 lg:py-20">
       <div className="container grid grid-cols-1 gap-8 md:grid-cols-2">
+        {/* Images */}
         <div className="order-1">
           <div className="relative">
             <Image
@@ -274,9 +180,7 @@ const ProductClient = ({
                 <button
                   key={idx}
                   onClick={() => setSelectedImage(idx)}
-                  className={`rounded border p-1 ${
-                    selectedImage === idx ? 'border-primary' : 'border-transparent'
-                  }`}
+                  className={`rounded border p-1 ${selectedImage === idx ? 'border-primary' : 'border-transparent'}`}
                 >
                   <Image src={img} alt={`Thumbnail ${idx + 1}`} width={80} height={60} />
                 </button>
@@ -285,41 +189,28 @@ const ProductClient = ({
           </div>
         </div>
 
+        {/* Config & Buy */}
         <div className="order-2 space-y-4 md:sticky md:top-16 md:col-start-2 md:row-start-1 md:self-start">
           <h1 className="text-3xl font-bold">{currentModel.name}</h1>
           <p className="text-muted-foreground">{currentModel.description}</p>
 
           <div>
             <h3 className="font-bold">Storage</h3>
-            <p className="text-sm">{tb}TB HDD</p>
+            <p className="text-sm">
+              {currentModel.hddCount} × {tb}TB HDD
+            </p>
             <p className="text-sm">
               RAID 0: {raid0}TB | RAID 5: {raid5}TB
             </p>
           </div>
 
-          <p className="mb-2 text-xl">Total: €{totalPrice}</p>
-
-          {/* inline success/error after dialog closes */}
-          {submitNotice.msg && (
-            <div
-              className={`mb-2 rounded-md border p-3 text-sm ${
-                submitNotice.type === 'success'
-                  ? 'border-green-200 bg-green-50 text-green-700'
-                  : 'border-red-200 bg-red-50 text-red-700'
-              }`}
-              role={submitNotice.type === 'success' ? 'status' : 'alert'}
-            >
-              {submitNotice.msg}
-            </div>
-          )}
+          <p className="mb-2 text-xl font-semibold">Total: €{totalPrice}</p>
 
           <div className="mb-4 space-y-2">
             <Label htmlFor="raid">RAID Level</Label>
             <Select onValueChange={setSelectedRaid} value={selectedRaid}>
-              <SelectTrigger
-                className={`w-full pr-10 ${!selectedRaid ? 'bg-[#306fdb] !text-[#ffffff] dark:bg-[#306fdb] dark:!text-[#ffffff]' : ''}`}
-              >
-                <SelectValue placeholder="First select RAID Level" />
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select RAID Level" />
               </SelectTrigger>
               <SelectContent>
                 {availableRaids.map((raid) => (
@@ -334,11 +225,10 @@ const ProductClient = ({
           <div className="mt-4 space-y-2">
             <Label htmlFor="quantity">Quantity</Label>
             <Select
-              onValueChange={(value) => setQuantity(parseInt(value, 10))}
+              onValueChange={(value) => setQuantity(parseInt(value))}
               value={quantity.toString()}
-              defaultValue="1"
             >
-              <SelectTrigger className="w-full pr-10">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="1" />
               </SelectTrigger>
               <SelectContent>
@@ -358,7 +248,6 @@ const ProductClient = ({
                   className="w-full"
                   variant={selectedRaid ? 'default' : 'outline'}
                   disabled={!selectedRaid}
-                  onClick={handleButtonClick}
                 >
                   Request Wire Transfer
                 </Button>
@@ -376,38 +265,35 @@ const ProductClient = ({
                       {...register('company', { required: true })}
                       placeholder="Name or Company"
                     />
-                    {errors.company && <p className="text-sm text-red-500">Required</p>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="vat">EU VAT Number (Optional for B2C)</Label>
-                    <Input id="vat" {...register('vat')} placeholder="e.g., ESB12345678" />
+                    <Label htmlFor="vat">EU VAT Number (Optional)</Label>
+                    <Input id="vat" {...register('vat')} placeholder="e.g. ESB10680478" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="address">Shipping Address</Label>
                     <Textarea
                       id="address"
                       {...register('address', { required: true })}
-                      placeholder="Shipping Address"
+                      placeholder="Full shipping address"
                     />
-                    {errors.address && <p className="text-sm text-red-500">Required</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
-                      {...register('email', { required: true })}
                       type="email"
-                      placeholder="Your Email"
+                      {...register('email', { required: true })}
+                      placeholder="your@email.com"
                     />
-                    {errors.email && <p className="text-sm text-red-500">Required</p>}
                   </div>
 
                   <p className="text-muted-foreground mt-2 text-xs leading-snug">
-                    This site is protected by reCAPTCHA to prevent spam and abuse. See our{' '}
+                    This site is protected by reCAPTCHA. See our{' '}
                     <a href="/privacy-policy" className="hover:text-primary underline">
                       Privacy Policy
                     </a>{' '}
-                    for details on data processing.
+                    for details.
                   </p>
 
                   <DialogFooter>
@@ -423,11 +309,10 @@ const ProductClient = ({
               className="snipcart-add-item w-full"
               variant={selectedRaid ? 'default' : 'outline'}
               disabled={!selectedRaid}
-              onClick={handleButtonClick}
               data-item-id={productId}
               data-item-price={price}
               data-item-url={productUrl}
-              data-item-description={currentModel.description as string}
+              data-item-description={currentModel.description}
               data-item-name={productName}
               data-item-image={images[0]}
               data-item-quantity={quantity}
@@ -442,19 +327,12 @@ const ProductClient = ({
           </div>
         </div>
 
+        {/* Specs */}
         <Card className="order-3 md:col-start-1 md:row-start-2">
           <CardContent className="space-y-4 p-6">
             <h2 className="text-2xl font-bold">Technical Specifications</h2>
-            {technicalSpecs.map((spec, idx) => (
-              <div key={idx} className="flex justify-between border-b py-2">
-                <span className="font-medium">{spec.label}</span>
-                <span className="text-right">
-                  {Array.isArray(spec.value) ? spec.value.join(', ') : spec.value}
-                </span>
-              </div>
-            ))}
             {currentModel.specs.map((spec, idx) => (
-              <div key={idx} className="flex justify-between border-b py-2">
+              <div key={idx} className="flex justify-between border-b py-2 last:border-0">
                 <span className="font-medium">{spec.label}</span>
                 <span className="text-right">
                   {Array.isArray(spec.value) ? spec.value.join(', ') : spec.value}
