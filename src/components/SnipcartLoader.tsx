@@ -8,15 +8,18 @@ export default function SnipcartLoader() {
   const key = getSnipcartPublicKey();
 
   useEffect(() => {
-    // Skip if already loaded (prevents double-init on navigation)
+    // Skip if already loaded
     if (window.Snipcart || document.querySelector('script[src*="snipcart.js"]')) {
       return;
     }
 
     // Set config early
-    window.SnipcartSettings = window.SnipcartSettings || {};
-    window.SnipcartSettings.publicApiKey = key;
-    // Optional defer: window.SnipcartSettings.loadStrategy = 'on-user-interaction';
+    window.SnipcartSettings = {
+      publicApiKey: key,
+      ...(window.SnipcartSettings || {}), // preserve other settings if already present
+    };
+    window.SnipcartSettings!.publicApiKey = key; // ← add !
+    // Optional: window.SnipcartSettings.loadStrategy = 'on-user-interaction';
 
     // Load JS
     const script = document.createElement('script');
@@ -32,11 +35,10 @@ export default function SnipcartLoader() {
       document.head.appendChild(link);
     }
 
-    // Cleanup on unmount (rare, but good)
     return () => {
       if (script.parentNode) script.parentNode.removeChild(script);
     };
-  }, []); // Run once on mount
+  }, []);
 
   return (
     <div
