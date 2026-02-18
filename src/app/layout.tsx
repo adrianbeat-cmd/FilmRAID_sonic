@@ -6,6 +6,7 @@ import Script from 'next/script';
 
 import type { Metadata } from 'next';
 
+// @ts-ignore - Next.js handles CSS imports automatically
 import './globals.css';
 import Footer from '@/components/layout/footer';
 import Navbar from '@/components/layout/navbar';
@@ -13,6 +14,7 @@ import { NavigationProvider } from '@/components/navigation-provider';
 import RecaptchaBoot from '@/components/RecaptchaBoot';
 import CTA from '@/components/sections/cta';
 import SnipcartConfig from '@/components/SnipcartConfig';
+import SnipcartLoader from '@/components/SnipcartLoader';
 import { ThemeProvider } from '@/components/theme-provider';
 
 // SF Pro
@@ -340,16 +342,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 `}</Script>
       </head>
 
-      <body className={`${sfProDisplay.variable} antialiased`}>
+      <body className={`${sfProDisplay.variable} antialiased`} suppressHydrationWarning={true}>
         <RecaptchaBoot />
-
-        {/* Snipcart container (key provided via SnipcartSettings above) */}
-        <div
-          hidden
-          id="snipcart"
-          data-config-add-product-behavior="open"
-          data-config-modal-style="full"
-        />
 
         <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
           <NavigationProvider>
@@ -358,7 +352,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <main>{children}</main>
             <CTA />
             <Footer />
-            <SnipcartConfig />
+            <SnipcartLoader />
           </NavigationProvider>
         </ThemeProvider>
       </body>
