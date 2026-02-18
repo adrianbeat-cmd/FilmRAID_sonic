@@ -239,7 +239,7 @@ export default function Contact() {
 
             {/* Required attribution for hiding the global reCAPTCHA badge */}
             <p className="text-muted-foreground mt-2 text-center text-xs leading-snug">
-              This site is protected by reCAPTCHA and the Google{' '}
+              This site is protected by reCAPTCHA to prevent spam and abuse{' '}
               <a
                 href="https://policies.google.com/privacy"
                 target="_blank"
