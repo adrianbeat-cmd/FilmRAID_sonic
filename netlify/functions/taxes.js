@@ -32,16 +32,11 @@ const EU = new Set([
 ]);
 
 function ok(obj) {
-  return {
-    statusCode: 200,
-    headers: JSON_HEADERS,
-    body: JSON.stringify(obj),
-  };
+  return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify(obj) };
 }
 
 exports.handler = async (event) => {
-  if (event.httpMethod === 'GET') return ok({ ok: true, info: 'tax function alive' });
-  if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
+  if (event.httpMethod === 'GET') return ok({ ok: true });
 
   try {
     const body = JSON.parse(event.body || '{}');
@@ -53,8 +48,9 @@ exports.handler = async (event) => {
       .toUpperCase()
       .trim();
 
-    console.info('[taxes] Detected country:', country); // ← for debugging
+    console.info('[taxes] Country received:', country);
 
+    // VAT number
     const cf = content.customFields || content.cart?.customFields || {};
     let vatNumber = '';
     if (Array.isArray(cf)) {
@@ -65,6 +61,8 @@ exports.handler = async (event) => {
     vatNumber = String(vatNumber || '')
       .replace(/\s+/g, '')
       .toUpperCase();
+
+    console.info('[taxes] VAT number:', vatNumber || '(none)');
 
     if (!country) return ok({ taxes: [] });
 
@@ -92,16 +90,10 @@ exports.handler = async (event) => {
     const base = itemsTotal + shippingFees;
     const amount = Math.round(base * rate * 100) / 100;
 
+    console.info(`[taxes] Final → ${label} = ${amount}€ (rate ${rate})`);
+
     return ok({
-      taxes: [
-        {
-          name: label,
-          rate: rate,
-          amount: amount,
-          appliesOnShipping: true,
-          includedInPrice: false,
-        },
-      ],
+      taxes: [{ name: label, rate, amount, appliesOnShipping: true, includedInPrice: false }],
     });
   } catch (err) {
     console.error('[taxes] Error:', err);
