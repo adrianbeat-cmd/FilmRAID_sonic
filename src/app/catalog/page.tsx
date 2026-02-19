@@ -21,35 +21,36 @@ export default function CatalogPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {products.flatMap((model) =>
             model.variants.map((variant) => (
               <Card
                 key={variant.slug}
-                className="group overflow-hidden border transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl"
+                className="group overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
-                {/* Bigger image - no cropping */}
-                <div className="relative aspect-[16/10] overflow-hidden bg-zinc-100 dark:bg-zinc-900">
+                {/* Image - no cropping, balanced size */}
+                <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-zinc-100 dark:bg-zinc-900">
                   <Image
                     src={model.image}
                     alt={`${model.name} ${variant.totalTB}TB`}
-                    fill
-                    className="object-contain p-6 transition-transform duration-500 group-hover:scale-105"
+                    width={600}
+                    height={450}
+                    className="max-h-full max-w-full object-contain p-6 transition-transform group-hover:scale-105"
                   />
                 </div>
 
-                <CardContent className="p-8">
-                  <h3 className="text-2xl font-semibold tracking-tight">
+                <CardContent className="p-6">
+                  <h3 className="text-2xl font-semibold">
                     {model.name} — {variant.totalTB}TB
                   </h3>
 
-                  <p className="text-muted-foreground mt-2 text-sm">
+                  <p className="text-muted-foreground mt-1 text-sm">
                     RAID 0: {variant.raid0TB}TB | RAID 5: {variant.raid5TB}TB
                   </p>
 
-                  <div className="text-primary mt-8 text-4xl font-bold">€{variant.priceEUR}</div>
+                  <div className="text-primary mt-6 text-3xl font-bold">€{variant.priceEUR}</div>
 
-                  <Button asChild className="mt-8 w-full text-base" size="lg">
+                  <Button asChild className="mt-6 w-full">
                     <Link href={`/products/${variant.slug}`}>View Details</Link>
                   </Button>
                 </CardContent>
