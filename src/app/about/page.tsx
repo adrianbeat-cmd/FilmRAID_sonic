@@ -10,7 +10,7 @@ export default function About() {
       <div className="text-center">
         <h1 className="text-4xl font-bold tracking-tight md:text-5xl">About FilmRAID</h1>
         <p className="text-muted-foreground mt-4 text-xl">
-          Professional RAID storage solutions built for filmmakers by filmmakers.
+          Professional RAID storage solutions built for filmmakers.
         </p>
       </div>
 
@@ -19,9 +19,9 @@ export default function About() {
         <div>
           <h2 className="text-2xl font-semibold">Who we are</h2>
           <p className="mt-6 text-lg leading-relaxed text-gray-600 dark:text-gray-300">
-            FilmRAID is a small, specialized company founded by Adri (a working DIT) and Ale Matus.
-            We configure and sell high-performance RAID systems optimized for digital cinema
-            workflows.
+            FilmRAID is a specialized company focused on high-performance RAID systems for digital
+            cinema and video professionals. We configure and deliver reliable storage solutions
+            optimized for real film production workflows.
           </p>
         </div>
 
@@ -40,7 +40,7 @@ export default function About() {
             <div>
               <p className="font-medium">Address</p>
               <p>
-                Carrer del Valles 55, 1-2
+                Carrer del Valles 55
                 <br />
                 08030 Barcelona, Spain
               </p>
@@ -50,10 +50,6 @@ export default function About() {
               <p>
                 <a href="mailto:hello@filmraid.pro" className="hover:underline">
                   hello@filmraid.pro
-                </a>
-                <br />
-                <a href="mailto:adri@filmraid.pro" className="hover:underline">
-                  adri@filmraid.pro
                 </a>
               </p>
             </div>
@@ -66,7 +62,7 @@ export default function About() {
           <ul className="mt-6 space-y-4 text-lg text-gray-600 dark:text-gray-300">
             <li className="flex gap-3">
               <span className="text-primary">✓</span>
-              Built by a working DIT — we understand real film production needs
+              Built specifically for film and video production needs
             </li>
             <li className="flex gap-3">
               <span className="text-primary">✓</span>
@@ -74,11 +70,11 @@ export default function About() {
             </li>
             <li className="flex gap-3">
               <span className="text-primary">✓</span>
-              Fast 3-day delivery across Europe (FedEx)
+              Fast and reliable delivery across Europe
             </li>
             <li className="flex gap-3">
               <span className="text-primary">✓</span>
-              Full support and configuration help
+              Full configuration and technical support
             </li>
           </ul>
         </div>
