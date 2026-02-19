@@ -65,9 +65,7 @@ export default function Contact() {
 
       setNotice({
         type: 'success',
-        msg: `Message sent successfully!${
-          typeof data.score === 'number' ? ` (reCAPTCHA score: ${data.score.toFixed(2)})` : ''
-        }`,
+        msg: `Message sent successfully! We'll reply shortly.`,
       });
       reset();
     } catch (err) {
@@ -79,175 +77,127 @@ export default function Contact() {
   };
 
   return (
-    <section className="section-padding container space-y-10.5">
-      <h2 className="text-center text-3xl font-bold text-black dark:text-white">Contact Us</h2>
-
-      <div className="mx-auto max-w-3xl space-y-6 text-lg">
-        <p className="text-center font-semibold text-gray-600 dark:text-gray-300">
-          We're here to assist with your film storage needs.
+    <section className="section-padding container">
+      <div className="mx-auto max-w-5xl">
+        <h1 className="text-center text-4xl font-bold">Contact Us</h1>
+        <p className="text-muted-foreground mt-4 text-center text-lg">
+          We're here to help with your FilmRAID needs.
         </p>
 
-        <img
-          src="/layout/map.jpg"
-          alt="FilmRaid Location Map"
-          className="mx-auto w-full max-w-3xl rounded-lg shadow-sm"
-        />
+        <div className="mt-12 grid gap-12 md:grid-cols-5">
+          {/* Company Info */}
+          <div className="md:col-span-2">
+            <Card>
+              <CardContent className="space-y-8 p-8">
+                <div>
+                  <h2 className="text-xl font-semibold">The DIT World Company S.L.U.</h2>
+                  <p className="text-muted-foreground mt-2 text-sm">VAT: ESB10680478</p>
+                </div>
 
-        <div className="rounded-lg bg-gray-100 p-4 text-center shadow-sm dark:bg-gray-800">
-          <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-            Reach out for <strong>custom configurations</strong>, <strong>support</strong>, or any{' '}
-            <strong>questions</strong>:
-          </p>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="md:col-span-1">
-            <Card className="dark:bg-gray-800">
-              <CardContent className="space-y-4 p-6">
-                <div className="flex items-center gap-4">
-                  <Mail className="text-primary h-6 w-6" />
+                <div className="flex gap-4">
+                  <MapPin className="text-primary mt-1 h-5 w-5" />
                   <div>
-                    <p className="font-semibold text-black dark:text-white">General Inquiries</p>
-                    <a href="mailto:hello@filmraid.pro" className="text-primary hover:underline">
-                      hello@filmraid.pro
-                    </a>
+                    <p className="font-medium">Address</p>
+                    <p className="text-muted-foreground text-sm">
+                      Carrer del Valles 55, 1-2
+                      <br />
+                      08030 Barcelona, Spain
+                    </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <Mail className="text-primary h-6 w-6" />
-                  <div>
-                    <p className="font-semibold text-black dark:text-white">Orders</p>
-                    <a href="mailto:orders@filmraid.pro" className="text-primary hover:underline">
-                      orders@filmraid.pro
-                    </a>
+
+                <div className="space-y-3">
+                  <div className="flex gap-4">
+                    <Mail className="text-primary mt-1 h-5 w-5" />
+                    <div>
+                      <p className="font-medium">General Inquiries</p>
+                      <a href="mailto:hello@filmraid.pro" className="text-primary hover:underline">
+                        hello@filmraid.pro
+                      </a>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Mail className="text-primary h-6 w-6" />
-                  <div>
-                    <p className="font-semibold text-black dark:text-white">Tech Support</p>
-                    <a href="mailto:support@filmraid.pro" className="text-primary hover:underline">
-                      support@filmraid.pro
-                    </a>
+
+                  <div className="flex gap-4">
+                    <Mail className="text-primary mt-1 h-5 w-5" />
+                    <div>
+                      <p className="font-medium">Orders</p>
+                      <a href="mailto:orders@filmraid.pro" className="text-primary hover:underline">
+                        orders@filmraid.pro
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <Mail className="text-primary mt-1 h-5 w-5" />
+                    <div>
+                      <p className="font-medium">Technical Support</p>
+                      <a
+                        href="mailto:support@filmraid.pro"
+                        className="text-primary hover:underline"
+                      >
+                        support@filmraid.pro
+                      </a>
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          <div className="space-y-4 md:col-span-1">
-            <Card className="dark:bg-gray-800">
-              <CardContent className="flex items-center gap-4 p-6">
-                <MapPin className="text-primary h-6 w-6" />
-                <div>
-                  <p className="font-semibold text-black dark:text-white">Address</p>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    <a
-                      href="https://maps.app.goo.gl/m3s6Ue1cMdecFz82A"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
-                    >
-                      Carrer del Valles 55
-                      <br />
-                      08030 Barcelona
-                      <br />
-                      Spain
-                    </a>
+          {/* Contact Form */}
+          <div className="md:col-span-3">
+            <Card>
+              <CardContent className="p-8">
+                <h3 className="mb-6 text-2xl font-semibold">Send us a message</h3>
+
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div>
+                      <Label htmlFor="name">Your Name</Label>
+                      <Input
+                        id="name"
+                        {...register('name', { required: true })}
+                        placeholder="John Doe"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="email">Your Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        {...register('email', { required: true })}
+                        placeholder="you@email.com"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="message">Your Message</Label>
+                    <Textarea
+                      id="message"
+                      {...register('message', { required: true })}
+                      rows={6}
+                      placeholder="How can we help you?"
+                    />
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? 'Sending...' : 'Send Message'}
+                  </Button>
+
+                  <p className="text-muted-foreground text-center text-xs">
+                    This site is protected by reCAPTCHA to prevent spam and abuse. See our{' '}
+                    <a href="/privacy-policy" className="hover:text-primary underline">
+                      Privacy Policy
+                    </a>{' '}
+                    for details.
                   </p>
-                </div>
+                </form>
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
-
-      <h3 className="text-center text-2xl font-bold text-black dark:text-white">Send a Message</h3>
-
-      <Card className="mx-auto max-w-md dark:bg-gray-800">
-        <CardContent className="space-y-6 p-6">
-          {/* Live region for notices (a11y) */}
-          <div aria-live="polite" aria-atomic="true">
-            {notice.msg && (
-              <div
-                className={`rounded-md border p-3 text-sm ${
-                  notice.type === 'success'
-                    ? 'border-green-200 bg-green-50 text-green-700'
-                    : 'border-red-200 bg-red-50 text-red-700'
-                }`}
-                role={notice.type === 'success' ? 'status' : 'alert'}
-              >
-                {notice.msg}
-              </div>
-            )}
-          </div>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
-            <div className="space-y-2">
-              <Label htmlFor="name" className="dark:text-white">
-                Your Name
-              </Label>
-              <Input
-                id="name"
-                {...register('name', { required: 'Name is required' })}
-                placeholder="Your Name"
-                className="dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
-              />
-              {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email" className="dark:text-white">
-                Your Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                {...register('email', {
-                  required: 'Email is required',
-                  pattern: {
-                    value:
-                      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@(([^<>()[\]\\.,;:\s@"]+\.)+[^<>()[\]\\.,;:\s@"]{2,})$/i,
-                    message: 'Please enter a valid email',
-                  },
-                })}
-                placeholder="your@email.com"
-                className="dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
-              />
-              {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="message" className="dark:text-white">
-                Your Message
-              </Label>
-              <Textarea
-                id="message"
-                {...register('message', {
-                  required: 'Message is required',
-                  minLength: { value: 10, message: 'Message is too short' },
-                })}
-                placeholder="Tell us what you need…"
-                className="h-32 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
-              />
-              {errors.message && <p className="text-sm text-red-500">{errors.message.message}</p>}
-            </div>
-
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? 'Sending...' : 'Send Message'}
-            </Button>
-
-            {/* Required attribution for hiding the global reCAPTCHA badge */}
-            <p className="text-muted-foreground mt-2 text-xs leading-snug">
-              This site is protected by reCAPTCHA to prevent spam and abuse. See our{' '}
-              <a href="/privacy-policy" className="hover:text-primary underline">
-                Privacy Policy
-              </a>{' '}
-              for details on data processing.
-            </p>
-          </form>
-        </CardContent>
-      </Card>
     </section>
   );
 }
