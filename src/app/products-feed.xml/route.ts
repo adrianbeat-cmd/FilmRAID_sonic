@@ -17,7 +17,7 @@ type Sku = {
   description: string;
 };
 
-// Build product list from central data
+// Clean product list from central data (only 16 products, no duplicates)
 const PRODUCTS: Sku[] = products.flatMap((model) =>
   model.variants.map((v) => ({
     id: v.slug,
@@ -28,7 +28,7 @@ const PRODUCTS: Sku[] = products.flatMap((model) =>
     shippingWeightKg:
       model.hddCount === 4 ? 8 : model.hddCount === 6 ? 12 : model.hddCount === 8 ? 18 : 22,
     availability: 'in stock' as const,
-    description: `${model.name} professional RAID system with ${v.totalTB}TB total capacity. Optimized for film and video workflows.`,
+    description: `${model.name} professional RAID system with ${v.totalTB}TB total capacity. Optimized for film and video workflows. Enterprise-grade drives and Areca hardware.`,
   })),
 );
 
