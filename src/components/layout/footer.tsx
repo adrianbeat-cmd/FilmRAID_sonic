@@ -12,6 +12,7 @@ const ITEMS = [
     title: 'Navigation',
     links: [
       { name: 'Home', href: '/' },
+      { name: 'Catalog', href: '/catalog' },
       { name: 'Configs', href: '/configs' },
       { name: 'Contact', href: '/contact' },
     ],
@@ -48,6 +49,7 @@ const Footer = () => {
     <footer className="bg-gray-100 py-12 dark:bg-gray-900">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:grid-cols-5">
+          {/* Logo + Tagline */}
           <div className="col-span-1 flex flex-col justify-start">
             <Link href="/" className="mb-4 inline-block">
               <Image
@@ -69,6 +71,8 @@ const Footer = () => {
               Fast & Reliable Storage for Filmmakers
             </p>
           </div>
+
+          {/* Navigation */}
           {ITEMS.map((section, sectionIdx) => (
             <div key={sectionIdx} className="col-span-1 flex flex-col justify-start">
               <h3 className="mb-4 text-lg font-semibold text-black dark:text-white">
@@ -85,6 +89,8 @@ const Footer = () => {
               </ul>
             </div>
           ))}
+
+          {/* Social */}
           <div className="col-span-1 flex flex-col justify-start">
             <h3 className="mb-4 text-lg font-semibold text-black dark:text-white">Connect</h3>
             <div className="flex space-x-4">
@@ -102,7 +108,27 @@ const Footer = () => {
               ))}
             </div>
           </div>
-          {/* Ecologi Badge on the right */}
+
+          {/* Company Information - NEW SECTION */}
+          <div className="col-span-1 flex flex-col justify-start text-sm">
+            <h3 className="mb-4 text-lg font-semibold text-black dark:text-white">Company</h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              The DIT World Company S.L.U.
+              <br />
+              Carrer del Valles 55, 1-2
+              <br />
+              08030 Barcelona, Spain
+              <br />
+              VAT: ESB10680478
+            </p>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">
+              <a href="mailto:hello@filmraid.pro" className="hover:text-primary">
+                hello@filmraid.pro
+              </a>
+            </p>
+          </div>
+
+          {/* Ecologi Badge */}
           <div className="col-span-1 flex flex-col justify-start">
             <a
               href="https://ecologi.com/filmraid?r=64a29ce03896b26a0cd54d17"
@@ -118,7 +144,7 @@ const Footer = () => {
                 height={0}
                 style={{ width: 'auto', height: '75px' }}
                 className="dark:hidden"
-                unoptimized // Since it's a remote API image
+                unoptimized
               />
               <Image
                 alt="We offset our carbon footprint via Ecologi"
@@ -127,13 +153,15 @@ const Footer = () => {
                 height={0}
                 style={{ width: 'auto', height: '75px' }}
                 className="hidden dark:block"
-                unoptimized // Since it's a remote API image
+                unoptimized
               />
             </a>
           </div>
         </div>
-        <div className="mt-8 border-t border-gray-200 pt-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-          <p>© 2025 FilmRAID. All rights reserved.</p>
+
+        {/* Bottom bar */}
+        <div className="mt-12 border-t border-gray-200 pt-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+          <p>© {new Date().getFullYear()} FilmRAID. All rights reserved.</p>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="text-primary mt-2 inline-flex items-center hover:underline"
