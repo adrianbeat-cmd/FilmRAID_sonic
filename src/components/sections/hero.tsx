@@ -126,7 +126,8 @@ const Hero = () => {
             variants={item}
             className="bg-clip-text text-4xl leading-tight font-bold sm:text-5xl md:text-6xl md:leading-18"
           >
-            Professional RAID Storage for Film — Complete & Ready to Use
+            Professional RAID Storage for Film{' '}
+            <span className="block">Complete & Ready to Use</span>
           </motion.h1>
 
           <motion.p
