@@ -134,7 +134,8 @@ const Hero = () => {
             variants={item}
             className="max-w-3xl text-lg leading-7 text-black sm:text-xl sm:leading-8 dark:text-white"
           >
-            Enterprise Seagate drives + Areca controller, pre-configured and shipped across Europe in 3 days. Built for DITs, editors and post-production professionals.
+            Enterprise SAS drives + Areca controller, pre-configured and shipped across Europe in 3
+            days. Built for DITs, editors and post-production professionals.
           </motion.p>
 
           <motion.div variants={item}>
