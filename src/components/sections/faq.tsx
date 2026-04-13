@@ -15,27 +15,27 @@ const faqData = [
   {
     question: 'What RAID levels do you offer?',
     answer:
-      'We offer RAID 0 (speed-focused), RAID 5 (balanced speed and redundancy), RAID 6 (extra protection), and more up to RAID 10. Choose based on your needs for speed, security, or capacity in cinema workflows.',
+      'All FilmRAID systems support RAID 0 (maximum speed, full capacity), RAID 5 (speed + redundancy, loses one drive worth of space), RAID 6 (extra protection, survives two simultaneous drive failures), RAID 10, and JBOD. The 6, 8, and 12E models also support RAID 30, 50, and 60. You choose your RAID level at checkout — the system arrives pre-configured and ready to use.',
   },
   {
     question: 'How fast is the delivery in the EU?',
     answer:
-      'We source and assemble your custom RAID system for delivery across Europe in just 3 days after order confirmation.',
+      'We ship via FedEx from Barcelona, Spain. Delivery across Europe typically takes 3–5 business days after order confirmation. Spain and nearby countries are usually 2–3 days.',
   },
   {
     question: 'Are your RAID systems compatible with film equipment?',
     answer:
-      'Yes, our systems support high-speed interfaces like Thunderbolt 3, NVMe, SAS, Fibre, iSCSI, and USB4, making them ideal for digital cinema cameras, editing software, and post-production setups.',
+      'Yes. All FilmRAID systems connect via dual Thunderbolt 3 (up to 40Gb/s), which is fully compatible with Mac Studio, Mac Pro, MacBook Pro, and any Thunderbolt 3 or 4 workstation. They also include DisplayPort 1.4, USB-C, USB-A, and RJ45 Ethernet. Compatible with DaVinci Resolve, Avid Media Composer, Final Cut Pro, and all major NLE and colour grading tools.',
   },
   {
     question: 'What storage capacities are available?',
     answer:
-      'Our systems offer flexible configurations from 18TB to 24TB options with enterprise-grade HDDs, scalable up to 264TB depending on the bay count and RAID level.',
+      'We offer four models in four capacities each. The FilmRaid-4A ranges from 72TB to 96TB. The FilmRaid-6 from 108TB to 144TB. The FilmRaid-8 from 144TB to 192TB. And the flagship FilmRaid-12E from 216TB to 288TB. All prices include the drives — nothing extra to buy.',
   },
   {
     question: 'Do you offer a warranty?',
     answer:
-      'All FilmRAID systems come with a limited factory warranty covering hardware defects. We provide expert support and assist with warranty claims if needed to ensure a smooth customer experience.',
+      'Yes. The Areca RAID enclosure comes with a 3-year warranty. The enterprise SAS drives (Toshiba MG series and Seagate Exos) come with a 5-year manufacturer warranty. All warranty claims are handled by FilmRAID — you contact us directly and we manage the process.',
   },
 ];
 

@@ -5,7 +5,6 @@ import { motion, useInView, useAnimation } from 'framer-motion';
 
 import usePrefersReducedMotion from '@/hooks/usePrefersReducedMotion';
 
-// Define type for text items
 interface ContentItem {
   type: 'text';
   content: string;
@@ -30,7 +29,6 @@ const ValueProposition = () => {
     }
   }, [isInView, controls, prefersReducedMotion]);
 
-  // Animation variants for text only
   const variants = {
     text: {
       hidden: {
@@ -83,8 +81,8 @@ const ValueProposition = () => {
         </motion.h2>
         <p className="mb-12 text-center text-lg">
           FilmRAID delivers pre-configured RAID systems tailored for digital cinema and
-          post-production. With 3-day EU delivery, high-speed interfaces like Thunderbolt 3 and
-          USB4, and robust security, focus on creating—not managing data.
+          post-production. With 3-day EU delivery, dual Thunderbolt 3 ports, and enterprise-grade
+          SAS drives, focus on creating — not managing data.
         </p>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           <div className="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
@@ -92,14 +90,15 @@ const ValueProposition = () => {
               Speed & Reliability
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              RAID 0 to RAID 6 setups ensure blazing-fast transfers up to 3000MB/s, perfect for 8K
-              workflows. Available in 18TB to 24TB options with enterprise-grade HDDs.
+              RAID 0 to RAID 6 setups with sustained transfers up to 2600MB/s — perfect for 4K,
+              6K, and 8K workflows. Available from 72TB to 288TB with enterprise-grade SAS drives.
             </p>
           </div>
           <div className="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
             <h3 className="mb-4 text-xl font-semibold text-black dark:text-white">Fast Delivery</h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Order today, assembled and shipped in 3 days—no inventory delays.
+              Order today, pre-configured and shipped across Europe via FedEx in 3 days — no
+              assembly required, ready to plug in and use.
             </p>
           </div>
           <div className="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
@@ -107,9 +106,8 @@ const ValueProposition = () => {
               Reliable Support
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              All FilmRAID systems come with a limited factory warranty covering hardware defects.
-              We provide expert support and assist with warranty claims if needed to ensure a smooth
-              customer experience.
+              All FilmRAID systems come with a 3-year warranty on the Areca enclosure and up to
+              5-year warranty on the drives. Expert support included.
             </p>
           </div>
         </div>

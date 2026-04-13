@@ -23,9 +23,9 @@ const features: Feature[] = [
   {
     icon: <Zap />,
     label: 'Speed & Reliability',
-    title: 'Blazing-fast transfers up to 3000MB/s for 8K workflows.',
+    title: 'Sustained transfers up to 2600MB/s for 4K, 6K and 8K workflows.',
     description:
-      'Our RAID systems are designed to handle high-speed data transfers, ensuring smooth post-production without bottlenecks.',
+      'Our RAID systems are designed to handle high-speed data transfers, ensuring smooth post-production without bottlenecks. Built on Areca controllers with enterprise-grade SAS drives.',
     image: '/layout/feature-1.png',
     link: {
       text: 'Configure now',
@@ -35,9 +35,9 @@ const features: Feature[] = [
   {
     icon: <HardDrive />,
     label: 'High-Capacity Storage',
-    title: '18TB to 24TB options with enterprise-grade HDDs.',
+    title: 'From 72TB to 288TB — drives included, pre-configured.',
     description:
-      'Store massive film files securely with customizable RAID levels for redundancy and performance.',
+      'Store massive film files securely with Toshiba and Seagate enterprise SAS drives. Choose your RAID level for the right balance of speed, capacity, and redundancy.',
     image: '/layout/feature-2.png',
     link: {
       text: 'See configs',
@@ -47,9 +47,9 @@ const features: Feature[] = [
   {
     icon: <Shield />,
     label: 'Secure & Versatile',
-    title: 'Robust security and versatile interfaces like Thunderbolt and PCIe.',
+    title: 'Dual Thunderbolt 3, DisplayPort, USB-C, Ethernet — all in one box.',
     description:
-      'Built for cinema experts, with no-stock model for 3-day EU delivery and AI-assisted configs.',
+      'Built for cinema professionals. Connects directly to your Mac workstation via Thunderbolt 3 at up to 40Gb/s. Ships ready to use with a 3-year warranty.',
     image: '/layout/feature-3.png',
     link: {
       text: 'Learn more',
