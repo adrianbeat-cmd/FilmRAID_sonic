@@ -225,7 +225,7 @@ const ProductClient = ({
               <li>✓ Areca RAID enclosure, fully assembled</li>
               <li>✓ Pre-configured RAID — ready to plug in and use</li>
               <li>✓ 3-year warranty</li>
-              <li>✓ FedEx delivery across Europe (3–5 days)</li>
+              <<li>✓ FedEx delivery across Europe — calculated at checkout</li>
             </ul>
           </div>
 
