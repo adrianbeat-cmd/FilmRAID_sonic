@@ -29,7 +29,7 @@ export const products: ProductModel[] = [
     image: '/layout/filmraid-4a.jpg',
     back_image: '/layout/FilmRaid-4A_back.jpg',
     description:
-      '4-bay portable tower RAID system with dual Thunderbolt 3 ports for up to 40Gb/s transfers.',
+      'The FilmRaid-4A is a professional 4-bay RAID tower designed for DITs, cinematographers, and on-set data management workflows. Featuring dual Thunderbolt 3 ports with up to 40Gb/s transfer speeds, it delivers the performance needed for 4K, 6K, and 8K raw footage. Built around enterprise-grade SAS/SATA drives and an Areca RAID controller, it supports RAID 0, 1, 1E, 3, 5, 6, 10, and JBOD — giving you full control over how you balance speed and redundancy. Compact enough for a cart or a pelican case, yet powerful enough to handle the demands of a full shooting day. Ships pre-configured and ready to use from Barcelona, Spain. 3-year warranty included.',
     specs: [
       { label: 'Bays', value: '4 x 3.5"/2.5" SAS/SATA' },
       {
@@ -93,7 +93,8 @@ export const products: ProductModel[] = [
     hddCount: 6,
     image: '/layout/filmraid-6.jpg',
     back_image: '/layout/FilmRaid-6_back.jpg',
-    description: '6-bay desktop RAID system with dual core processor and 2GB DDR3 ECC memory.',
+    description:
+      'The FilmRaid-6 is a professional 6-bay desktop RAID system built for film productions, post-production facilities, and data-intensive studio environments. Powered by a dual-core processor with 2GB DDR3 ECC memory and an Areca RAID controller, it delivers sustained read/write speeds of up to 2600MB/s — enough for simultaneous 4K and 6K multicam workflows. Dual Thunderbolt 3 ports allow daisy-chaining to additional storage or displays, while RAID levels 0, 1, 3, 5, 6, 10, 30, 50, 60, and JBOD give you complete flexibility for any pipeline. Enterprise-grade Seagate Exos drives ensure long-term reliability under continuous use. Ships pre-configured and ready to plug in. Delivered across Europe via FedEx from Barcelona. 3-year warranty included.',
     specs: [
       { label: 'Bays', value: '6 x 3.5"/2.5" SAS/SATA' },
       {
@@ -159,7 +160,8 @@ export const products: ProductModel[] = [
     hddCount: 8,
     image: '/layout/filmraid-8.jpg',
     back_image: '/layout/FilmRaid-8_back.jpg',
-    description: '8-bay tower RAID system with dual core processor and 2GB DDR3 ECC memory.',
+    description:
+      'The FilmRaid-8 is a high-capacity 8-bay professional RAID tower engineered for demanding film and broadcast workflows. With up to 192TB of raw storage, sustained speeds of up to 2600MB/s, and support for DisplayPort 1.4 (8K at 30Hz), it handles the most data-intensive productions without compromise. Built on an Areca RAID controller with a dual-core processor and 2GB DDR3 ECC memory, it supports the full range of RAID levels including 0, 1, 3, 5, 6, 10, 30, 50, 60, and JBOD. Dual Thunderbolt 3 ports enable seamless daisy-chaining across a professional workstation setup. Enterprise Seagate Exos drives are pre-installed and the system ships fully configured, tested, and ready to use. Ideal for DITs managing large shooting days, editors working with 6K and 8K footage, and post houses that need reliable high-volume storage. Delivered across Europe via FedEx from Barcelona. 3-year warranty included.',
     specs: [
       { label: 'Bays', value: '8 x 3.5"/2.5" SAS/SATA' },
       {
@@ -226,7 +228,7 @@ export const products: ProductModel[] = [
     image: '/layout/filmraid-12e.jpg',
     back_image: '/layout/FilmRaid-12E_back.jpg',
     description:
-      '12-bay tower RAID system (two-box shipment) with dual core processor and 8GB DDR4 ECC memory.',
+      'The FilmRaid-12E is our flagship 12-bay professional RAID system — the maximum capacity option for productions and facilities that cannot afford storage bottlenecks. With up to 288TB of raw storage and up to 2600MB/s sustained transfer speeds, it handles simultaneous 8K multicam recording, large-scale digital archiving, and the most demanding post-production pipelines. Powered by a dual-core 1.6GHz processor with 8GB DDR4 ECC memory and an Areca RAID controller, it supports RAID 0, 1, 3, 5, 6, 10, 30, 50, 60, and JBOD. Dual Thunderbolt 3 ports with DisplayPort 1.4 output (8K at 30Hz) integrate cleanly into any professional workstation. Enterprise Seagate Exos drives are pre-installed. Due to its size, the FilmRaid-12E ships in two boxes and is delivered fully configured and tested. Designed for rental houses, broadcast facilities, high-end post-production studios, and productions working with very large daily data volumes. Delivered across Europe via FedEx from Barcelona. 3-year warranty included.',
     specs: [
       { label: 'Bays', value: '12 x 3.5"/2.5" SAS/SATA' },
       {
