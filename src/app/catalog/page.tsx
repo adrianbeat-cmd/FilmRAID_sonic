@@ -10,6 +10,13 @@ import { Card, CardContent } from '@/components/ui/card';
 
 import { products } from '@/data/products';
 
+const modelTagline: Record<string, string> = {
+  'filmraid-4a': '4-bay · On-set workflows · Thunderbolt 3',
+  'filmraid-6': '6-bay · Studio and post-production',
+  'filmraid-8': '8-bay · High-capacity broadcast',
+  'filmraid-12e': '12-bay · Maximum capacity',
+};
+
 export default function CatalogPage() {
   return (
     <section className="py-16 md:py-24">
@@ -44,7 +51,9 @@ export default function CatalogPage() {
                     {model.name} — {variant.totalTB}TB
                   </h3>
 
-                  <p className="text-muted-foreground mt-1 text-sm">
+                  <p className="text-muted-foreground mt-1 text-xs">{modelTagline[model.id]}</p>
+
+                  <p className="text-muted-foreground mt-2 text-sm">
                     RAID 0: {variant.raid0TB}TB | RAID 5: {variant.raid5TB}TB
                   </p>
 
