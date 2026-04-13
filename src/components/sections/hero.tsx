@@ -89,7 +89,7 @@ const Hero = () => {
         className="absolute inset-0 hidden h-full w-full bg-cover bg-center dark:block"
         style={{ backgroundImage: 'url("/layout/hero_back_dark.jpg")' }}
       />
-      {/* Content wrapper: Using hero-content class and flexible layout */}
+      {/* Content wrapper */}
       <div className="hero-content relative z-30 container mx-auto flex h-full flex-col items-center gap-8 px-4 pt-[calc(2.5rem+env(safe-area-inset-top))] md:pt-[calc(3rem+env(safe-area-inset-top))]">
         <motion.div
           variants={container}
@@ -97,7 +97,7 @@ const Hero = () => {
           animate="visible"
           className="flex flex-col items-center gap-6"
         >
-          {/* Logo with responsive sizing */}
+          {/* Logo */}
           <motion.div
             variants={imageAnimation}
             className="relative max-h-[min(40vh,568px)] w-full max-w-[min(80vw,644px)]"
@@ -121,29 +121,33 @@ const Hero = () => {
               className="hidden h-auto w-full object-contain drop-shadow-2xl dark:block"
             />
           </motion.div>
+
           <motion.h1
             variants={item}
             className="bg-clip-text text-4xl leading-tight font-bold sm:text-5xl md:text-6xl md:leading-18"
           >
-            Fast & Reliable Storage
+            Professional RAID Storage for Film — Complete & Ready to Use
           </motion.h1>
+
           <motion.p
             variants={item}
             className="max-w-3xl text-lg leading-7 text-black sm:text-xl sm:leading-8 dark:text-white"
           >
-            Custom RAID storage for film productions.
+            Enterprise Seagate drives + Areca controller, pre-configured and shipped across Europe in 3 days. Built for DITs, editors and post-production professionals.
           </motion.p>
+
           <motion.div variants={item}>
             <AnimatedBorderButton
               asChild
               className="[&_svg]:transition-transform hover:[&_svg]:translate-x-0.5"
             >
               <Link href="/configs">
-                Configure Now <ChevronRight />
+                See Models & Prices <ChevronRight />
               </Link>
             </AnimatedBorderButton>
           </motion.div>
         </motion.div>
+
         {/* Main product image */}
         <motion.div
           variants={imageAnimation}
