@@ -165,6 +165,15 @@ const ProductClient = ({
     }
   };
 
+  const driveModel =
+    tb === 24
+      ? 'Seagate Exos X24'
+      : tb === 22
+        ? 'Toshiba MG10SFA'
+        : tb === 20
+          ? 'Toshiba MG10SCA'
+          : 'Toshiba MG09SCA';
+
   return (
     <section className="py-12 md:py-16 lg:py-20">
       <div className="container grid grid-cols-1 gap-8 md:grid-cols-2">
@@ -220,7 +229,7 @@ const ProductClient = ({
             </p>
             <ul className="space-y-1 text-sm text-green-700 dark:text-green-400">
               <li>
-                ✓ {currentModel.hddCount} × {tb}TB Seagate Exos enterprise drives
+                ✓ {currentModel.hddCount} × {tb}TB {driveModel} SAS drives
               </li>
               <li>✓ Areca RAID enclosure, fully assembled</li>
               <li>✓ Pre-configured RAID — ready to plug in and use</li>
