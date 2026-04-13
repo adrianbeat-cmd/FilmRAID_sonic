@@ -145,7 +145,7 @@ const ProductClient = ({
       if (!res.ok) throw new Error(dataResp?.error || 'Send failed');
 
       toast('Wire transfer request sent!', {
-        description: `We’ll email you bank details shortly.`,
+        description: `We'll email you bank details shortly.`,
         style: { background: '#16a34a', color: '#fff' },
       });
 
@@ -205,7 +205,29 @@ const ProductClient = ({
             </p>
           </div>
 
-          <p className="mb-2 text-xl font-semibold">Total: €{totalPrice}</p>
+          {/* Price + what's included */}
+          <div>
+            <p className="text-2xl font-bold">€{totalPrice}</p>
+            <p className="text-muted-foreground mt-1 text-xs">
+              VAT not included. Calculated at checkout based on your country.
+            </p>
+          </div>
+
+          {/* What's included box */}
+          <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950">
+            <p className="mb-2 text-sm font-semibold text-green-800 dark:text-green-300">
+              ✓ Everything included in this price:
+            </p>
+            <ul className="space-y-1 text-sm text-green-700 dark:text-green-400">
+              <li>
+                ✓ {currentModel.hddCount} × {tb}TB Seagate Exos enterprise drives
+              </li>
+              <li>✓ Areca RAID enclosure, fully assembled</li>
+              <li>✓ Pre-configured RAID — ready to plug in and use</li>
+              <li>✓ 3-year warranty</li>
+              <li>✓ FedEx delivery across Europe (3–5 days)</li>
+            </ul>
+          </div>
 
           {/* Clear instruction with arrow */}
           {!selectedRaid && (
@@ -345,7 +367,7 @@ const ProductClient = ({
           </div>
         </div>
 
-        {/* === TECHNICAL SPECIFICATIONS - RESTORED === */}
+        {/* Technical Specifications */}
         <Card className="order-3 md:col-start-1 md:row-start-2">
           <CardContent className="space-y-4 p-6">
             <h2 className="text-2xl font-bold">Technical Specifications</h2>
