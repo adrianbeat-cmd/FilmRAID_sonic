@@ -271,7 +271,7 @@ const ProductClient = ({
                 <DialogTrigger asChild>
                   <button
                     type="button"
-                    className="text-muted-foreground hover:text-primary flex h-5 w-5 items-center justify-center rounded-full border text-xs font-bold transition-colors"
+                    className="text-primary hover:bg-primary hover:text-primary-foreground flex h-5 w-5 items-center justify-center rounded-full border-2 border-current text-xs font-bold transition-colors"
                     aria-label="RAID level information"
                   >
                     i
