@@ -315,6 +315,14 @@ const ProductClient = ({
                         redundancy matter.
                       </p>
                     </div>
+                    <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
+                      <p className="font-semibold">JBOD — Independent drives</p>
+                      <p className="text-muted-foreground mt-1 text-sm">
+                        Each drive works independently with no combining or protection. Used by
+                        professionals who manage their own backup strategy and want full control
+                        over each drive separately.
+                      </p>
+                    </div>
                     <p className="text-muted-foreground text-xs">
                       Not sure? Choose RAID 5 — it&apos;s the most popular choice for film and video
                       workflows.
