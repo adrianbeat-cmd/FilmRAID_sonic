@@ -177,8 +177,8 @@ const ProductClient = ({
   return (
     <section className="py-12 md:py-16 lg:py-20">
       <div className="container grid grid-cols-1 gap-8 md:grid-cols-2 md:items-start">
-        {/* Image Column */}
-        <div className="order-1">
+        {/* Image + Specs in same column — no gap */}
+        <div className="order-1 flex flex-col gap-8">
           <div className="relative">
             <Image
               src={images[selectedImage]}
@@ -199,6 +199,21 @@ const ProductClient = ({
               ))}
             </div>
           </div>
+
+          {/* Technical Specifications */}
+          <Card>
+            <CardContent className="space-y-4 p-6">
+              <h2 className="text-2xl font-bold">Technical Specifications</h2>
+              {currentModel.specs.map((spec, idx) => (
+                <div key={idx} className="flex justify-between border-b py-3">
+                  <span className="font-medium text-gray-700 dark:text-gray-300">{spec.label}</span>
+                  <span className="text-right">
+                    {Array.isArray(spec.value) ? spec.value.join(', ') : spec.value}
+                  </span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Config Column */}
@@ -374,21 +389,6 @@ const ProductClient = ({
             </Button>
           </div>
         </div>
-
-        {/* Technical Specifications */}
-        <Card className="order-3 md:col-start-1 md:row-start-2">
-          <CardContent className="space-y-4 p-6">
-            <h2 className="text-2xl font-bold">Technical Specifications</h2>
-            {currentModel.specs.map((spec, idx) => (
-              <div key={idx} className="flex justify-between border-b py-3">
-                <span className="font-medium text-gray-700 dark:text-gray-300">{spec.label}</span>
-                <span className="text-right">
-                  {Array.isArray(spec.value) ? spec.value.join(', ') : spec.value}
-                </span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
       </div>
     </section>
   );
