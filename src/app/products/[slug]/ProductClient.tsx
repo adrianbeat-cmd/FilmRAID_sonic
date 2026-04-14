@@ -177,7 +177,7 @@ const ProductClient = ({
   return (
     <section className="py-12 md:py-16 lg:py-20">
       <div className="container grid grid-cols-1 gap-8 md:grid-cols-2 md:items-start">
-        {/* Image + Specs in same column — no gap */}
+        {/* Image Column — desktop only shows image here, specs below */}
         <div className="order-1 flex flex-col gap-8">
           <div className="relative">
             <Image
@@ -200,8 +200,8 @@ const ProductClient = ({
             </div>
           </div>
 
-          {/* Technical Specifications */}
-          <Card>
+          {/* Technical Specifications — hidden on mobile, shown on desktop */}
+          <Card className="hidden md:block">
             <CardContent className="space-y-4 p-6">
               <h2 className="text-2xl font-bold">Technical Specifications</h2>
               {currentModel.specs.map((spec, idx) => (
@@ -388,6 +388,21 @@ const ProductClient = ({
               Add to Cart (Pay Online)
             </Button>
           </div>
+
+          {/* Technical Specifications — mobile only, shown below buttons */}
+          <Card className="md:hidden">
+            <CardContent className="space-y-4 p-6">
+              <h2 className="text-2xl font-bold">Technical Specifications</h2>
+              {currentModel.specs.map((spec, idx) => (
+                <div key={idx} className="flex justify-between border-b py-3">
+                  <span className="font-medium text-gray-700 dark:text-gray-300">{spec.label}</span>
+                  <span className="text-right">
+                    {Array.isArray(spec.value) ? spec.value.join(', ') : spec.value}
+                  </span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </section>
