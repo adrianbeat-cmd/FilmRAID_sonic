@@ -284,46 +284,42 @@ const ProductClient = ({
                       RAID controls how your drives work together. Here&apos;s a simple guide:
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="space-y-4 pt-2">
-                    <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
-                      <p className="font-semibold">RAID 0 — Maximum speed</p>
-                      <p className="text-muted-foreground mt-1 text-sm">
-                        All drives work together for full capacity and fastest speeds. No redundancy
-                        — if one drive fails you lose everything. Best if you have backups elsewhere
-                        and need maximum performance.
+                  <div className="space-y-2 pt-2 pb-4">
+                    <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-900">
+                      <p className="text-sm font-semibold">RAID 0 — Maximum speed</p>
+                      <p className="text-muted-foreground mt-0.5 text-xs">
+                        Full capacity, fastest speeds. No redundancy — if one drive fails you lose
+                        everything. Best if you have backups elsewhere.
                       </p>
                     </div>
-                    <div className="rounded-lg bg-green-50 p-4 dark:bg-green-950">
-                      <p className="font-semibold">RAID 5 — Best for most workflows ✓</p>
-                      <p className="text-muted-foreground mt-1 text-sm">
-                        Good speed, uses one drive for protection. Can survive one drive failure
-                        without losing data. Most DITs and post-production editors choose this.
+                    <div className="rounded-lg bg-green-50 p-3 dark:bg-green-950">
+                      <p className="text-sm font-semibold">RAID 5 — Best for most workflows ✓</p>
+                      <p className="text-muted-foreground mt-0.5 text-xs">
+                        Good speed, survives one drive failure. Most DITs and editors choose this.
                       </p>
                     </div>
-                    <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
-                      <p className="font-semibold">RAID 6 — Extra protection</p>
-                      <p className="text-muted-foreground mt-1 text-sm">
-                        Like RAID 5 but survives two simultaneous drive failures. Slightly less
-                        usable capacity. Ideal for long-term archiving or critical data.
+                    <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-900">
+                      <p className="text-sm font-semibold">RAID 6 — Extra protection</p>
+                      <p className="text-muted-foreground mt-0.5 text-xs">
+                        Survives two simultaneous drive failures. Slightly less capacity. Ideal for
+                        archiving or critical data.
                       </p>
                     </div>
-                    <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
-                      <p className="font-semibold">RAID 10 — Speed + safety</p>
-                      <p className="text-muted-foreground mt-1 text-sm">
-                        Mirrors all data across drives — very fast and very safe, but uses half the
-                        total capacity. Best for high-end productions where both speed and
-                        redundancy matter.
+                    <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-900">
+                      <p className="text-sm font-semibold">RAID 10 — Speed + safety</p>
+                      <p className="text-muted-foreground mt-0.5 text-xs">
+                        Very fast and very safe, but uses half the total capacity. Best for high-end
+                        productions.
                       </p>
                     </div>
-                    <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
-                      <p className="font-semibold">JBOD — Independent drives</p>
-                      <p className="text-muted-foreground mt-1 text-sm">
-                        Each drive works independently with no combining or protection. Used by
-                        professionals who manage their own backup strategy and want full control
-                        over each drive separately.
+                    <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-900">
+                      <p className="text-sm font-semibold">JBOD — Independent drives</p>
+                      <p className="text-muted-foreground mt-0.5 text-xs">
+                        Each drive works independently. For professionals who manage their own
+                        backup strategy and want full control over each drive.
                       </p>
                     </div>
-                    <p className="text-muted-foreground text-xs">
+                    <p className="text-muted-foreground pt-1 text-xs">
                       Not sure? Choose RAID 5 — it&apos;s the most popular choice for film and video
                       workflows.
                     </p>
