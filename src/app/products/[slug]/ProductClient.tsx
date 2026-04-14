@@ -176,7 +176,7 @@ const ProductClient = ({
 
   return (
     <section className="py-12 md:py-16 lg:py-20">
-      <div className="container grid grid-cols-1 gap-8 md:grid-cols-2">
+      <div className="container grid grid-cols-1 gap-8 md:grid-cols-2 md:items-start">
         {/* Image Column */}
         <div className="order-1">
           <div className="relative">
@@ -202,7 +202,7 @@ const ProductClient = ({
         </div>
 
         {/* Config Column */}
-        <div className="order-2 space-y-4 md:sticky md:top-16 md:col-start-2 md:row-start-1 md:self-start">
+        <div className="order-2 space-y-4 md:col-start-2 md:row-start-1">
           <h1 className="text-3xl font-bold">{currentModel.name}</h1>
           <p className="text-muted-foreground">{currentModel.description}</p>
 
