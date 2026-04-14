@@ -265,7 +265,64 @@ const ProductClient = ({
           )}
 
           <div className="mb-4 space-y-2">
-            <Label htmlFor="raid">RAID Level</Label>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="raid">RAID Level</Label>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:text-primary flex h-5 w-5 items-center justify-center rounded-full border text-xs font-bold transition-colors"
+                    aria-label="RAID level information"
+                  >
+                    i
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Which RAID level should I choose?</DialogTitle>
+                    <DialogDescription>
+                      RAID controls how your drives work together. Here&apos;s a simple guide:
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-2">
+                    <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
+                      <p className="font-semibold">RAID 0 — Maximum speed</p>
+                      <p className="text-muted-foreground mt-1 text-sm">
+                        All drives work together for full capacity and fastest speeds. No redundancy
+                        — if one drive fails you lose everything. Best if you have backups elsewhere
+                        and need maximum performance.
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-green-50 p-4 dark:bg-green-950">
+                      <p className="font-semibold">RAID 5 — Best for most workflows ✓</p>
+                      <p className="text-muted-foreground mt-1 text-sm">
+                        Good speed, uses one drive for protection. Can survive one drive failure
+                        without losing data. Most DITs and post-production editors choose this.
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
+                      <p className="font-semibold">RAID 6 — Extra protection</p>
+                      <p className="text-muted-foreground mt-1 text-sm">
+                        Like RAID 5 but survives two simultaneous drive failures. Slightly less
+                        usable capacity. Ideal for long-term archiving or critical data.
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
+                      <p className="font-semibold">RAID 10 — Speed + safety</p>
+                      <p className="text-muted-foreground mt-1 text-sm">
+                        Mirrors all data across drives — very fast and very safe, but uses half the
+                        total capacity. Best for high-end productions where both speed and
+                        redundancy matter.
+                      </p>
+                    </div>
+                    <p className="text-muted-foreground text-xs">
+                      Not sure? Choose RAID 5 — it&apos;s the most popular choice for film and video
+                      workflows.
+                    </p>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
             <Select onValueChange={setSelectedRaid} value={selectedRaid}>
               <SelectTrigger
                 className={`w-full pr-10 ${!selectedRaid ? 'border-blue-500 ring-2 ring-blue-200' : ''}`}
