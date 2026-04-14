@@ -277,7 +277,7 @@ const ProductClient = ({
                     i
                   </button>
                 </DialogTrigger>
-                <DialogContent className="max-w-lg">
+                <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Which RAID level should I choose?</DialogTitle>
                     <DialogDescription>
