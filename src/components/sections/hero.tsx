@@ -131,10 +131,10 @@ const Hero = () => {
           <Image
             src="/layout/hero-product.png"
             alt="FilmRAID Areca professional RAID system"
-            width={900}
-            height={900}
+            width={400}
+            height={459}
             priority
-            className="h-auto w-full max-w-md object-contain drop-shadow-2xl md:max-w-lg lg:max-w-xl"
+            className="h-auto w-full max-w-[400px] object-contain drop-shadow-2xl"
           />
         </motion.div>
       </div>
