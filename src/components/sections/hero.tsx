@@ -19,15 +19,15 @@ const Hero = () => {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.2,
-        delayChildren: 0.2,
+        staggerChildren: 0.15,
+        delayChildren: 0.1,
         ease: [0.22, 1, 0.36, 1],
       },
     },
   };
 
   const item = {
-    hidden: { opacity: 0, y: 20, filter: 'blur(6px)' },
+    hidden: { opacity: 0, y: 16, filter: 'blur(4px)' },
     visible: {
       opacity: 1,
       y: 0,
@@ -40,62 +40,83 @@ const Hero = () => {
     },
   };
 
+  const imageVariant = {
+    hidden: { opacity: 0, scale: 1.03 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 1.0,
+        ease: [0.22, 1, 0.36, 1],
+      },
+    },
+  };
+
   return (
     <section
-      className="relative -mx-[calc(50vw-50%)] w-screen overflow-hidden bg-[#f0f0ee] !pb-0 dark:bg-[#111111]"
-      style={{ minHeight: '100svh' }}
+      className="relative -mx-[calc(50vw-50%)] w-screen overflow-hidden !pb-0"
+      style={{ background: 'linear-gradient(160deg, #d8d8d8 0%, #e8e8e8 40%, #f2f2f0 100%)' }}
     >
-      {/* Product image — right side on desktop, full background on mobile */}
-      <motion.div
-        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, scale: 1.04 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-        className="absolute inset-0 h-full w-full md:right-0 md:left-auto md:w-[58%]"
-      >
-        <Image
-          src="/layout/hero-product.jpg"
-          alt="FilmRAID Areca RAID system"
-          fill
-          priority
-          className="object-cover object-center"
-        />
-        {/* Fade to left on desktop */}
-        <div className="absolute inset-0 hidden bg-gradient-to-r from-[#f0f0ee]/50 via-[#f0f0ee]/35 to-transparent md:block dark:from-[#111111]/50 dark:via-[#111111]/35" />
-        {/* Fade from bottom on mobile */}
-        <div className="to-[#f0f0ee]/05 dark:to-[#111111]/05 absolute inset-0 bg-gradient-to-t from-[#f0f0ee]/50 via-[#f0f0ee]/30 md:hidden dark:from-[#111111]/50 dark:via-[#111111]/30" />
-      </motion.div>
-
-      {/* Text content */}
-      <div className="relative z-10 flex min-h-[100svh] flex-col justify-end px-6 pb-16 md:justify-center md:px-16 md:pb-0 lg:px-24">
+      <div className="mx-auto flex max-w-7xl flex-col items-center px-6 pt-10 md:px-12">
+        {/* Small label — like Apple's "AirPods Pro 3" */}
         <motion.div
           variants={container}
           initial={prefersReducedMotion ? 'visible' : 'hidden'}
           animate="visible"
-          className="flex max-w-xl flex-col gap-7"
+          className="flex flex-col items-center gap-4 text-center"
         >
-          {/* Title */}
-          <motion.h1
-            variants={item}
-            className="text-4xl leading-tight font-bold tracking-tight text-black sm:text-5xl lg:text-6xl dark:text-white"
-          >
-            Professional RAID
-            <span className="block">Storage for Film</span>
-            <span className="mt-1 block text-2xl font-normal text-gray-500 sm:text-3xl lg:text-4xl dark:text-gray-400">
-              Complete & Ready to Use
-            </span>
-          </motion.h1>
-
-          {/* Subtitle */}
           <motion.p
             variants={item}
-            className="max-w-sm text-base leading-relaxed text-gray-600 sm:text-lg dark:text-gray-400"
+            className="text-sm font-medium tracking-widest text-gray-500 uppercase"
+          >
+            FilmRAID Pro Storage
+          </motion.p>
+
+          {/* Main headline */}
+          <motion.h1
+            variants={item}
+            className="text-4xl leading-tight font-bold tracking-tight text-black sm:text-5xl lg:text-6xl"
+          >
+            Professional RAID for Film.
+            <span className="mt-2 block text-2xl font-normal text-gray-500 sm:text-3xl lg:text-4xl">
+              Complete & Ready to Use.
+            </span>
+          </motion.h1>
+        </motion.div>
+
+        {/* Product image — large, centered, no cropping */}
+        <motion.div
+          variants={imageVariant}
+          initial={prefersReducedMotion ? 'visible' : 'hidden'}
+          animate="visible"
+          className="relative mt-6 w-full max-w-3xl"
+        >
+          <Image
+            src="/layout/hero-product.jpg"
+            alt="FilmRAID Areca RAID system"
+            width={1706}
+            height={1088}
+            priority
+            className="h-auto w-full object-contain"
+          />
+        </motion.div>
+
+        {/* Text + CTA below image — like Apple bottom row */}
+        <motion.div
+          variants={container}
+          initial={prefersReducedMotion ? 'visible' : 'hidden'}
+          animate="visible"
+          className="flex w-full flex-col items-center gap-4 pb-14 text-center md:flex-row md:items-end md:justify-between md:pb-16"
+        >
+          <motion.p
+            variants={item}
+            className="max-w-sm text-sm leading-relaxed text-gray-600 md:text-left md:text-base"
           >
             Enterprise SAS drives + Areca controller, pre-configured and shipped across Europe in 3
             days. Built for DITs, editors and post-production professionals.
           </motion.p>
 
-          {/* CTA */}
-          <motion.div variants={item}>
+          <motion.div variants={item} className="flex items-center gap-4">
             <AnimatedBorderButton
               asChild
               className="[&_svg]:transition-transform hover:[&_svg]:translate-x-0.5"
