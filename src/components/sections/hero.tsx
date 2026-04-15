@@ -60,9 +60,9 @@ const Hero = () => {
           className="object-cover object-center"
         />
         {/* Fade to left on desktop */}
-        <div className="absolute inset-0 hidden bg-gradient-to-r from-[#f0f0ee] via-[#f0f0ee]/70 to-transparent md:block dark:from-[#111111] dark:via-[#111111]/70" />
+        <div className="absolute inset-0 hidden bg-gradient-to-r from-[#f0f0ee]/50 via-[#f0f0ee]/35 to-transparent md:block dark:from-[#111111]/50 dark:via-[#111111]/35" />
         {/* Fade from bottom on mobile */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#f0f0ee] via-[#f0f0ee]/60 to-[#f0f0ee]/10 md:hidden dark:from-[#111111] dark:via-[#111111]/60 dark:to-[#111111]/10" />
+        <div className="to-[#f0f0ee]/05 dark:to-[#111111]/05 absolute inset-0 bg-gradient-to-t from-[#f0f0ee]/50 via-[#f0f0ee]/30 md:hidden dark:from-[#111111]/50 dark:via-[#111111]/30" />
       </motion.div>
 
       {/* Text content */}
