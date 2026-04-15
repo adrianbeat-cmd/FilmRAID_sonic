@@ -59,10 +59,6 @@ const Hero = () => {
           priority
           className="object-cover object-center"
         />
-        {/* Fade to left on desktop */}
-        <div className="absolute inset-0 hidden bg-gradient-to-r from-[#f0f0ee] via-[#f0f0ee]/70 to-transparent md:block dark:from-[#111111] dark:via-[#111111]/70" />
-        {/* Fade from bottom on mobile */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#f0f0ee] via-[#f0f0ee]/60 to-[#f0f0ee]/10 md:hidden dark:from-[#111111] dark:via-[#111111]/60 dark:to-[#111111]/10" />
       </motion.div>
 
       {/* Text content */}
