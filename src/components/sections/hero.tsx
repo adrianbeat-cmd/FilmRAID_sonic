@@ -57,7 +57,7 @@ const Hero = () => {
           alt="FilmRAID Areca RAID system"
           fill
           priority
-          className="object-cover object-center md:object-left"
+          className="object-cover object-center"
         />
         {/* Fade to left on desktop */}
         <div className="absolute inset-0 hidden bg-gradient-to-r from-[#f0f0ee] via-[#f0f0ee]/70 to-transparent md:block dark:from-[#111111] dark:via-[#111111]/70" />
@@ -73,26 +73,6 @@ const Hero = () => {
           animate="visible"
           className="flex max-w-xl flex-col gap-7"
         >
-          {/* Logo */}
-          <motion.div variants={item} className="w-36 md:w-48">
-            <Image
-              src="/layout/logo.svg"
-              alt="FilmRAID Logo"
-              width={200}
-              height={48}
-              className="h-auto w-full dark:hidden"
-              priority
-            />
-            <Image
-              src="/layout/logo_light.svg"
-              alt="FilmRAID Logo"
-              width={200}
-              height={48}
-              className="hidden h-auto w-full dark:block"
-              priority
-            />
-          </motion.div>
-
           {/* Title */}
           <motion.h1
             variants={item}
