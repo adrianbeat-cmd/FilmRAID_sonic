@@ -46,19 +46,15 @@ const Features = () => {
               index % 2 === 1 ? 'md:flex-row-reverse' : ''
             }`}
           >
-            {/* Image — square, no crop, full product visible */}
+            {/* Image — no container, PNG shown directly */}
             <div className="w-full md:w-1/2">
-              <div
-                className="relative flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-950"
-                style={{ aspectRatio: '4/3' }}
-              >
-                <Image
-                  src={feature.image}
-                  alt={feature.label}
-                  fill
-                  className="object-contain p-8"
-                />
-              </div>
+              <Image
+                src={feature.image}
+                alt={feature.label}
+                width={800}
+                height={600}
+                className="h-auto w-full object-contain"
+              />
             </div>
 
             {/* Text */}
