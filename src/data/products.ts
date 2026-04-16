@@ -23,13 +23,13 @@ export type ProductModel = {
 
 export const products: ProductModel[] = [
   {
-    id: 'filmraid-4a',
-    name: 'FilmRaid-4A',
+    id: 'filmraid-4',
+    name: 'FilmRaid-4',
     hddCount: 4,
     image: '/layout/filmraid-4a.jpg',
     back_image: '/layout/FilmRaid-4A_back.jpg',
     description:
-      'The FilmRaid-4A is a professional 4-bay RAID tower designed for DITs, cinematographers, and on-set data management workflows. Featuring dual Thunderbolt 5 ports with up to 80Gb/s transfer speeds (120Gb/s with Bandwidth Boost), it delivers the performance needed for 4K, 6K, and 8K raw footage. Fully backward compatible with Thunderbolt 3 and 4. Built around enterprise-grade SAS drives and an Areca RAID controller, it supports RAID 0, 5, 6, 10, and JBOD — giving you full control over how you balance speed and redundancy. Available with Toshiba MG09SCA (18TB), Toshiba MG10SCA (20TB), Toshiba MG10SFA (22TB), or Seagate Exos X24 (24TB) enterprise SAS drives. Compact enough for a cart or a pelican case, yet powerful enough to handle the demands of a full shooting day. Ships pre-configured and ready to use from Barcelona, Spain. 3-year warranty included.',
+      'The FilmRaid-4 is a professional 4-bay RAID tower designed for DITs, cinematographers, and on-set data management workflows. Featuring dual Thunderbolt 5 ports with up to 80Gb/s transfer speeds (120Gb/s with Bandwidth Boost), it delivers the performance needed for 4K, 6K, and 8K raw footage. Fully backward compatible with Thunderbolt 3 and 4. Built around enterprise-grade SAS drives and an Areca RAID controller, it supports RAID 0, 5, 6, 10, and JBOD — giving you full control over how you balance speed and redundancy. Available with Toshiba MG09SCA (18TB), Toshiba MG10SCA (20TB), Toshiba MG10SFA (22TB), or Seagate Exos X24 (24TB) enterprise SAS drives. Compact enough for a cart or a pelican case, yet powerful enough to handle the demands of a full shooting day. Ships pre-configured and ready to use from Barcelona, Spain. 3-year warranty included.',
     specs: [
       { label: 'Bays', value: '4 x 3.5"/2.5" SAS/SATA' },
       {
@@ -52,7 +52,7 @@ export const products: ProductModel[] = [
     ],
     variants: [
       {
-        slug: 'filmraid-4a-72tb',
+        slug: 'filmraid-4-72tb',
         totalTB: 72,
         perDriveTB: 18,
         priceEUR: 4249,
@@ -60,7 +60,7 @@ export const products: ProductModel[] = [
         raid5TB: 54,
       },
       {
-        slug: 'filmraid-4a-80tb',
+        slug: 'filmraid-4-80tb',
         totalTB: 80,
         perDriveTB: 20,
         priceEUR: 4649,
@@ -68,7 +68,7 @@ export const products: ProductModel[] = [
         raid5TB: 60,
       },
       {
-        slug: 'filmraid-4a-88tb',
+        slug: 'filmraid-4-88tb',
         totalTB: 88,
         perDriveTB: 22,
         priceEUR: 4949,
@@ -76,7 +76,7 @@ export const products: ProductModel[] = [
         raid5TB: 66,
       },
       {
-        slug: 'filmraid-4a-96tb',
+        slug: 'filmraid-4-96tb',
         totalTB: 96,
         perDriveTB: 24,
         priceEUR: 5349,
@@ -215,13 +215,13 @@ export const products: ProductModel[] = [
   },
 
   {
-    id: 'filmraid-12e',
-    name: 'FilmRaid-12E',
+    id: 'filmraid-12',
+    name: 'FilmRaid-12',
     hddCount: 12,
     image: '/layout/filmraid-12e.jpg',
     back_image: '/layout/FilmRaid-12E_back.jpg',
     description:
-      'The FilmRaid-12E is our flagship 12-bay professional RAID system — the maximum capacity option for productions and facilities that cannot afford storage bottlenecks. With up to 288TB of raw storage and up to 5000MB/s sustained transfer speeds, it handles simultaneous 8K multicam recording, large-scale digital archiving, and the most demanding post-production pipelines. Featuring dual Thunderbolt 5 ports — fully backward compatible with Thunderbolt 3 and 4 — and built on an Areca RAID controller with DisplayPort 2.1 output (dual 6K or 8K 60Hz), it supports RAID 0, 5, 6, 10, and JBOD. Available with Toshiba MG09SCA (18TB), Toshiba MG10SCA (20TB), Toshiba MG10SFA (22TB), or Seagate Exos X24 (24TB) enterprise SAS drives. Due to its size, the FilmRaid-12E ships in two boxes and arrives fully configured and tested. Designed for rental houses, broadcast facilities, high-end post-production studios, and productions working with very large daily data volumes. Delivered across Europe via FedEx from Barcelona. 3-year warranty included.',
+      'The FilmRaid-12 is our flagship 12-bay professional RAID system — the maximum capacity option for productions and facilities that cannot afford storage bottlenecks. With up to 288TB of raw storage and up to 5000MB/s sustained transfer speeds, it handles simultaneous 8K multicam recording, large-scale digital archiving, and the most demanding post-production pipelines. Featuring dual Thunderbolt 5 ports — fully backward compatible with Thunderbolt 3 and 4 — and built on an Areca RAID controller with DisplayPort 2.1 output (dual 6K or 8K 60Hz), it supports RAID 0, 5, 6, 10, and JBOD. Available with Toshiba MG09SCA (18TB), Toshiba MG10SCA (20TB), Toshiba MG10SFA (22TB), or Seagate Exos X24 (24TB) enterprise SAS drives. Due to its size, the FilmRaid-12 ships in two boxes and arrives fully configured and tested. Designed for rental houses, broadcast facilities, high-end post-production studios, and productions working with very large daily data volumes. Delivered across Europe via FedEx from Barcelona. 3-year warranty included.',
     specs: [
       { label: 'Bays', value: '12 x 3.5"/2.5" SAS/SATA' },
       {
@@ -244,7 +244,7 @@ export const products: ProductModel[] = [
     ],
     variants: [
       {
-        slug: 'filmraid-12e-216tb',
+        slug: 'filmraid-12-216tb',
         totalTB: 216,
         perDriveTB: 18,
         priceEUR: 11299,
@@ -252,7 +252,7 @@ export const products: ProductModel[] = [
         raid5TB: 198,
       },
       {
-        slug: 'filmraid-12e-240tb',
+        slug: 'filmraid-12-240tb',
         totalTB: 240,
         perDriveTB: 20,
         priceEUR: 12499,
@@ -260,7 +260,7 @@ export const products: ProductModel[] = [
         raid5TB: 220,
       },
       {
-        slug: 'filmraid-12e-264tb',
+        slug: 'filmraid-12-264tb',
         totalTB: 264,
         perDriveTB: 22,
         priceEUR: 13399,
@@ -268,7 +268,7 @@ export const products: ProductModel[] = [
         raid5TB: 242,
       },
       {
-        slug: 'filmraid-12e-288tb',
+        slug: 'filmraid-12-288tb',
         totalTB: 288,
         perDriveTB: 24,
         priceEUR: 14649,

@@ -69,12 +69,12 @@ const SHIPPER = {
 // --- PRODUCT → DIMENSIONS / WEIGHTS ---
 const PACK_MAP = {
   // Single-box models
-  'FilmRaid-4A (72TB/80TB/88TB)': { boxes: [{ w: 8, l: 40, wdt: 37, h: 36, units: 'CM' }] },
+  'FilmRaid-4 (72TB/80TB/88TB)': { boxes: [{ w: 8, l: 40, wdt: 37, h: 36, units: 'CM' }] },
   'FilmRaid-6 (108TB/120TB/132TB)': { boxes: [{ w: 12, l: 40, wdt: 37, h: 36, units: 'CM' }] },
   'FilmRaid-8 (144TB/160TB/176TB)': { boxes: [{ w: 18, l: 40, wdt: 37, h: 36, units: 'CM' }] },
 
   // Two-box model (12E) → RAID + HDDs
-  'FilmRaid-12E (216TB/240TB/264TB)': {
+  'FilmRaid-12 (216TB/240TB/264TB)': {
     boxes: [
       { w: 10, l: 53, wdt: 39, h: 43, units: 'CM' }, // RAID
       { w: 12, l: 53, wdt: 39, h: 43, units: 'CM' }, // HDDs

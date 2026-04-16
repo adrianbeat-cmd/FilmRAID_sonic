@@ -11,10 +11,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { products } from '@/data/products';
 
 const modelTagline: Record<string, string> = {
-  'filmraid-4a': '4-bay · On-set workflows · Thunderbolt 3',
+  'filmraid-4': '4-bay · On-set workflows · Thunderbolt 5',
   'filmraid-6': '6-bay · Studio and post-production',
   'filmraid-8': '8-bay · High-capacity broadcast',
-  'filmraid-12e': '12-bay · Maximum capacity',
+  'filmraid-12': '12-bay · Maximum capacity',
 };
 
 export default function CatalogPage() {
