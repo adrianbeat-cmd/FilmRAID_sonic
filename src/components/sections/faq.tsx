@@ -15,7 +15,7 @@ const faqData = [
   {
     question: 'What RAID levels do you offer?',
     answer:
-      'All FilmRAID systems support RAID 0 (maximum speed, full capacity), RAID 5 (speed + redundancy, loses one drive worth of space), RAID 6 (extra protection, survives two simultaneous drive failures), RAID 10, and JBOD. The 6, 8, and 12E models also support RAID 30, 50, and 60. You choose your RAID level at checkout — the system arrives pre-configured and ready to use.',
+      'All FilmRAID systems support RAID 0 (maximum speed, full capacity), RAID 5 (speed + redundancy, loses one drive worth of space), RAID 6 (extra protection, survives two simultaneous drive failures), RAID 10, and JBOD. You choose your RAID level at checkout — the system arrives pre-configured and ready to use.',
   },
   {
     question: 'How fast is the delivery in the EU?',
@@ -25,7 +25,7 @@ const faqData = [
   {
     question: 'Are your RAID systems compatible with film equipment?',
     answer:
-      'Yes. All FilmRAID systems connect via dual Thunderbolt 3 (up to 40Gb/s), which is fully compatible with Mac Studio, Mac Pro, MacBook Pro, and any Thunderbolt 3 or 4 workstation. They also include DisplayPort 1.4, USB-C, USB-A, and RJ45 Ethernet. Compatible with DaVinci Resolve, Avid Media Composer, Final Cut Pro, and all major NLE and colour grading tools.',
+      'Yes. All FilmRAID systems connect via dual Thunderbolt 3 (up to 40Gb/s), fully compatible with Mac Studio, Mac Pro, MacBook Pro, and any Thunderbolt 3 or 4 workstation. They also include DisplayPort 1.4, USB-C, USB-A, and RJ45 Ethernet. Compatible with DaVinci Resolve, Avid Media Composer, Final Cut Pro, and all major NLE and colour grading tools.',
   },
   {
     question: 'What storage capacities are available?',
@@ -41,20 +41,29 @@ const faqData = [
 
 export default function FAQ() {
   return (
-    <section className="section-padding container flex flex-col gap-8 md:flex-row md:gap-16">
-      <div className="flex max-w-md flex-col gap-6 md:gap-16">
-        <h2 className="text-3xl">FilmRAID FAQ</h2>
-        <h3 className="text-2xl leading-8 md:text-4xl md:leading-14 lg:text-5xl">
-          Common Questions About Our Custom RAID Storage Solutions
-        </h3>
+    <section className="section-padding container">
+      {/* Header */}
+      <div className="mb-12 max-w-2xl">
+        <p className="mb-4 text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">FAQ</p>
+        <h2 className="text-3xl leading-tight font-bold tracking-tight text-black md:text-4xl dark:text-white">
+          Common questions.
+        </h2>
       </div>
-      <Accordion defaultValue="item-0" type="single" className="space-y-8">
+
+      {/* Accordion — full width, clean dividers */}
+      <Accordion defaultValue="item-0" type="single" collapsible className="w-full">
         {faqData.map((item, index) => (
-          <AccordionItem key={index} value={`item-${index}`} className="px-4">
-            <AccordionTrigger className="cursor-pointer text-xl font-normal hover:no-underline md:pb-6 md:text-3xl">
+          <AccordionItem
+            key={index}
+            value={`item-${index}`}
+            className="border-b border-gray-200 last:border-b-0 dark:border-gray-800"
+          >
+            <AccordionTrigger className="py-6 text-left text-base font-medium text-black hover:no-underline md:text-lg dark:text-white">
               {item.question}
             </AccordionTrigger>
-            <AccordionContent className="text-base md:pb-6">{item.answer}</AccordionContent>
+            <AccordionContent className="max-w-3xl pb-6 text-sm leading-relaxed text-gray-500 md:text-base dark:text-gray-400">
+              {item.answer}
+            </AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>
