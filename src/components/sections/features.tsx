@@ -53,7 +53,7 @@ const Features = () => {
               alt={feature.label}
               width={500}
               height={500}
-              className="h-auto w-full max-w-[320px] object-contain drop-shadow-xl md:max-w-[380px]"
+              className="h-auto w-full max-w-[420px] object-contain drop-shadow-xl md:max-w-[480px]"
             />
           </div>
 
