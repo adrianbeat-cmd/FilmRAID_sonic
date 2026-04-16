@@ -63,12 +63,7 @@ const ValueProposition = () => {
   return (
     <section ref={sectionRef} className="section-padding container">
       {/* Headline */}
-      <motion.div
-        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 12 }}
-        animate={controls}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-        className="mb-16 max-w-2xl"
-      >
+      <div className="mb-16 max-w-2xl">
         <p className="mb-4 text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">
           Why FilmRAID
         </p>
@@ -76,7 +71,7 @@ const ValueProposition = () => {
           Built for professionals
           <span className="block font-normal text-gray-400">who can't afford to lose a frame.</span>
         </h2>
-      </motion.div>
+      </div>
 
       {/* Stats grid — no boxes, just dividers */}
       <motion.div
