@@ -9,9 +9,9 @@ const features = [
   {
     number: '01',
     label: 'Speed & Reliability',
-    title: 'Sustained transfers up to 2600MB/s.',
+    title: 'Sustained transfers up to 5000MB/s.',
     description:
-      'Built on Areca controllers with enterprise-grade SAS drives. Handles 4K, 6K, and 8K workflows without bottlenecks — on set or in post.',
+      'Built on Areca controllers with enterprise-grade SAS drives. Handles 4K, 6K, and 8K workflows without bottlenecks — on set or in post. Dual Thunderbolt 5 ports, backward compatible with TB3 and TB4.',
     image: '/layout/feature-1.png',
     imageLeft: true,
     link: { text: 'Configure now', href: '/configs' },
@@ -29,9 +29,9 @@ const features = [
   {
     number: '03',
     label: 'Secure & Versatile',
-    title: 'Dual Thunderbolt 3, DisplayPort, USB-C, Ethernet.',
+    title: 'Dual Thunderbolt 5, DisplayPort 2.1, USB-C, Ethernet.',
     description:
-      'Connects directly to your Mac at up to 40Gb/s. Ships fully configured with a 3-year warranty — ready to plug in and use.',
+      'Connects directly to your Mac at up to 80Gb/s (120Gb/s with Bandwidth Boost). Backward compatible with Thunderbolt 3 and 4. Ships fully configured with a 3-year warranty — ready to plug in and use.',
     image: '/layout/feature-3.png',
     imageLeft: true,
     link: { text: 'Learn more', href: '/about' },

@@ -7,7 +7,7 @@ import usePrefersReducedMotion from '@/hooks/usePrefersReducedMotion';
 
 const stats = [
   {
-    value: '2600MB/s',
+    value: '5000MB/s',
     label: 'Sustained transfers',
     description: 'On all models, across RAID 0, 5, 6 and 10.',
   },
