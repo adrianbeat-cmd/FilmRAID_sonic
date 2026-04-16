@@ -5,22 +5,33 @@ import { motion, useInView, useAnimation } from 'framer-motion';
 
 import usePrefersReducedMotion from '@/hooks/usePrefersReducedMotion';
 
-interface ContentItem {
-  type: 'text';
-  content: string;
-  index: number;
-}
-
-const CONTENT_ITEMS: ContentItem[] = [
-  { type: 'text', content: 'Unlock Seamless', index: 0 },
-  { type: 'text', content: 'Storage for Your', index: 1 },
-  { type: 'text', content: 'Film Projects', index: 2 },
+const stats = [
+  {
+    value: '2600MB/s',
+    label: 'Sustained transfers',
+    description: 'On all models, across RAID 0, 5, 6 and 10.',
+  },
+  {
+    value: '72–288TB',
+    label: 'Storage range',
+    description: 'Drives included, pre-configured and ready to use.',
+  },
+  {
+    value: '3 days',
+    label: 'EU delivery',
+    description: 'FedEx from Barcelona to anywhere in Europe.',
+  },
+  {
+    value: '3+5 yr',
+    label: 'Warranty',
+    description: '3yr on Areca enclosure. 5yr on enterprise drives.',
+  },
 ];
 
 const ValueProposition = () => {
   const controls = useAnimation();
   const sectionRef = useRef<HTMLElement>(null);
-  const isInView = useInView(sectionRef, { once: true, amount: 0.7 });
+  const isInView = useInView(sectionRef, { once: true, amount: 0.3 });
   const prefersReducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
@@ -29,89 +40,67 @@ const ValueProposition = () => {
     }
   }, [isInView, controls, prefersReducedMotion]);
 
-  const variants = {
-    text: {
-      hidden: {
-        opacity: 0,
-        y: 10,
-        filter: 'blur(8px)',
-      },
-      visible: {
-        opacity: 1,
-        y: 0,
-        filter: 'blur(0px)',
-        transition: {
-          duration: 0.9,
-          ease: [0.22, 1, 0.36, 1],
-        },
-      },
-    },
-    container: {
-      hidden: { opacity: 0 },
-      visible: {
-        opacity: 1,
-        transition: {
-          staggerChildren: 0.2,
-          delayChildren: 0.1,
-          ease: 'easeOut',
-          duration: 0.8,
-        },
+  const container = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.1,
       },
     },
   };
 
+  const item = {
+    hidden: { opacity: 0, y: 16 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+    },
+  };
+
   return (
-    <section ref={sectionRef} className="bg-card py-15 md:py-20 lg:py-36">
-      <div className="container flex flex-col items-center justify-center text-center">
-        <motion.h2
-          className="text-2xl font-bold md:text-3xl lg:text-5xl"
-          variants={variants.container}
-          initial={prefersReducedMotion ? 'visible' : 'hidden'}
-          animate={controls}
-        >
-          {CONTENT_ITEMS.map((item, idx) => (
-            <motion.span
-              key={`feature-${idx}`}
-              className="m-1.5 inline-block md:m-4"
-              variants={variants.text}
-            >
-              {item.content}
-            </motion.span>
-          ))}
-        </motion.h2>
-        <p className="mb-12 text-center text-lg">
-          FilmRAID delivers pre-configured RAID systems tailored for digital cinema and
-          post-production. With 3-day EU delivery, dual Thunderbolt 3 ports, and enterprise-grade
-          SAS drives, focus on creating — not managing data.
+    <section ref={sectionRef} className="section-padding container">
+      {/* Headline */}
+      <motion.div
+        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 12 }}
+        animate={controls}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="mb-16 max-w-2xl"
+      >
+        <p className="mb-4 text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">
+          Why FilmRAID
         </p>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          <div className="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
-            <h3 className="mb-4 text-xl font-semibold text-black dark:text-white">
-              Speed & Reliability
-            </h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              RAID 0 to RAID 6 setups with sustained transfers up to 2600MB/s — perfect for 4K,
-              6K, and 8K workflows. Available from 72TB to 288TB with enterprise-grade SAS drives.
+        <h2 className="text-3xl leading-tight font-bold tracking-tight text-black md:text-4xl lg:text-5xl dark:text-white">
+          Built for professionals
+          <span className="block font-normal text-gray-400">who can't afford to lose a frame.</span>
+        </h2>
+      </motion.div>
+
+      {/* Stats grid — no boxes, just dividers */}
+      <motion.div
+        variants={container}
+        initial={prefersReducedMotion ? 'visible' : 'hidden'}
+        animate={controls}
+        className="grid grid-cols-1 divide-y divide-gray-200 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4 dark:divide-gray-800"
+      >
+        {stats.map((stat) => (
+          <motion.div
+            key={stat.value}
+            variants={item}
+            className="flex flex-col gap-2 py-8 sm:px-8 sm:py-0 first:sm:pl-0 last:sm:pr-0"
+          >
+            <p className="text-4xl font-bold tracking-tight text-black md:text-5xl dark:text-white">
+              {stat.value}
             </p>
-          </div>
-          <div className="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
-            <h3 className="mb-4 text-xl font-semibold text-black dark:text-white">Fast Delivery</h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              Order today, pre-configured and shipped across Europe via FedEx in 3 days — no
-              assembly required, ready to plug in and use.
+            <p className="text-sm font-semibold text-black dark:text-white">{stat.label}</p>
+            <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+              {stat.description}
             </p>
-          </div>
-          <div className="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
-            <h3 className="mb-4 text-xl font-semibold text-black dark:text-white">
-              Reliable Support
-            </h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              All FilmRAID systems come with a 3-year warranty on the Areca enclosure and up to
-              5-year warranty on the drives. Expert support included.
-            </p>
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        ))}
+      </motion.div>
     </section>
   );
 };
