@@ -25,7 +25,7 @@ const faqData = [
   {
     question: 'Are your RAID systems compatible with film equipment?',
     answer:
-      'Yes. All FilmRAID systems connect via dual Thunderbolt 3 (up to 40Gb/s), fully compatible with Mac Studio, Mac Pro, MacBook Pro, and any Thunderbolt 3 or 4 workstation. They also include DisplayPort 1.4, USB-C, USB-A, and RJ45 Ethernet. Compatible with DaVinci Resolve, Avid Media Composer, Final Cut Pro, and all major NLE and colour grading tools.',
+      'Yes. All FilmRAID systems feature dual Thunderbolt 5 ports (up to 80Gb/s, or 120Gb/s with Bandwidth Boost) — and are fully backward compatible with Thunderbolt 3 and Thunderbolt 4. This means they work seamlessly with existing Mac Studio, Mac Pro, MacBook Pro, and any Thunderbolt 3 or 4 workstation without any adapters. They also include DisplayPort 2.1, USB-C (USB 3.2 Gen 2), and RJ45 Ethernet. Compatible with DaVinci Resolve, Avid Media Composer, Final Cut Pro, and all major NLE and colour grading tools.',
   },
   {
     question: 'What storage capacities are available?',
