@@ -22,13 +22,13 @@ const rows = [
     synology: false,
   },
   {
-    feature: 'Thunderbolt 3',
+    feature: 'Thunderbolt 5 (TB3/4 compatible)',
     filmraid: true,
     graid: true,
     synology: false,
   },
   {
-    feature: 'Up to 2600MB/s',
+    feature: 'Up to 5000MB/s',
     filmraid: true,
     graid: false,
     synology: false,
