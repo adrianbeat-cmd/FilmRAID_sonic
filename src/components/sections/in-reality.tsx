@@ -47,13 +47,15 @@ export default function InReality() {
 
   return (
     <section className="section-padding container space-y-8">
-      {/* Section header — minimal */}
-      <div className="flex flex-col gap-2">
-        <p className="text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">In Reality</p>
-        <h2 className="text-3xl font-bold tracking-tight text-black md:text-4xl dark:text-white">
-          FilmRAID in Action
+      {/* Section header — consistent with rest of page */}
+      <div className="mb-4 max-w-2xl">
+        <p className="mb-4 text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">
+          In Reality
+        </p>
+        <h2 className="text-3xl leading-tight font-bold tracking-tight text-black md:text-4xl dark:text-white">
+          FilmRAID in Action.
         </h2>
-        <p className="max-w-xl text-base text-gray-500 dark:text-gray-400">
+        <p className="mt-4 text-base text-gray-500 dark:text-gray-400">
           Our RAID systems integrate seamlessly into film production workflows — on set, in the edit
           suite, and in post.
         </p>
