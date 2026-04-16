@@ -1,145 +1,94 @@
 'use client';
-import React from 'react';
+
+import { useState, useEffect, useCallback } from 'react';
 
 import Image from 'next/image';
-import Link from 'next/link';
 
-import { motion } from 'framer-motion';
-import { ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-import AnimatedBorderButton from '../animated-border-button';
+const IMAGES = [
+  {
+    src: '/layout/raid1.jpg',
+    alt: 'FilmRAID tower in post-production setup',
+  },
+  {
+    src: '/layout/raid2.jpg',
+    alt: 'Custom RAID assembly process',
+  },
+  {
+    src: '/layout/raid3.jpg',
+    alt: 'RAID system on film set for fast transfers',
+  },
+];
 
-import usePrefersReducedMotion from '@/hooks/usePrefersReducedMotion';
+export default function InReality() {
+  const [active, setActive] = useState(0);
+  const [fading, setFading] = useState(false);
 
-const Hero = () => {
-  const prefersReducedMotion = usePrefersReducedMotion();
-
-  const container = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.15,
-        delayChildren: 0.1,
-        ease: [0.22, 1, 0.36, 1],
-      },
+  const goTo = useCallback(
+    (index: number) => {
+      if (index === active) return;
+      setFading(true);
+      setTimeout(() => {
+        setActive(index);
+        setFading(false);
+      }, 400);
     },
-  };
+    [active],
+  );
 
-  const item = {
-    hidden: { opacity: 0, y: 20, filter: 'blur(4px)' },
-    visible: {
-      opacity: 1,
-      y: 0,
-      filter: 'blur(0px)',
-      transition: {
-        type: 'spring',
-        stiffness: 70,
-        damping: 20,
-      },
-    },
-  };
-
-  const imageVariant = {
-    hidden: { opacity: 0, x: 40, filter: 'blur(4px)' },
-    visible: {
-      opacity: 1,
-      x: 0,
-      filter: 'blur(0px)',
-      transition: {
-        duration: 1.0,
-        ease: [0.22, 1, 0.36, 1],
-      },
-    },
-  };
+  // Auto-advance every 4 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      goTo((active + 1) % IMAGES.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [active, goTo]);
 
   return (
-    <section
-      className="relative -mx-[calc(50vw-50%)] w-screen overflow-hidden !pb-0"
-      style={{
-        background: 'linear-gradient(135deg, #e8e8e6 0%, #f0f0ee 50%, #e4e4e2 100%)',
-        minHeight: '100svh',
-      }}
-    >
-      {/* Dark mode background */}
-      <div
-        className="absolute inset-0 hidden dark:block"
-        style={{ background: 'linear-gradient(135deg, #141414 0%, #1a1a1a 50%, #111111 100%)' }}
-      />
+    <section className="section-padding container space-y-8">
+      {/* Section header — minimal */}
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">In Reality</p>
+        <h2 className="text-3xl font-bold tracking-tight text-black md:text-4xl dark:text-white">
+          FilmRAID in Action
+        </h2>
+        <p className="max-w-xl text-base text-gray-500 dark:text-gray-400">
+          Our RAID systems integrate seamlessly into film production workflows — on set, in the edit
+          suite, and in post.
+        </p>
+      </div>
 
-      <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col items-center justify-center px-6 md:flex-row md:items-center md:px-12 lg:px-20">
-        {/* Left — Text */}
-        <motion.div
-          variants={container}
-          initial={prefersReducedMotion ? 'visible' : 'hidden'}
-          animate="visible"
-          className="z-10 flex flex-col gap-6 pt-20 text-center md:w-1/2 md:pt-0 md:pr-8 md:text-left"
-        >
-          <motion.p
-            variants={item}
-            className="text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase"
-          >
-            FilmRAID · Professional Storage
-          </motion.p>
+      {/* Image */}
+      <div className="relative aspect-[16/9] w-full overflow-hidden bg-black">
+        <Image
+          src={IMAGES[active].src}
+          alt={IMAGES[active].alt}
+          fill
+          className={cn(
+            'object-cover transition-opacity duration-500',
+            fading ? 'opacity-0' : 'opacity-100',
+          )}
+          priority
+        />
+      </div>
 
-          <motion.h1
-            variants={item}
-            className="text-5xl leading-[1.05] font-bold tracking-tight text-black sm:text-6xl lg:text-7xl dark:text-white"
-          >
-            Professional
-            <span className="block">RAID Storage</span>
-            <span className="block">for Film.</span>
-          </motion.h1>
-
-          <motion.p
-            variants={item}
-            className="text-lg font-normal text-gray-500 dark:text-gray-400"
-          >
-            Complete & Ready to Use.
-          </motion.p>
-
-          <motion.p
-            variants={item}
-            className="max-w-sm text-sm leading-relaxed text-gray-500 md:text-base dark:text-gray-400"
-          >
-            Enterprise SAS drives + Areca controller, pre-configured and shipped across Europe in 3
-            days. Built for DITs, editors and post-production professionals.
-          </motion.p>
-
-          <motion.div
-            variants={item}
-            className="flex flex-col gap-3 sm:flex-row md:flex-col lg:flex-row"
-          >
-            <AnimatedBorderButton
-              asChild
-              className="[&_svg]:transition-transform hover:[&_svg]:translate-x-0.5"
-            >
-              <Link href="/configs">
-                See Models & Prices <ChevronRight />
-              </Link>
-            </AnimatedBorderButton>
-          </motion.div>
-        </motion.div>
-
-        {/* Right — Product PNG floating */}
-        <motion.div
-          variants={imageVariant}
-          initial={prefersReducedMotion ? 'visible' : 'hidden'}
-          animate="visible"
-          className="relative mt-8 flex items-center justify-center md:mt-0 md:w-1/2"
-        >
-          <Image
-            src="/layout/hero-product.png"
-            alt="FilmRAID Areca professional RAID system"
-            width={400}
-            height={459}
-            priority
-            className="h-auto w-full max-w-[400px] object-contain drop-shadow-2xl"
+      {/* Dot navigation */}
+      <div className="flex items-center justify-center gap-3">
+        {IMAGES.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => goTo(idx)}
+            aria-label={`Go to image ${idx + 1}`}
+            className={cn(
+              'rounded-full transition-all duration-300',
+              idx === active
+                ? 'h-2 w-8 bg-black dark:bg-white'
+                : 'h-2 w-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500',
+            )}
           />
-        </motion.div>
+        ))}
       </div>
     </section>
   );
-};
-
-export default Hero;
+}

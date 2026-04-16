@@ -60,7 +60,7 @@ export default function InReality() {
       </div>
 
       {/* Image */}
-      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-black">
+      <div className="relative aspect-[16/9] w-full overflow-hidden bg-black">
         <Image
           src={IMAGES[active].src}
           alt={IMAGES[active].alt}
