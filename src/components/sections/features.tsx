@@ -47,7 +47,7 @@ const Features = () => {
           className={`flex flex-col md:flex-row ${!feature.imageLeft ? 'md:flex-row-reverse' : ''}`}
         >
           {/* Image side — full bleed, no container */}
-          <div className="flex w-full items-center justify-center bg-[#f0f0ee] py-16 md:w-1/2 md:py-24 dark:bg-[#141414]">
+          <div className="flex w-full items-center justify-center bg-[#f0f0ee] py-16 md:w-1/2 md:py-24 dark:bg-[#161616]">
             <Image
               src={feature.image}
               alt={feature.label}
@@ -58,7 +58,7 @@ const Features = () => {
           </div>
 
           {/* Text side — white background */}
-          <div className="flex w-full flex-col justify-center bg-white px-8 py-16 md:w-1/2 md:px-16 md:py-24 dark:bg-[#0a0a0a]">
+          <div className="flex w-full flex-col justify-center bg-white px-8 py-16 md:w-1/2 md:px-16 md:py-24 dark:bg-[#111111]">
             <div className="max-w-md">
               <div className="mb-6 flex items-baseline gap-4">
                 <span className="text-xs font-semibold tracking-[0.2em] text-gray-300 dark:text-gray-600">
