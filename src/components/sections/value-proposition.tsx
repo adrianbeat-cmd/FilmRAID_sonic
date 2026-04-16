@@ -63,7 +63,7 @@ const ValueProposition = () => {
   return (
     <section ref={sectionRef} className="section-padding container">
       {/* Headline */}
-      <div className="mb-0 max-w-2xl border-b border-gray-200 pb-12 dark:border-gray-800">
+      <div className="mb-0 max-w-2xl pb-12">
         <p className="mb-4 text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">
           Why FilmRAID
         </p>
