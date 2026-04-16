@@ -13,9 +13,9 @@ const CTA = () => {
   if (!shouldShowCTA) return null;
 
   return (
-    <section className="bg-[#f7f7f5] dark:bg-[#111111]">
+    <section className="bg-[#f7f7f5] pt-8 dark:bg-[#111111]">
       <div className="section-padding container">
-        <div className="border-t border-gray-200 pt-16 md:pt-24 dark:border-gray-800">
+        <div className="border-t border-gray-300 pt-16 md:pt-24 dark:border-gray-700">
           <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
             {/* Left — headline */}
             <div className="max-w-xl">
