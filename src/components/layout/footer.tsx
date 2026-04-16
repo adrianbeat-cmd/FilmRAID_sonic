@@ -40,7 +40,7 @@ const SOCIAL_LINKS = [
 
 const Footer = () => {
   return (
-    <footer className="border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-[#0a0a0a]">
+    <footer className="border-t border-gray-200 bg-[#f7f7f5] dark:border-gray-800 dark:bg-[#111111]">
       <div className="container mx-auto px-6 py-16 md:px-12">
         {/* Top row — logo + nav */}
         <div className="flex flex-col gap-12 md:flex-row md:items-start md:justify-between">
