@@ -76,7 +76,7 @@ const Cell = ({ value, highlight = false }: { value: CellValue; highlight?: bool
   if (value === false) {
     return (
       <div className="flex justify-center">
-        <X size={18} className="text-gray-200 dark:text-gray-700" strokeWidth={2} />
+        <X size={18} className="text-gray-400 dark:text-gray-500" strokeWidth={2} />
       </div>
     );
   }
