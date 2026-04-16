@@ -38,33 +38,51 @@ const features = [
 const Features = () => {
   return (
     <section className="section-padding container">
-      <div className="divide-y divide-gray-200 dark:divide-gray-800">
-        {features.map((feature) => (
+      <div className="flex flex-col gap-24 md:gap-32">
+        {features.map((feature, index) => (
           <div
             key={feature.number}
-            className="group grid grid-cols-1 gap-6 py-10 md:grid-cols-12 md:gap-12 md:py-14"
+            className={`flex flex-col items-center gap-12 md:flex-row md:gap-16 ${
+              index % 2 === 1 ? 'md:flex-row-reverse' : ''
+            }`}
           >
-            {/* Number */}
-            <div className="md:col-span-1">
-              <span className="text-xs font-semibold tracking-[0.2em] text-gray-400">
-                {feature.number}
-              </span>
+            {/* Image — square, no crop, full product visible */}
+            <div className="w-full md:w-1/2">
+              <div
+                className="relative flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-950"
+                style={{ aspectRatio: '4/3' }}
+              >
+                <Image
+                  src={feature.image}
+                  alt={feature.label}
+                  fill
+                  className="object-contain p-8"
+                />
+              </div>
             </div>
 
-            {/* Label + Title + Description + CTA */}
-            <div className="flex flex-col gap-4 md:col-span-6">
-              <p className="text-xs font-semibold tracking-[0.15em] text-gray-400 uppercase">
-                {feature.label}
-              </p>
-              <h3 className="text-2xl leading-tight font-bold tracking-tight text-black md:text-3xl dark:text-white">
+            {/* Text */}
+            <div className="flex w-full flex-col gap-5 md:w-1/2">
+              <div className="flex items-baseline gap-4">
+                <span className="text-xs font-semibold tracking-[0.2em] text-gray-300 dark:text-gray-600">
+                  {feature.number}
+                </span>
+                <span className="text-xs font-semibold tracking-[0.15em] text-gray-400 uppercase">
+                  {feature.label}
+                </span>
+              </div>
+
+              <h3 className="text-3xl leading-tight font-bold tracking-tight text-black md:text-4xl dark:text-white">
                 {feature.title}
               </h3>
-              <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400">
+
+              <p className="text-base leading-relaxed text-gray-500 md:text-lg dark:text-gray-400">
                 {feature.description}
               </p>
+
               <Link
                 href={feature.link.href}
-                className="group/link mt-2 inline-flex items-center gap-1 text-sm font-medium text-black transition-opacity hover:opacity-60 dark:text-white"
+                className="group/link mt-2 inline-flex items-center gap-1 text-sm font-medium text-black transition-opacity hover:opacity-50 dark:text-white"
               >
                 {feature.link.text}
                 <ChevronRight
@@ -72,18 +90,6 @@ const Features = () => {
                   className="transition-transform group-hover/link:translate-x-0.5"
                 />
               </Link>
-            </div>
-
-            {/* Image — smaller, right aligned */}
-            <div className="flex items-center justify-center md:col-span-5 md:justify-end">
-              <div className="relative h-48 w-full max-w-xs overflow-hidden rounded-2xl bg-gray-100 md:h-56 dark:bg-gray-900">
-                <Image
-                  src={feature.image}
-                  alt={feature.label}
-                  fill
-                  className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                />
-              </div>
             </div>
           </div>
         ))}
