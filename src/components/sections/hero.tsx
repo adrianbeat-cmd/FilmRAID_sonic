@@ -134,7 +134,7 @@ const Hero = () => {
             width={400}
             height={459}
             priority
-            className="h-auto w-full max-w-[200px] object-contain drop-shadow-2xl md:max-w-[400px]"
+            className="h-auto w-full max-w-[200px] object-contain drop-shadow-2xl will-change-transform md:max-w-[400px]"
           />
         </motion.div>
       </div>
