@@ -47,7 +47,7 @@ const Features = () => {
             }`}
           >
             {/* Image — no container, PNG shown directly */}
-            <div className="w-full md:w-1/2">
+            <div className="w-full md:w-5/12">
               <Image
                 src={feature.image}
                 alt={feature.label}
