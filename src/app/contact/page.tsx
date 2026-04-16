@@ -2,14 +2,12 @@
 
 import React, { useState } from 'react';
 
-import { Mail, MapPin } from 'lucide-react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 import { SITE_KEY, grecaptchaReady, getEnterpriseToken } from '@/lib/recaptcha';
 
 interface ContactFormData {
@@ -65,7 +63,7 @@ export default function Contact() {
 
       setNotice({
         type: 'success',
-        msg: `Message sent successfully! We'll reply shortly.`,
+        msg: `Message sent. We'll reply shortly.`,
       });
       reset();
     } catch (err) {
@@ -77,117 +75,128 @@ export default function Contact() {
   };
 
   return (
-    <section className="section-padding container max-w-5xl">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold">Contact Us</h1>
-        <p className="text-muted-foreground mt-4 text-lg">
-          We're here to help with your FilmRAID needs.
+    <section className="section-padding container max-w-4xl">
+      {/* Header */}
+      <div className="mb-16">
+        <p className="mb-4 text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">
+          Contact
         </p>
+        <h1 className="text-4xl leading-tight font-bold tracking-tight text-black md:text-5xl dark:text-white">
+          Get in touch.
+        </h1>
       </div>
 
-      {/* Restored banner image */}
-      <div className="mt-10 overflow-hidden rounded-2xl">
-        <img src="/layout/map.jpg" alt="FilmRAID Location Map" className="w-full" />
-      </div>
+      <div className="grid gap-16 md:grid-cols-2">
+        {/* Left — contact info */}
+        <div className="flex flex-col gap-10">
+          <div className="border-t border-gray-200 pt-8 dark:border-gray-800">
+            <p className="mb-3 text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">
+              General Inquiries
+            </p>
+            <a
+              href="mailto:hello@filmraid.pro"
+              className="text-base text-black transition-opacity hover:opacity-50 dark:text-white"
+            >
+              hello@filmraid.pro
+            </a>
+          </div>
 
-      <div className="mt-12 grid gap-12 md:grid-cols-5">
-        {/* Contact Info */}
-        <div className="space-y-8 md:col-span-2">
-          <Card>
-            <CardContent className="p-8">
-              <div className="flex items-center gap-4">
-                <Mail className="text-primary h-6 w-6" />
-                <div>
-                  <p className="font-medium">General Inquiries</p>
-                  <a href="mailto:hello@filmraid.pro" className="text-primary hover:underline">
-                    hello@filmraid.pro
-                  </a>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="border-t border-gray-200 pt-8 dark:border-gray-800">
+            <p className="mb-3 text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">
+              Orders
+            </p>
+            <a
+              href="mailto:orders@filmraid.pro"
+              className="text-base text-black transition-opacity hover:opacity-50 dark:text-white"
+            >
+              orders@filmraid.pro
+            </a>
+          </div>
 
-          <Card>
-            <CardContent className="p-8">
-              <div className="flex items-center gap-4">
-                <Mail className="text-primary h-6 w-6" />
-                <div>
-                  <p className="font-medium">Orders</p>
-                  <a href="mailto:orders@filmraid.pro" className="text-primary hover:underline">
-                    orders@filmraid.pro
-                  </a>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-8">
-              <div className="flex items-center gap-4">
-                <MapPin className="text-primary h-6 w-6" />
-                <div>
-                  <p className="font-medium">Address</p>
-                  <p className="text-muted-foreground text-sm">
-                    Carrer del Valles 55
-                    <br />
-                    08030 Barcelona, Spain
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="border-t border-gray-200 pt-8 dark:border-gray-800">
+            <p className="mb-3 text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">
+              Address
+            </p>
+            <p className="text-base text-black dark:text-white">
+              The DIT World Company S.L.U.
+              <br />
+              Carrer del Valles 55, 1-2
+              <br />
+              08030 Barcelona, Spain
+            </p>
+          </div>
         </div>
 
-        {/* Contact Form */}
-        <div className="md:col-span-3">
-          <Card>
-            <CardContent className="p-8">
-              <h3 className="mb-6 text-2xl font-semibold">Send us a message</h3>
+        {/* Right — contact form */}
+        <div className="border-t border-gray-200 pt-8 dark:border-gray-800">
+          <p className="mb-8 text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">
+            Send a message
+          </p>
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
-                <div>
-                  <Label htmlFor="name">Your Name</Label>
-                  <Input
-                    id="name"
-                    {...register('name', { required: true })}
-                    placeholder="Your Name"
-                  />
-                </div>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6" noValidate>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="name" className="text-xs tracking-[0.15em] text-gray-400 uppercase">
+                Name
+              </Label>
+              <Input
+                id="name"
+                {...register('name', { required: true })}
+                placeholder="Your name"
+                className="rounded-none border-0 border-b border-gray-200 bg-transparent px-0 focus-visible:ring-0 dark:border-gray-800"
+              />
+              {errors.name && <p className="text-xs text-red-500">Required</p>}
+            </div>
 
-                <div>
-                  <Label htmlFor="email">Your Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    {...register('email', { required: true })}
-                    placeholder="you@email.com"
-                  />
-                </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="email" className="text-xs tracking-[0.15em] text-gray-400 uppercase">
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                {...register('email', { required: true })}
+                placeholder="you@email.com"
+                className="rounded-none border-0 border-b border-gray-200 bg-transparent px-0 focus-visible:ring-0 dark:border-gray-800"
+              />
+              {errors.email && <p className="text-xs text-red-500">Required</p>}
+            </div>
 
-                <div>
-                  <Label htmlFor="message">Your Message</Label>
-                  <Textarea
-                    id="message"
-                    {...register('message', { required: true })}
-                    rows={6}
-                    placeholder="How can we help you?"
-                  />
-                </div>
+            <div className="flex flex-col gap-2">
+              <Label
+                htmlFor="message"
+                className="text-xs tracking-[0.15em] text-gray-400 uppercase"
+              >
+                Message
+              </Label>
+              <Textarea
+                id="message"
+                {...register('message', { required: true })}
+                rows={5}
+                placeholder="How can we help?"
+                className="rounded-none border-0 border-b border-gray-200 bg-transparent px-0 focus-visible:ring-0 dark:border-gray-800"
+              />
+              {errors.message && <p className="text-xs text-red-500">Required</p>}
+            </div>
 
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? 'Sending...' : 'Send Message'}
-                </Button>
+            {notice.msg && (
+              <p
+                className={`text-sm ${notice.type === 'success' ? 'text-green-600' : 'text-red-500'}`}
+              >
+                {notice.msg}
+              </p>
+            )}
 
-                <p className="text-muted-foreground text-center text-xs">
-                  This site is protected by reCAPTCHA to prevent spam and abuse. See our{' '}
-                  <a href="/privacy-policy" className="hover:text-primary underline">
-                    Privacy Policy
-                  </a>{' '}
-                  for details.
-                </p>
-              </form>
-            </CardContent>
-          </Card>
+            <Button type="submit" disabled={isSubmitting} className="w-fit">
+              {isSubmitting ? 'Sending…' : 'Send Message'}
+            </Button>
+
+            <p className="text-xs text-gray-400">
+              Protected by reCAPTCHA.{' '}
+              <a href="/privacy-policy" className="underline hover:opacity-60">
+                Privacy Policy
+              </a>
+            </p>
+          </form>
         </div>
       </div>
     </section>

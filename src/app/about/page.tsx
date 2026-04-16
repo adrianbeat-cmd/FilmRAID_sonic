@@ -2,91 +2,107 @@ import Link from 'next/link';
 
 import { ChevronRight } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-
 export default function About() {
   return (
     <section className="section-padding container max-w-4xl">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold tracking-tight md:text-5xl">About FilmRAID</h1>
-        <p className="text-muted-foreground mt-4 text-xl">
-          Professional RAID storage solutions built for filmmakers.
+      {/* Header */}
+      <div className="mb-16">
+        <p className="mb-4 text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">About</p>
+        <h1 className="text-4xl leading-tight font-bold tracking-tight text-black md:text-5xl dark:text-white">
+          Professional RAID storage
+          <span className="block font-normal text-gray-400">built for filmmakers.</span>
+        </h1>
+      </div>
+
+      {/* Who we are */}
+      <div className="border-t border-gray-200 py-12 dark:border-gray-800">
+        <p className="mb-6 text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">
+          Who we are
+        </p>
+        <p className="max-w-2xl text-lg leading-relaxed text-gray-600 dark:text-gray-300">
+          FilmRAID is a specialized company focused on high-performance RAID systems for digital
+          cinema and video professionals. We configure and deliver reliable storage solutions
+          optimized for real film production workflows — from single-camera DITs to multi-camera
+          broadcast facilities.
         </p>
       </div>
 
-      <div className="mt-16 space-y-16">
-        {/* Who we are */}
-        <div>
-          <h2 className="text-2xl font-semibold">Who we are</h2>
-          <p className="mt-6 text-lg leading-relaxed text-gray-600 dark:text-gray-300">
-            FilmRAID is a specialized company focused on high-performance RAID systems for digital
-            cinema and video professionals. We configure and deliver reliable storage solutions
-            optimized for real film production workflows.
-          </p>
-        </div>
-
-        {/* Company Information */}
-        <div className="rounded-2xl border bg-gray-50 p-8 dark:bg-gray-900">
-          <h3 className="text-xl font-semibold">Company Information</h3>
-          <div className="mt-6 grid gap-6 text-sm md:grid-cols-2">
-            <div>
-              <p className="font-medium">Legal Name</p>
-              <p>The DIT World Company S.L.U.</p>
-            </div>
-            <div>
-              <p className="font-medium">VAT Number</p>
-              <p>ESB10680478</p>
-            </div>
-            <div>
-              <p className="font-medium">Address</p>
-              <p>
-                Carrer del Valles 55
-                <br />
-                08030 Barcelona, Spain
+      {/* Why FilmRAID */}
+      <div className="border-t border-gray-200 py-12 dark:border-gray-800">
+        <p className="mb-8 text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">
+          Why FilmRAID
+        </p>
+        <div className="grid gap-8 md:grid-cols-2">
+          {[
+            {
+              title: 'Built for film',
+              desc: 'Every system is configured specifically for film and video production workflows — not generic IT storage.',
+            },
+            {
+              title: 'Enterprise hardware only',
+              desc: 'Areca RAID controllers and Toshiba or Seagate enterprise SAS drives. No consumer-grade components.',
+            },
+            {
+              title: 'EU delivery in 3 days',
+              desc: 'Shipped via FedEx from Barcelona. Ready to plug in and use the moment it arrives.',
+            },
+            {
+              title: 'Full support included',
+              desc: '3-year warranty on the enclosure, 5-year on the drives. We handle all warranty claims directly.',
+            },
+          ].map((item) => (
+            <div key={item.title}>
+              <h3 className="mb-2 text-base font-semibold text-black dark:text-white">
+                {item.title}
+              </h3>
+              <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+                {item.desc}
               </p>
             </div>
-            <div>
-              <p className="font-medium">Contact</p>
-              <p>
-                <a href="mailto:hello@filmraid.pro" className="hover:underline">
-                  hello@filmraid.pro
+          ))}
+        </div>
+      </div>
+
+      {/* Company Information */}
+      <div className="border-t border-gray-200 py-12 dark:border-gray-800">
+        <p className="mb-8 text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">
+          Company Information
+        </p>
+        <div className="grid gap-6 text-sm md:grid-cols-2">
+          {[
+            { label: 'Legal Name', value: 'The DIT World Company S.L.U.' },
+            { label: 'VAT Number', value: 'ESB10680478' },
+            { label: 'Address', value: 'Carrer del Valles 55, 08030 Barcelona, Spain' },
+            { label: 'Contact', value: 'hello@filmraid.pro', href: 'mailto:hello@filmraid.pro' },
+          ].map((item) => (
+            <div key={item.label} className="flex flex-col gap-1">
+              <p className="text-xs font-semibold tracking-[0.15em] text-gray-400 uppercase">
+                {item.label}
+              </p>
+              {item.href ? (
+                <a
+                  href={item.href}
+                  className="text-black transition-opacity hover:opacity-60 dark:text-white"
+                >
+                  {item.value}
                 </a>
-              </p>
+              ) : (
+                <p className="text-black dark:text-white">{item.value}</p>
+              )}
             </div>
-          </div>
+          ))}
         </div>
+      </div>
 
-        {/* Why FilmRAID */}
-        <div>
-          <h2 className="text-2xl font-semibold">Why FilmRAID?</h2>
-          <ul className="mt-6 space-y-4 text-lg text-gray-600 dark:text-gray-300">
-            <li className="flex gap-3">
-              <span className="text-primary">✓</span>
-              Built specifically for film and video production needs
-            </li>
-            <li className="flex gap-3">
-              <span className="text-primary">✓</span>
-              Only enterprise-grade drives and Areca hardware
-            </li>
-            <li className="flex gap-3">
-              <span className="text-primary">✓</span>
-              Fast and reliable delivery across Europe
-            </li>
-            <li className="flex gap-3">
-              <span className="text-primary">✓</span>
-              Full configuration and technical support
-            </li>
-          </ul>
-        </div>
-
-        {/* Call to action */}
-        <div className="pt-8 text-center">
-          <Button variant="default" size="lg" asChild>
-            <Link href="/catalog">
-              Browse All Systems <ChevronRight className="ml-2" />
-            </Link>
-          </Button>
-        </div>
+      {/* CTA */}
+      <div className="border-t border-gray-200 pt-12 dark:border-gray-800">
+        <Link
+          href="/catalog"
+          className="group inline-flex items-center gap-1 text-sm font-medium text-black transition-opacity hover:opacity-50 dark:text-white"
+        >
+          Browse All Systems
+          <ChevronRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+        </Link>
       </div>
     </section>
   );
