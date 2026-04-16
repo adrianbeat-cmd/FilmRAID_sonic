@@ -3,102 +3,87 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { HardDrive, Zap, Shield, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
-import AnimatedBorderButton from '../animated-border-button';
-
-interface Feature {
-  icon: React.ReactElement;
-  label: string;
-  title: string;
-  description: string;
-  image: string;
-  link: {
-    text: string;
-    href: string;
-  };
-}
-
-const features: Feature[] = [
+const features = [
   {
-    icon: <Zap />,
+    number: '01',
     label: 'Speed & Reliability',
-    title: 'Sustained transfers up to 2600MB/s for 4K, 6K and 8K workflows.',
+    title: 'Sustained transfers up to 2600MB/s.',
     description:
-      'Our RAID systems are designed to handle high-speed data transfers, ensuring smooth post-production without bottlenecks. Built on Areca controllers with enterprise-grade SAS drives.',
+      'Built on Areca controllers with enterprise-grade SAS drives. Handles 4K, 6K, and 8K workflows without bottlenecks — on set or in post.',
     image: '/layout/feature-1.png',
-    link: {
-      text: 'Configure now',
-      href: '/configs',
-    },
+    link: { text: 'Configure now', href: '/configs' },
   },
   {
-    icon: <HardDrive />,
+    number: '02',
     label: 'High-Capacity Storage',
-    title: 'From 72TB to 288TB — drives included, pre-configured.',
+    title: 'From 72TB to 288TB — drives included.',
     description:
-      'Store massive film files securely with Toshiba and Seagate enterprise SAS drives. Choose your RAID level for the right balance of speed, capacity, and redundancy.',
+      'Toshiba and Seagate enterprise SAS drives, pre-installed. Choose your RAID level for the right balance of speed, capacity, and redundancy.',
     image: '/layout/feature-2.png',
-    link: {
-      text: 'See configs',
-      href: '/configs',
-    },
+    link: { text: 'See models', href: '/catalog' },
   },
   {
-    icon: <Shield />,
+    number: '03',
     label: 'Secure & Versatile',
-    title: 'Dual Thunderbolt 3, DisplayPort, USB-C, Ethernet — all in one box.',
+    title: 'Dual Thunderbolt 3, DisplayPort, USB-C, Ethernet.',
     description:
-      'Built for cinema professionals. Connects directly to your Mac workstation via Thunderbolt 3 at up to 40Gb/s. Ships ready to use with a 3-year warranty.',
+      'Connects directly to your Mac at up to 40Gb/s. Ships fully configured with a 3-year warranty — ready to plug in and use.',
     image: '/layout/feature-3.png',
-    link: {
-      text: 'Learn more',
-      href: '/about',
-    },
+    link: { text: 'Learn more', href: '/about' },
   },
 ];
 
 const Features = () => {
   return (
     <section className="section-padding container">
-      <div className="[&>*:nth-child(odd)]:md:flex-row-reverse">
-        {features.map((feature, index) => (
+      <div className="divide-y divide-gray-200 dark:divide-gray-800">
+        {features.map((feature) => (
           <div
-            key={index}
-            className="section-padding flex flex-col items-center justify-between gap-8 last:!pb-0 md:flex-row md:gap-16"
+            key={feature.number}
+            className="group grid grid-cols-1 gap-6 py-10 md:grid-cols-12 md:gap-12 md:py-14"
           >
-            <div className="relative h-[340px] w-full sm:h-[600px] sm:min-w-[440px] lg:w-[569px] lg:shrink-0">
-              <Image
-                src={feature.image}
-                alt={feature.label}
-                fill
-                className="rounded-3xl object-cover object-[70%_30%]"
-              />
+            {/* Number */}
+            <div className="md:col-span-1">
+              <span className="text-xs font-semibold tracking-[0.2em] text-gray-400">
+                {feature.number}
+              </span>
             </div>
-            <div className="rounded-3xl bg-white p-6 dark:bg-gray-800">
-              <div className="space-y-6 md:space-y-8 lg:space-y-10.5">
-                <div className="flex items-center gap-3">
-                  {feature.icon}
-                  <p className="text-xl leading-8 text-black md:leading-10 dark:text-white">
-                    {feature.label}
-                  </p>
-                </div>
-                <h3 className="text-2xl font-medium text-black md:text-3xl lg:text-4xl dark:text-white">
-                  {feature.title}
-                </h3>
-                <p className="text-xl leading-8 text-gray-600 dark:text-gray-300">
-                  {feature.description}
-                </p>
-              </div>
-              <AnimatedBorderButton
-                asChild
-                wrapperClassName="w-fit mt-4"
-                className="[&_svg]:transition-transform hover:[&_svg]:translate-x-0.5"
+
+            {/* Label + Title + Description + CTA */}
+            <div className="flex flex-col gap-4 md:col-span-6">
+              <p className="text-xs font-semibold tracking-[0.15em] text-gray-400 uppercase">
+                {feature.label}
+              </p>
+              <h3 className="text-2xl leading-tight font-bold tracking-tight text-black md:text-3xl dark:text-white">
+                {feature.title}
+              </h3>
+              <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400">
+                {feature.description}
+              </p>
+              <Link
+                href={feature.link.href}
+                className="group/link mt-2 inline-flex items-center gap-1 text-sm font-medium text-black transition-opacity hover:opacity-60 dark:text-white"
               >
-                <Link href={feature.link.href}>
-                  {feature.link.text} <ChevronRight />
-                </Link>
-              </AnimatedBorderButton>
+                {feature.link.text}
+                <ChevronRight
+                  size={16}
+                  className="transition-transform group-hover/link:translate-x-0.5"
+                />
+              </Link>
+            </div>
+
+            {/* Image — smaller, right aligned */}
+            <div className="flex items-center justify-center md:col-span-5 md:justify-end">
+              <div className="relative h-48 w-full max-w-xs overflow-hidden rounded-2xl bg-gray-100 md:h-56 dark:bg-gray-900">
+                <Image
+                  src={feature.image}
+                  alt={feature.label}
+                  fill
+                  className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                />
+              </div>
             </div>
           </div>
         ))}
