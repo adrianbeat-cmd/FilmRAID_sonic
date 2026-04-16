@@ -62,8 +62,9 @@ export const metadata: Metadata = {
     apple: [{ url: '/favicon/apple-touch-icon.png', sizes: '180x180' }],
   },
   openGraph: {
-    title: 'FilmRAID — Professional RAID Storage for Film'
-    description: 'Pre-configured Areca RAID systems with enterprise SAS drives. 72TB to 288TB, ready to use, shipped across Europe in 3 days. Built for DITs and post-production professionals.'
+    title: 'FilmRAID — Professional RAID Storage for Film',
+    description:
+      'Pre-configured Areca RAID systems with enterprise SAS drives. 72TB to 288TB, ready to use, shipped across Europe in 3 days. Built for DITs and post-production professionals.',
     siteName: 'FilmRAID',
     type: 'website',
     url: 'https://www.filmraid.pro',
