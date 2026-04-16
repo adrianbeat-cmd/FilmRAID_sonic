@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
 
 import AnimatedBorderButton from '../animated-border-button';
-// Force redeploy to update 3-day delivery - Oct 20, 2025
+
 const CTA = () => {
   const pathname = usePathname();
   const shouldShowCTA = !['/privacy-policy', '/terms-of-service'].includes(pathname);
@@ -13,33 +13,34 @@ const CTA = () => {
   if (!shouldShowCTA) return null;
 
   return (
-    <section className="bg-card py-15">
-      <div className="container flex flex-col justify-between gap-8 md:flex-row md:gap-16">
-        <div className="space-y-6 sm:min-w-[440px] md:space-y-8 lg:w-[569px] lg:shrink-0">
-          <h2 className="text-5xl leading-13 font-bold md:text-6xl md:leading-18">
-            Secure Your Film Data Today
-          </h2>
+    <section className="section-padding container">
+      <div className="border-t border-gray-200 pt-16 md:pt-24 dark:border-gray-800">
+        <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
+          {/* Left — headline */}
+          <div className="max-w-xl">
+            <p className="mb-4 text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">
+              Ready to order?
+            </p>
+            <h2 className="text-4xl leading-tight font-bold tracking-tight text-black md:text-5xl dark:text-white">
+              Pre-configured.
+              <span className="block font-normal text-gray-400">Ships in 3 days.</span>
+            </h2>
+          </div>
 
-          <AnimatedBorderButton
-            asChild
-            wrapperClassName="w-fit"
-            className="gap-2.5 pe-3 [&_svg]:transition-transform hover:[&_svg]:translate-x-0.25"
-          >
-            <Link href="/configs">
-              Configure Now
-              <span className="bg-background text-foreground rounded-full p-2">
-                <ChevronRight />
-              </span>
-            </Link>
-          </AnimatedBorderButton>
-        </div>
-        <div className="max-w-xl space-y-4">
-          <h3 className="text-3xl font-bold">Elevate Your Production Workflow</h3>
-          <p className="text-xl leading-8">
-            Don't risk data loss or slow transfers. Our pre-configured RAID systems deliver
-            unmatched speed, security, and 3-day EU delivery – perfect for filmmakers ready to focus
-            on creating, not waiting.
-          </p>
+          {/* Right — CTA */}
+          <div className="flex flex-col gap-3">
+            <AnimatedBorderButton
+              asChild
+              className="[&_svg]:transition-transform hover:[&_svg]:translate-x-0.5"
+            >
+              <Link href="/configs">
+                See Models & Prices <ChevronRight />
+              </Link>
+            </AnimatedBorderButton>
+            <p className="text-center text-xs text-gray-400">
+              VAT calculated at checkout · FedEx EU delivery
+            </p>
+          </div>
         </div>
       </div>
     </section>
