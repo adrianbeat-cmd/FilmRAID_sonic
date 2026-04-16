@@ -90,65 +90,67 @@ const Cell = ({ value, highlight = false }: { value: CellValue; highlight?: bool
 export default function WhyUs() {
   return (
     <section className="section-padding container">
-      {/* Header */}
-      <div className="mb-12 max-w-2xl">
-        <p className="mb-4 text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">
-          Why FilmRAID
-        </p>
-        <h2 className="text-3xl leading-tight font-bold tracking-tight text-black md:text-4xl dark:text-white">
-          How we compare.
-        </h2>
-        <p className="mt-4 text-base text-gray-500 dark:text-gray-400">
-          Not all RAID systems are equal. Here's how FilmRAID stacks up against the alternatives.
-        </p>
-      </div>
+      <div className="border-t border-gray-200 pt-16 md:pt-24 dark:border-gray-800">
+        {/* Header */}
+        <div className="mb-12 max-w-2xl">
+          <p className="mb-4 text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">
+            Why FilmRAID
+          </p>
+          <h2 className="text-3xl leading-tight font-bold tracking-tight text-black md:text-4xl dark:text-white">
+            How we compare.
+          </h2>
+          <p className="mt-4 text-base text-gray-500 dark:text-gray-400">
+            Not all RAID systems are equal. Here's how FilmRAID stacks up against the alternatives.
+          </p>
+        </div>
 
-      {/* Table */}
-      <div className="w-full overflow-x-auto">
-        <table className="w-full min-w-[520px] border-collapse">
-          {/* Column headers */}
-          <thead>
-            <tr className="border-b border-gray-200 dark:border-gray-800">
-              <th className="w-1/2 pb-4 text-left text-sm font-normal text-gray-400" />
-              <th className="w-[16.6%] pb-4 text-center">
-                <span className="text-sm font-bold text-black dark:text-white">FilmRAID</span>
-              </th>
-              <th className="w-[16.6%] pb-4 text-center">
-                <span className="text-sm font-normal text-gray-400">G-RAID</span>
-              </th>
-              <th className="w-[16.6%] pb-4 text-center">
-                <span className="text-sm font-normal text-gray-400">Synology</span>
-              </th>
-            </tr>
-          </thead>
-
-          {/* Rows */}
-          <tbody>
-            {rows.map((row, index) => (
-              <tr
-                key={index}
-                className="border-b border-gray-100 last:border-b-0 dark:border-gray-900"
-              >
-                <td className="py-4 text-sm text-gray-600 dark:text-gray-400">{row.feature}</td>
-                <td className="py-4">
-                  <Cell value={row.filmraid} highlight />
-                </td>
-                <td className="py-4">
-                  <Cell value={row.graid} />
-                </td>
-                <td className="py-4">
-                  <Cell value={row.synology} />
-                </td>
+        {/* Table */}
+        <div className="w-full overflow-x-auto">
+          <table className="w-full min-w-[520px] border-collapse">
+            {/* Column headers */}
+            <thead>
+              <tr className="border-b border-gray-200 dark:border-gray-800">
+                <th className="w-1/2 pb-4 text-left text-sm font-normal text-gray-400" />
+                <th className="w-[16.6%] pb-4 text-center">
+                  <span className="text-sm font-bold text-black dark:text-white">FilmRAID</span>
+                </th>
+                <th className="w-[16.6%] pb-4 text-center">
+                  <span className="text-sm font-normal text-gray-400">G-RAID</span>
+                </th>
+                <th className="w-[16.6%] pb-4 text-center">
+                  <span className="text-sm font-normal text-gray-400">Synology</span>
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
 
-      <p className="mt-6 text-xs text-gray-400">
-        * Comparison based on publicly available product specifications. G-RAID and Synology are
-        trademarks of their respective owners.
-      </p>
+            {/* Rows */}
+            <tbody>
+              {rows.map((row, index) => (
+                <tr
+                  key={index}
+                  className="border-b border-gray-100 last:border-b-0 dark:border-gray-900"
+                >
+                  <td className="py-4 text-sm text-gray-600 dark:text-gray-400">{row.feature}</td>
+                  <td className="py-4">
+                    <Cell value={row.filmraid} highlight />
+                  </td>
+                  <td className="py-4">
+                    <Cell value={row.graid} />
+                  </td>
+                  <td className="py-4">
+                    <Cell value={row.synology} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <p className="mt-6 text-xs text-gray-400">
+          * Comparison based on publicly available product specifications. G-RAID and Synology are
+          trademarks of their respective owners.
+        </p>
+      </div>
     </section>
   );
 }
