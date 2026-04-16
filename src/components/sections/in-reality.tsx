@@ -1,49 +1,10 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import Image from 'next/image';
 
-import { HardDrive } from 'lucide-react';
-
-import SectionHeader from '@/components/section-header';
-import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
-import type { CarouselApi } from '@/components/ui/carousel';
 import { cn } from '@/lib/utils';
-
-const SPACING = {
-  itemPadding: 4, // py-1 = 8px total
-} as const;
-
-type ThumbnailSize = {
-  width: number;
-  height: number;
-  containerWidth: number;
-};
-
-// Thumbnail size configurations
-const THUMBNAIL_SIZES: Record<'default' | 'hover' | 'distance1' | 'distance2', ThumbnailSize> = {
-  default: {
-    width: 70,
-    height: 44,
-    containerWidth: 86,
-  },
-  hover: {
-    width: 86,
-    height: 53,
-    containerWidth: 86,
-  },
-  distance1: {
-    width: 78,
-    height: 49,
-    containerWidth: 86,
-  },
-  distance2: {
-    width: 74,
-    height: 46,
-    containerWidth: 86,
-  },
-} as const;
 
 const IMAGES = [
   {
@@ -61,191 +22,72 @@ const IMAGES = [
 ];
 
 export default function InReality() {
-  const [api, setApi] = useState<CarouselApi>();
-  const [activeImage, setActiveImage] = useState(0);
-  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
-  const navRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+  const [fading, setFading] = useState(false);
 
-  const onSelect = useCallback(() => {
-    if (!api) return;
-    setActiveImage(api.selectedScrollSnap());
-  }, [api]);
-
-  const scrollTo = useCallback(
+  const goTo = useCallback(
     (index: number) => {
-      api?.scrollTo(index);
+      if (index === active) return;
+      setFading(true);
+      setTimeout(() => {
+        setActive(index);
+        setFading(false);
+      }, 400);
     },
-    [api],
+    [active],
   );
 
-  // Calculate position for border based on hover index
-  const calculateBorderPosition = useCallback(
-    (hoverIndex: number | null) => {
-      const targetIndex = hoverIndex ?? activeImage;
-      let position = 0;
-
-      // Calculate position by summing up the heights of previous items
-      for (let i = 0; i < targetIndex; i++) {
-        if (hoverIndex !== null) {
-          const distanceFromHover = Math.abs(i - hoverIndex);
-          if (distanceFromHover === 0) {
-            position += THUMBNAIL_SIZES.hover.height;
-          } else if (distanceFromHover === 1) {
-            position += THUMBNAIL_SIZES.distance1.height;
-          } else if (distanceFromHover === 2) {
-            position += THUMBNAIL_SIZES.distance2.height;
-          } else {
-            position += THUMBNAIL_SIZES.default.height;
-          }
-        } else {
-          position += THUMBNAIL_SIZES.default.height;
-        }
-        position += SPACING.itemPadding * 2; // *2 because of the padding on the top and bottom
-      }
-
-      if (hoverIndex !== null) {
-        position += SPACING.itemPadding;
-      }
-
-      return position;
-    },
-    [activeImage],
-  );
-
-  // Sync the carousel with the navigation
+  // Auto-advance every 4 seconds
   useEffect(() => {
-    if (!api) return;
-    onSelect();
-    api.on('select', onSelect);
-    return () => {
-      api.off('select', onSelect);
-    };
-  }, [api, onSelect]);
-
-  // Add resize listener to update position when screen size changes
-  useEffect(() => {
-    const handleResize = () => {
-      if (hoverIndex !== null) {
-        // Force a recalculation by toggling the hover state
-        const currentHover = hoverIndex;
-        setHoverIndex(null);
-        setTimeout(() => setHoverIndex(currentHover), 0);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [hoverIndex]);
+    const timer = setInterval(() => {
+      goTo((active + 1) % IMAGES.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [active, goTo]);
 
   return (
-    <section className="section-padding container space-y-10.5">
-      <SectionHeader
-        category="In Reality"
-        title="FilmRAID in Action"
-        description="Discover how our custom RAID systems integrate seamlessly into film production workflows, providing secure storage and lightning-fast transfers."
-        icon={<HardDrive />}
-      />
+    <section className="section-padding container space-y-8">
+      {/* Section header — minimal */}
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">In Reality</p>
+        <h2 className="text-3xl font-bold tracking-tight text-black md:text-4xl dark:text-white">
+          FilmRAID in Action
+        </h2>
+        <p className="max-w-xl text-base text-gray-500 dark:text-gray-400">
+          Our RAID systems integrate seamlessly into film production workflows — on set, in the edit
+          suite, and in post.
+        </p>
+      </div>
 
-      <div className="relative overflow-hidden rounded-3xl">
-        {/* Main Carousel */}
-        <Carousel
-          setApi={setApi}
-          className="w-full"
-          orientation="vertical"
-          opts={{
-            align: 'start',
-            axis: 'y',
-          }}
-        >
-          <CarouselContent className="mt-0 h-[340px] sm:h-[520px] lg:h-[680px]">
-            {IMAGES.map((image, index) => (
-              <CarouselItem key={index} className="relative h-full overflow-hidden">
-                <Image
-                  src={image.src}
-                  alt={image.alt}
-                  fill
-                  className="object-cover object-bottom"
-                />
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-        </Carousel>
+      {/* Image */}
+      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-black">
+        <Image
+          src={IMAGES[active].src}
+          alt={IMAGES[active].alt}
+          fill
+          className={cn(
+            'object-cover transition-opacity duration-500',
+            fading ? 'opacity-0' : 'opacity-100',
+          )}
+          priority
+        />
+      </div>
 
-        {/* Thumbnail Navigation */}
-        <div className="from-base-dark/60 dark:from-background/60 pointer-events-none absolute inset-0 w-1/3 bg-gradient-to-r to-transparent" />
-        <div ref={navRef} className="absolute top-1/2 flex -translate-y-1/2 flex-col ps-2 md:ps-8">
-          {IMAGES.map((image, index) => {
-            const distance = hoverIndex !== null ? Math.abs(index - hoverIndex) : null;
-
-            let size = THUMBNAIL_SIZES.default;
-            if (distance === 0) {
-              size = THUMBNAIL_SIZES.hover;
-            } else if (distance === 1) {
-              size = THUMBNAIL_SIZES.distance1;
-            } else if (distance === 2) {
-              size = THUMBNAIL_SIZES.distance2;
-            }
-
-            return (
-              <div
-                key={index}
-                onMouseEnter={() => setHoverIndex(index)}
-                onMouseLeave={() => setHoverIndex(null)}
-                style={
-                  {
-                    '--thumb-width': `${size.width}px`,
-                    '--thumb-height': `${size.height}px`,
-                    '--container-width': `${size.containerWidth}px`,
-                    '--item-padding': `${SPACING.itemPadding}px`,
-                  } as React.CSSProperties
-                }
-                className="flex w-[var(--container-width)] items-center justify-center py-[var(--item-padding)]"
-              >
-                <button
-                  onClick={() => scrollTo(index)}
-                  className={cn(
-                    'relative origin-center transform-gpu cursor-pointer overflow-visible will-change-[width,height]',
-                    'transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)]',
-                    'h-[var(--thumb-height)] w-[var(--thumb-width)]',
-                  )}
-                >
-                  <div className="absolute inset-1 overflow-hidden rounded-full">
-                    <Image
-                      src={image.src}
-                      alt={image.alt}
-                      fill
-                      className="rounded-full object-cover object-bottom"
-                    />
-                  </div>
-                </button>
-              </div>
-            );
-          })}
-          <div
-            style={
-              {
-                '--highlight-translate-y': `${calculateBorderPosition(hoverIndex)}px`,
-              } as React.CSSProperties
-            }
+      {/* Dot navigation */}
+      <div className="flex items-center justify-center gap-3">
+        {IMAGES.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => goTo(idx)}
+            aria-label={`Go to image ${idx + 1}`}
             className={cn(
-              'border-background pointer-events-none absolute z-20 rounded-full border',
-              'transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)]',
-              'transform-gpu will-change-[width,height,transform]',
-              'translate-y-[var(--highlight-translate-y)]',
-              hoverIndex === null
-                ? [
-                    'top-1',
-                    'left-4 md:left-10',
-                    'h-11 w-[70px]', // default height and width
-                  ]
-                : [
-                    'top-0',
-                    'left-2 md:left-8',
-                    'h-[53px] w-[86px]', // hover height and width
-                  ],
+              'rounded-full transition-all duration-300',
+              idx === active
+                ? 'h-2 w-8 bg-black dark:bg-white'
+                : 'h-2 w-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500',
             )}
           />
-        </div>
+        ))}
       </div>
     </section>
   );
